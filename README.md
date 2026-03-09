@@ -12,9 +12,6 @@
 
 ---
 
-> [!WARNING]
-> **Beta Release (v0.1.1):** This is the very first public release. While fully usable, you might encounter bugs. Additionally, the English translation is currently incomplete in some areas.
-
 Psysonic is a beautiful desktop music player built completely from the ground up for the modern era. Utilizing **Tauri v2** and **React**, it offers a native-feeling, lightweight, and incredibly fast experience with a stunning UI inspired by the [Catppuccin](https://github.com/catppuccin/catppuccin) aesthetic. 
 
 Designed specifically for users hosting their own music via Navidrome or other Subsonic API servers, Psysonic aims to be the best way to interact with your personal library.
@@ -25,20 +22,27 @@ Designed specifically for users hosting their own music via Navidrome or other S
 
 - 🎨 **Gorgeous UI**: Deeply integrated Catppuccin themes (Mocha & Latte) with smooth glassmorphism effects and micro-animations.
 - ⚡ **Blazing Fast**: Built with Rust & Tauri, resulting in minimal RAM usage compared to typical Electron apps.
-- 🌍 **Internationalization (i18n)**: Fully translated into English and German, with the architecture built to easily support more languages.
+- 🌍 **Internationalization (i18n)**: Fully translated into English and German (v1.0.0).
 - 📻 **Live "Now Playing"**: See what other users on your server are currently listening to in real-time.
 - 🎵 **Last.fm Scrobbling**: Full integration for scrobbling your tracks via the Navidrome server.
 - 💾 **Local Caching**: Fast loading times with customizable image caching thresholds.
 - 💿 **Album & Artist Views**: Beautiful grid displays and detailed artist pages with related albums.
-- 🎛️ **Queue Management**: Drag & drop support, playlist saving, and loading directly built into the queue.
+- 🎛️ **Queue Management**: Drag & drop support, playlist saving, and loading directly built into the queue. Server-side queue synchronization is fully supported.
 - 🖥️ **Cross-Platform**: Available natively for Windows, macOS, and Linux.
+
+## 🛡️ Security
+
+With the **v1.0.0 Release**, Psysonic has been hardened for public use:
+- **Secured Credentials**: Industry-standard security using Tauri's native encrypted store.
+- **Hardened Sandbox**: Restricted filesystem permissions to only necessary directories.
+- **Native Security**: Disabled global Tauri objects to significantly reduce XSS attack vectors.
 
 ## 📥 Installation
 
 Navigate to the [Releases](https://github.com/Psychotoxical/psysonic/releases) page and download the installer for your operating system.
 
 - **Windows**: `.exe` or `.msi`
-- **macOS**: `.dmg`
+- **macOS**: `.dmg` (Universal or Apple Silicon)
 - **Linux**: `.AppImage` or `.deb`
 
 ## 🚀 Getting Started
@@ -54,8 +58,8 @@ If you want to build Psysonic from source or contribute to the project:
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18+)
-- [Rust](https://www.rust-lang.org/)
-- OS-specific build dependencies for Tauri (see the [Tauri prerequisites guide](https://tauri.app/v1/guides/getting-started/prerequisites)).
+- [Rust](https://www.rust-lang.org/) (v1.75+)
+- OS-specific build dependencies for Tauri (see the [Tauri prerequisites guide](https://tauri.app/v2/guides/getting-started/prerequisites)).
 
 ### Setup
 
