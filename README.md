@@ -12,6 +12,9 @@
 
 ---
 
+> [!WARNING]
+> **Beta Release (v0.1.0):** This is the very first public release. While fully usable, you might encounter bugs. Additionally, the English translation is currently incomplete in some areas.
+
 Psysonic is a beautiful desktop music player built completely from the ground up for the modern era. Utilizing **Tauri v2** and **React**, it offers a native-feeling, lightweight, and incredibly fast experience with a stunning UI inspired by the [Catppuccin](https://github.com/catppuccin/catppuccin) aesthetic. 
 
 Designed specifically for users hosting their own music via Navidrome or other Subsonic API servers, Psysonic aims to be the best way to interact with your personal library.
