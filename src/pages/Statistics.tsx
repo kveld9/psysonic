@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { getAlbumList, getGenres, SubsonicAlbum, SubsonicGenre } from '../api/subsonic';
 import AlbumRow from '../components/AlbumRow';
-import { BarChart3, TrendingUp, Star, Music } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Statistics() {
+  const { t } = useTranslation();
   const [frequent, setFrequent] = useState<SubsonicAlbum[]>([]);
   const [highest, setHighest] = useState<SubsonicAlbum[]>([]);
   const [genres, setGenres] = useState<SubsonicGenre[]>([]);
@@ -45,7 +47,7 @@ export default function Statistics() {
     <div className="content-body animate-fade-in">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
         <BarChart3 size={32} style={{ color: 'var(--accent)' }} />
-        <h1 className="page-title" style={{ margin: 0 }}>Statistiken</h1>
+        <h1 className="page-title" style={{ margin: 0 }}>{t('statistics.title')}</h1>
       </div>
 
       {loading ? (
@@ -54,28 +56,27 @@ export default function Statistics() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-          
-          <AlbumRow 
-            title="Meistgespielte Alben"
-            albums={frequent} 
+
+          <AlbumRow
+            title={t('statistics.mostPlayed')}
+            albums={frequent}
             onLoadMore={() => loadMore('frequent', frequent, setFrequent)}
-            moreText="Mehr laden" 
+            moreText={t('statistics.loadMore')}
           />
 
-          <AlbumRow 
-            title="Höchstbewertete Alben" 
-            albums={highest} 
+          <AlbumRow
+            title={t('statistics.highestRated')}
+            albums={highest}
             onLoadMore={() => loadMore('highest', highest, setHighest)}
-            moreText="Mehr laden" 
+            moreText={t('statistics.loadMore')}
           />
 
           {genres.length > 0 && (
             <div>
               <div className="section-title">
-                <Music size={20} />
-                <h2>Genre-Verteilung (Top 20)</h2>
+                <h2>{t('statistics.genreDistribution')}</h2>
               </div>
-              
+
               <div style={{ display: 'grid', gap: '1rem', background: 'var(--surface0)', padding: '1.5rem', borderRadius: '12px' }}>
                 {genres.map(genre => {
                   const percentage = (genre.songCount / maxGenreCount) * 100;
@@ -86,14 +87,14 @@ export default function Statistics() {
                         <span style={{ color: 'var(--subtext0)' }}>{genre.songCount} Songs</span>
                       </div>
                       <div style={{ width: '100%', height: '8px', background: 'var(--surface2)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div 
-                          style={{ 
-                            width: `${percentage}%`, 
-                            height: '100%', 
-                            background: 'var(--accent)', 
+                        <div
+                          style={{
+                            width: `${percentage}%`,
+                            height: '100%',
+                            background: 'var(--accent)',
                             borderRadius: '4px',
                             transition: 'width 1s ease-out'
-                          }} 
+                          }}
                         />
                       </div>
                     </div>

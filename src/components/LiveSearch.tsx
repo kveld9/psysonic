@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Disc3, Users, Music } from 'lucide-react';
 import { search, SearchResults, buildCoverArtUrl } from '../api/subsonic';
 import { usePlayerStore } from '../store/playerStore';
+import { useTranslation } from 'react-i18next';
 
 function debounce(fn: (q: string) => void, ms: number): (q: string) => void {
   let timer: ReturnType<typeof setTimeout>;
@@ -13,6 +14,7 @@ function debounce(fn: (q: string) => void, ms: number): (q: string) => void {
 }
 
 export default function LiveSearch() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResults | null>(null);
   const [open, setOpen] = useState(false);
@@ -63,7 +65,7 @@ export default function LiveSearch() {
           id="live-search-input"
           className="input live-search-field"
           type="search"
-          placeholder="Suchen nach Künstler, Album oder Song…"
+          placeholder={t('search.placeholder')}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => results && setOpen(true)}
@@ -73,7 +75,7 @@ export default function LiveSearch() {
           autoComplete="off"
         />
         {query && (
-          <button className="live-search-clear" onClick={() => { setQuery(''); setResults(null); setOpen(false); }} aria-label="Suche leeren">
+          <button className="live-search-clear" onClick={() => { setQuery(''); setResults(null); setOpen(false); }} aria-label={t('search.clearLabel')}>
             ×
           </button>
         )}
@@ -82,12 +84,12 @@ export default function LiveSearch() {
       {open && (
         <div className="live-search-dropdown" id="search-results" role="listbox">
           {!hasResults && !loading && (
-            <div className="search-empty">Keine Ergebnisse für „{query}"</div>
+            <div className="search-empty">{t('search.noResults', { query })}</div>
           )}
 
           {results?.artists.length ? (
             <div className="search-section">
-              <div className="search-section-label"><Users size={12} /> Künstler</div>
+              <div className="search-section-label"><Users size={12} /> {t('search.artists')}</div>
               {results.artists.map(a => (
                 <button
                   key={a.id}
@@ -104,7 +106,7 @@ export default function LiveSearch() {
 
           {results?.albums.length ? (
             <div className="search-section">
-              <div className="search-section-label"><Disc3 size={12} /> Alben</div>
+              <div className="search-section-label"><Disc3 size={12} /> {t('search.albums')}</div>
               {results.albums.map(a => (
                 <button
                   key={a.id}
@@ -128,14 +130,14 @@ export default function LiveSearch() {
 
           {results?.songs.length ? (
             <div className="search-section">
-              <div className="search-section-label"><Music size={12} /> Songs</div>
+              <div className="search-section-label"><Music size={12} /> {t('search.songs')}</div>
               {results.songs.map(s => (
                 <button
                   key={s.id}
                   className="search-result-item"
                   onClick={() => {
-                    playTrack({ 
-                      id: s.id, title: s.title, artist: s.artist, album: s.album, 
+                    playTrack({
+                      id: s.id, title: s.title, artist: s.artist, album: s.album,
                       albumId: s.albumId, duration: s.duration, coverArt: s.coverArt,
                       year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating
                     });

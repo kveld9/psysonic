@@ -3,6 +3,7 @@ import { SubsonicAlbum } from '../api/subsonic';
 import AlbumCard from './AlbumCard';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   title: string;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function AlbumRow({ title, albums, moreLink, moreText, onLoadMore }: Props) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [showLeft, setShowLeft] = useState(false);
@@ -86,7 +88,7 @@ export default function AlbumRow({ title, albums, moreLink, moreText, onLoadMore
               <div style={{ padding: '1rem', background: 'var(--bg-app)', borderRadius: '50%' }}>
                 <div className="spinner" style={{ width: 24, height: 24 }} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 500 }}>Lädt...</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{t('common.loadingMore')}</span>
             </div>
           )}
           {!loadingMore && moreLink && (
@@ -94,7 +96,7 @@ export default function AlbumRow({ title, albums, moreLink, moreText, onLoadMore
               <div style={{ padding: '1rem', background: 'var(--bg-app)', borderRadius: '50%' }}>
                 <ArrowRight size={24} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 500 }}>{moreText || 'Alle ansehen'}</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{moreText}</span>
             </div>
           )}
         </div>

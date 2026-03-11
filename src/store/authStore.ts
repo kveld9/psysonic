@@ -1,24 +1,26 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type ConnectionMode = 'local' | 'external';
+export interface ServerProfile {
+  id: string;
+  name: string;
+  url: string;
+  username: string;
+  password: string;
+}
 
 interface AuthState {
-  // Server config
-  serverName: string;
-  lanIp: string;
-  externalUrl: string;
-  username: string;
-  password: string; // stored encrypted via plugin-store
-  activeConnection: ConnectionMode;
+  // Multi-server
+  servers: ServerProfile[];
+  activeServerId: string | null;
 
-  // Last.fm
+  // Last.fm (global)
   lastfmApiKey: string;
   lastfmApiSecret: string;
   lastfmSessionKey: string;
   lastfmUsername: string;
 
-  // Settings
+  // Settings (global)
   minimizeToTray: boolean;
   scrobblingEnabled: boolean;
   maxCacheMb: number;
@@ -30,15 +32,10 @@ interface AuthState {
   connectionError: string | null;
 
   // Actions
-  setCredentials: (data: {
-    serverName: string;
-    lanIp: string;
-    externalUrl: string;
-    username: string;
-    password: string;
-  }) => void;
-  setActiveConnection: (mode: ConnectionMode) => void;
-  toggleConnection: () => void;
+  addServer: (profile: Omit<ServerProfile, 'id'>) => string;
+  updateServer: (id: string, data: Partial<Omit<ServerProfile, 'id'>>) => void;
+  removeServer: (id: string) => void;
+  setActiveServer: (id: string) => void;
   setLoggedIn: (v: boolean) => void;
   setConnecting: (v: boolean) => void;
   setConnectionError: (e: string | null) => void;
@@ -51,17 +48,18 @@ interface AuthState {
 
   // Derived
   getBaseUrl: () => string;
+  getActiveServer: () => ServerProfile | undefined;
+}
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      serverName: '',
-      lanIp: '',
-      externalUrl: '',
-      username: '',
-      password: '',
-      activeConnection: 'local',
+      servers: [],
+      activeServerId: null,
       lastfmApiKey: '',
       lastfmApiSecret: '',
       lastfmSessionKey: '',
@@ -74,12 +72,31 @@ export const useAuthStore = create<AuthState>()(
       isConnecting: false,
       connectionError: null,
 
-      setCredentials: (data) => set({ ...data, connectionError: null }),
+      addServer: (profile) => {
+        const id = generateId();
+        set(s => ({ servers: [...s.servers, { ...profile, id }] }));
+        return id;
+      },
 
-      setActiveConnection: (mode) => set({ activeConnection: mode }),
+      updateServer: (id, data) => {
+        set(s => ({
+          servers: s.servers.map(srv => srv.id === id ? { ...srv, ...data } : srv),
+        }));
+      },
 
-      toggleConnection: () =>
-        set(s => ({ activeConnection: s.activeConnection === 'local' ? 'external' : 'local' })),
+      removeServer: (id) => {
+        set(s => {
+          const newServers = s.servers.filter(srv => srv.id !== id);
+          const switchedAway = s.activeServerId === id;
+          return {
+            servers: newServers,
+            activeServerId: switchedAway ? (newServers[0]?.id ?? null) : s.activeServerId,
+            isLoggedIn: switchedAway ? false : s.isLoggedIn,
+          };
+        });
+      },
+
+      setActiveServer: (id) => set({ activeServerId: id }),
 
       setLoggedIn: (v) => set({ isLoggedIn: v }),
       setConnecting: (v) => set({ isConnecting: v }),
@@ -93,20 +110,18 @@ export const useAuthStore = create<AuthState>()(
       setMaxCacheMb: (v) => set({ maxCacheMb: v }),
       setDownloadFolder: (v) => set({ downloadFolder: v }),
 
-      logout: () => set({
-        isLoggedIn: false,
-        username: '',
-        password: '',
-        lastfmSessionKey: '',
-        lastfmUsername: '',
-      }),
+      logout: () => set({ isLoggedIn: false }),
 
       getBaseUrl: () => {
         const s = get();
-        if (s.activeConnection === 'local') {
-          return s.lanIp.startsWith('http') ? s.lanIp : `http://${s.lanIp}`;
-        }
-        return s.externalUrl.startsWith('http') ? s.externalUrl : `https://${s.externalUrl}`;
+        const server = s.servers.find(srv => srv.id === s.activeServerId);
+        if (!server?.url) return '';
+        return server.url.startsWith('http') ? server.url : `http://${server.url}`;
+      },
+
+      getActiveServer: () => {
+        const s = get();
+        return s.servers.find(srv => srv.id === s.activeServerId);
       },
     }),
     {

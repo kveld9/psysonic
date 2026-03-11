@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-11
+
+### Fixed
+- **Optimized Codebase**: Integrated core fixes and performance improvements.
+- **Improved Multi-Server Support**: Fixed edge cases in server switching and credential management.
+- **Enhanced Security**: Switched to `crypto.getRandomValues()` for more robust auth salt generation.
+- **Connection Reliability**: Added pre-verification for server connections to prevent state synchronization issues.
+- **Linux Compatibility**: Applied workarounds for WebKitGTK compositing issues on Linux.
+
+### Changed
+- Repository maintenance and preparation for the 1.0.1 release.
+
 ## [1.0.0] - 2026-03-09
 
 ### Added

@@ -5,6 +5,7 @@ import AlbumCard from '../components/AlbumCard';
 import { ArrowLeft, Users, ExternalLink, Star, Play, Shuffle, Radio } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
 import { usePlayerStore } from '../store/playerStore';
+import { useTranslation } from 'react-i18next';
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -12,7 +13,23 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// Inline Last.fm SVG icon
+/** Strip dangerous tags/attributes from server-provided HTML */
+function sanitizeHtml(html: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  doc.querySelectorAll('script, style, iframe, object, embed, form, input, button, select, base, meta, link').forEach(el => el.remove());
+  doc.querySelectorAll('*').forEach(el => {
+    Array.from(el.attributes).forEach(attr => {
+      const name = attr.name.toLowerCase();
+      const val = attr.value.toLowerCase().trim();
+      if (name.startsWith('on') || (name === 'href' && (val.startsWith('javascript:') || val.startsWith('data:'))) || (name === 'src' && (val.startsWith('javascript:') || val.startsWith('data:')))) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+  return doc.body.innerHTML;
+}
+
 function LastfmIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -22,6 +39,7 @@ function LastfmIcon({ size = 16 }: { size?: number }) {
 }
 
 export default function ArtistDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [artist, setArtist] = useState<SubsonicArtist | null>(null);
@@ -31,7 +49,7 @@ export default function ArtistDetail() {
   const [loading, setLoading] = useState(true);
   const [radioLoading, setRadioLoading] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
-  
+
   const playTrack = usePlayerStore(state => state.playTrack);
   const enqueue = usePlayerStore(state => state.enqueue);
   const clearQueue = usePlayerStore(state => state.clearQueue);
@@ -44,7 +62,6 @@ export default function ArtistDetail() {
       setArtist(artistData.artist);
       setAlbums(artistData.albums);
       setIsStarred(!!artistData.artist.starred);
-      
       return Promise.all([
         getArtistInfo(id).catch(() => null),
         getTopSongs(artistData.artist.name).catch(() => [])
@@ -64,16 +81,13 @@ export default function ArtistDetail() {
   const toggleStar = async () => {
     if (!artist) return;
     const currentlyStarred = isStarred;
-    setIsStarred(!currentlyStarred); // Optimistic UI update
+    setIsStarred(!currentlyStarred);
     try {
-      if (currentlyStarred) {
-        await unstar(artist.id, 'artist');
-      } else {
-        await star(artist.id, 'artist');
-      }
+      if (currentlyStarred) await unstar(artist.id, 'artist');
+      else await star(artist.id, 'artist');
     } catch (e) {
       console.error('Failed to toggle star', e);
-      setIsStarred(currentlyStarred); // Revert on failure
+      setIsStarred(currentlyStarred);
     }
   };
 
@@ -101,10 +115,10 @@ export default function ArtistDetail() {
         clearQueue();
         playTrack(similar[0], similar);
       } else {
-        alert("Keine ähnlichen Titel für diesen Künstler gefunden.");
+        alert(t('artistDetail.noRadio'));
       }
     } catch (e) {
-      console.error("Radio start failed", e);
+      console.error('Radio start failed', e);
     } finally {
       setRadioLoading(false);
     }
@@ -122,7 +136,7 @@ export default function ArtistDetail() {
     return (
       <div className="content-body">
         <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-          Künstler nicht gefunden.
+          {t('artistDetail.notFound')}
         </div>
       </div>
     );
@@ -138,10 +152,9 @@ export default function ArtistDetail() {
         onClick={() => navigate(-1)}
         style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
       >
-        <ArrowLeft size={16} /> <span>Zurück</span>
+        <ArrowLeft size={16} /> <span>{t('artistDetail.back')}</span>
       </button>
 
-      {/* Header: avatar + name + meta + links */}
       <div className="artist-detail-header">
         <div className="artist-detail-avatar">
           {coverId ? (
@@ -161,11 +174,10 @@ export default function ArtistDetail() {
             {artist.name}
           </h1>
           <div style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '1rem' }}>
-            {artist.albumCount} {artist.albumCount === 1 ? 'Album' : 'Alben'}
+            {t('artistDetail.albumCount_other', { count: artist.albumCount ?? 0 })}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {/* External links */}
             {(info?.lastFmUrl || artist.name) && (
               <div className="artist-detail-links">
                 {info?.lastFmUrl && (
@@ -180,44 +192,43 @@ export default function ArtistDetail() {
                 </button>
               </div>
             )}
-            
-            {/* Star toggle */}
-            <button 
-              className="artist-ext-link" 
+
+            <button
+              className="artist-ext-link"
               onClick={toggleStar}
-              data-tooltip={isStarred ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+              data-tooltip={isStarred ? t('artistDetail.favoriteRemove') : t('artistDetail.favoriteAdd')}
               style={{ color: isStarred ? 'var(--accent)' : 'inherit', border: isStarred ? '1px solid var(--accent)' : undefined }}
             >
-              <Star size={14} fill={isStarred ? "currentColor" : "none"} /> 
-              {isStarred ? 'Favorit' : 'Als Favorit'}
+              <Star size={14} fill={isStarred ? "currentColor" : "none"} />
+              {t('artistDetail.favorite')}
             </button>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '8px', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             {topSongs.length > 0 && (
               <>
                 <button className="btn btn-primary" onClick={handlePlayAll}>
-                  <Play size={16} /> Alle abspielen
+                  <Play size={16} /> {t('artistDetail.playAll')}
                 </button>
                 <button className="btn btn-surface" onClick={handleShuffle}>
-                  <Shuffle size={16} /> Zufallswiedergabe
+                  <Shuffle size={16} /> {t('artistDetail.shuffle')}
                 </button>
               </>
             )}
             <button className="btn btn-surface" onClick={handleStartRadio} disabled={radioLoading}>
               {radioLoading ? <div className="spinner" style={{ width: 16, height: 16, borderTopColor: 'currentColor' }} /> : <Radio size={16} />}
-              {radioLoading ? 'Lädt...' : 'Radio'}
+              {radioLoading ? t('artistDetail.loading') : t('artistDetail.radio')}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Biography — only shown when available */}
+      {/* Biography — sanitized HTML from server */}
       {info?.biography && (
         <div className="artist-bio-section">
           <div
             className="artist-bio-text"
-            dangerouslySetInnerHTML={{ __html: info.biography }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(info.biography) }}
           />
         </div>
       )}
@@ -226,14 +237,14 @@ export default function ArtistDetail() {
       {topSongs.length > 0 && (
         <>
           <h2 className="section-title" style={{ marginTop: info?.biography ? '2rem' : '0', marginBottom: '1rem' }}>
-            Beliebteste Titel
+            {t('artistDetail.topTracks')}
           </h2>
           <div className="tracklist" style={{ padding: 0, marginBottom: '2rem' }}>
             <div className="tracklist-header" style={{ gridTemplateColumns: '36px minmax(150px, 2fr) minmax(100px, 1fr) 60px' }}>
               <div style={{ textAlign: 'center' }}>#</div>
-              <div>Titel</div>
-              <div>Album</div>
-              <div style={{ textAlign: 'right' }}>Dauer</div>
+              <div>{t('artistDetail.trackTitle')}</div>
+              <div>{t('artistDetail.trackAlbum')}</div>
+              <div style={{ textAlign: 'right' }}>{t('artistDetail.trackDuration')}</div>
             </div>
             {topSongs.map((song, idx) => (
               <div
@@ -251,28 +262,23 @@ export default function ArtistDetail() {
                   openContextMenu(e.clientX, e.clientY, track, 'song');
                 }}
               >
-                <div className="track-num" style={{ textAlign: 'center' }}>
-                  {idx + 1}
-                </div>
-                
+                <div className="track-num" style={{ textAlign: 'center' }}>{idx + 1}</div>
                 <div className="track-info" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {song.coverArt && (
-                    <img 
-                      src={buildCoverArtUrl(song.coverArt, 64)} 
-                      alt={song.album} 
-                      style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }} 
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                    <img
+                      src={buildCoverArtUrl(song.coverArt, 64)}
+                      alt={song.album}
+                      style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', flexShrink: 0 }}
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <div className="track-title">{song.title}</div>
                   </div>
                 </div>
-                
                 <div className="track-album truncate" style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
                   {song.album}
                 </div>
-                
                 <div className="track-duration" style={{ textAlign: 'right' }}>
                   {formatDuration(song.duration)}
                 </div>
@@ -284,7 +290,7 @@ export default function ArtistDetail() {
 
       {/* Albums */}
       <h2 className="section-title" style={{ marginTop: (info?.biography || topSongs.length > 0) ? '2rem' : '0', marginBottom: '1rem' }}>
-        Alben von {artist.name}
+        {t('artistDetail.albumsBy', { name: artist.name })}
       </h2>
 
       {albums.length > 0 ? (
@@ -292,7 +298,7 @@ export default function ArtistDetail() {
           {albums.map(a => <AlbumCard key={a.id} album={a} />)}
         </div>
       ) : (
-        <p style={{ color: 'var(--text-muted)' }}>Keine Alben gefunden.</p>
+        <p style={{ color: 'var(--text-muted)' }}>{t('artistDetail.noAlbums')}</p>
       )}
     </div>
   );

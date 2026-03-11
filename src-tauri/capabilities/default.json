@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.tauri.app/config/2/capability.json",
+  "$schema": "../gen/schemas/capability-schema.json",
   "identifier": "default",
   "description": "Default capabilities for Psysonic",
   "platforms": ["linux", "macOS", "windows"],
@@ -22,7 +22,6 @@
     "fs:allow-write-file",
     "fs:allow-mkdir",
     "fs:scope-download-recursive",
-    "fs:scope-home-recursive",
     "core:window:allow-set-title",
     "core:window:allow-close",
     "core:window:allow-hide",

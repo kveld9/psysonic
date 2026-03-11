@@ -2,31 +2,38 @@ import axios from 'axios';
 import md5 from 'md5';
 import { useAuthStore } from '../store/authStore';
 
+// ─── Secure random salt ────────────────────────────────────────
+function secureRandomSalt(): string {
+  const buf = new Uint8Array(8);
+  crypto.getRandomValues(buf);
+  return Array.from(buf, b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // ─── Token Auth ───────────────────────────────────────────────
 function getAuthParams(username: string, password: string) {
-  const salt = Math.random().toString(36).substring(2, 10);
+  const salt = secureRandomSalt();
   const token = md5(password + salt);
   return { u: username, t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json' };
 }
 
 function getClient() {
-  const { getBaseUrl, username, password } = useAuthStore.getState();
+  const { getBaseUrl, getActiveServer } = useAuthStore.getState();
+  const server = getActiveServer();
   const baseUrl = getBaseUrl();
-  const params = getAuthParams(username, password);
-
-  return {
-    baseUrl: `${baseUrl}/rest`,
-    params,
-  };
+  if (!baseUrl) throw new Error('No server configured');
+  const params = getAuthParams(server?.username ?? '', server?.password ?? '');
+  return { baseUrl: `${baseUrl}/rest`, params };
 }
 
-async function api<T>(endpoint: string, extra: Record<string, unknown> = {}): Promise<T> {
+async function api<T>(endpoint: string, extra: Record<string, unknown> = {}, timeout = 15000): Promise<T> {
   const { baseUrl, params } = getClient();
   const resp = await axios.get(`${baseUrl}/${endpoint}`, {
     params: { ...params, ...extra },
-    paramsSerializer: { indexes: null }
+    paramsSerializer: { indexes: null },
+    timeout,
   });
-  const data = resp.data['subsonic-response'];
+  const data = resp.data?.['subsonic-response'];
+  if (!data) throw new Error('Invalid response from server (possibly not a Subsonic server)');
   if (data.status !== 'ok') throw new Error(data.error?.message ?? 'Subsonic API error');
   return data as T;
 }
@@ -59,11 +66,11 @@ export interface SubsonicSong {
   year?: number;
   userRating?: number;
   // Audio technical info
-  bitRate?: number;       // kbps
-  suffix?: string;        // mp3, flac, opus…
-  contentType?: string;   // audio/mpeg, audio/flac…
-  size?: number;          // bytes
-  samplingRate?: number;  // Hz
+  bitRate?: number;
+  suffix?: string;
+  contentType?: string;
+  size?: number;
+  samplingRate?: number;
   channelCount?: number;
   starred?: string;
 }
@@ -95,7 +102,7 @@ export interface SubsonicArtist {
 }
 
 export interface SubsonicGenre {
-  value: string; // The genre name is returned as "value" by subsonic
+  value: string;
   songCount: number;
   albumCount: number;
 }
@@ -114,6 +121,24 @@ export async function ping(): Promise<boolean> {
   try {
     await api('ping.view');
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Test a connection with explicit credentials — does NOT depend on store state. */
+export async function pingWithCredentials(serverUrl: string, username: string, password: string): Promise<boolean> {
+  try {
+    const base = serverUrl.startsWith('http') ? serverUrl.replace(/\/$/, '') : `http://${serverUrl.replace(/\/$/, '')}`;
+    const salt = secureRandomSalt();
+    const token = md5(password + salt);
+    const resp = await axios.get(`${base}/rest/ping.view`, {
+      params: { u: username, t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json' },
+      paramsSerializer: { indexes: null },
+      timeout: 15000,
+    });
+    const data = resp.data?.['subsonic-response'];
+    return data?.status === 'ok';
   } catch {
     return false;
   }
@@ -205,13 +230,8 @@ export async function getStarred(): Promise<StarredResults> {
       song?: SubsonicSong[];
     }
   }>('getStarred2.view');
-  
   const r = data.starred2 ?? {};
-  return {
-    artists: r.artist ?? [],
-    albums: r.album ?? [],
-    songs: r.song ?? [],
-  };
+  return { artists: r.artist ?? [], albums: r.album ?? [], songs: r.song ?? [] };
 }
 
 export async function star(id: string, type: 'song' | 'album' | 'artist' = 'album'): Promise<void> {
@@ -270,33 +290,44 @@ export async function reportNowPlaying(id: string): Promise<void> {
 
 // ─── Stream URL ───────────────────────────────────────────────
 export function buildStreamUrl(id: string): string {
-  const { getBaseUrl, username, password } = useAuthStore.getState();
+  const { getBaseUrl, getActiveServer } = useAuthStore.getState();
+  const server = getActiveServer();
   const baseUrl = getBaseUrl();
-  const { u, t, s, v, c, f } = (() => {
-    const salt = Math.random().toString(36).substring(2, 10);
-    const token = md5(password + salt);
-    return { u: username, t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json' };
-  })();
-
-  const p = new URLSearchParams({ id, u, t, s, v, c, f });
+  const salt = secureRandomSalt();
+  const token = md5((server?.password ?? '') + salt);
+  const p = new URLSearchParams({
+    id,
+    u: server?.username ?? '',
+    t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json',
+  });
   return `${baseUrl}/rest/stream.view?${p.toString()}`;
 }
 
 export function buildCoverArtUrl(id: string, size = 256): string {
-  const { getBaseUrl, username, password } = useAuthStore.getState();
+  const { getBaseUrl, getActiveServer } = useAuthStore.getState();
+  const server = getActiveServer();
   const baseUrl = getBaseUrl();
-  const salt = Math.random().toString(36).substring(2, 10);
-  const token = md5(password + salt);
-  const p = new URLSearchParams({ id, size: String(size), u: username, t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json' });
+  const salt = secureRandomSalt();
+  const token = md5((server?.password ?? '') + salt);
+  const p = new URLSearchParams({
+    id, size: String(size),
+    u: server?.username ?? '',
+    t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json',
+  });
   return `${baseUrl}/rest/getCoverArt.view?${p.toString()}`;
 }
 
 export function buildDownloadUrl(id: string): string {
-  const { getBaseUrl, username, password } = useAuthStore.getState();
+  const { getBaseUrl, getActiveServer } = useAuthStore.getState();
+  const server = getActiveServer();
   const baseUrl = getBaseUrl();
-  const salt = Math.random().toString(36).substring(2, 10);
-  const token = md5(password + salt);
-  const p = new URLSearchParams({ id, u: username, t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json' });
+  const salt = secureRandomSalt();
+  const token = md5((server?.password ?? '') + salt);
+  const p = new URLSearchParams({
+    id,
+    u: server?.username ?? '',
+    t: token, s: salt, v: '1.16.1', c: 'psysonic', f: 'json',
+  });
   return `${baseUrl}/rest/download.view?${p.toString()}`;
 }
 
@@ -307,7 +338,6 @@ export async function getPlaylists(): Promise<SubsonicPlaylist[]> {
 }
 
 export async function getPlaylist(id: string): Promise<{ playlist: SubsonicPlaylist; songs: SubsonicSong[] }> {
-  // Songs inside a playlist are typically in the 'entry' array
   const data = await api<{ playlist: SubsonicPlaylist & { entry: SubsonicSong[] } }>('getPlaylist.view', { id });
   const { entry, ...playlist } = data.playlist;
   return { playlist, songs: entry ?? [] };
@@ -330,11 +360,7 @@ export async function getPlayQueue(): Promise<{ current?: string; position?: num
   try {
     const data = await api<{ playQueue: { current?: string; position?: number; entry?: SubsonicSong[] } }>('getPlayQueue.view');
     const pq = data.playQueue;
-    return {
-      current: pq?.current,
-      position: pq?.position,
-      songs: pq?.entry ?? []
-    };
+    return { current: pq?.current, position: pq?.position, songs: pq?.entry ?? [] };
   } catch {
     return { songs: [] };
   }
@@ -342,12 +368,9 @@ export async function getPlayQueue(): Promise<{ current?: string; position?: num
 
 export async function savePlayQueue(songIds: string[], current?: string, position?: number): Promise<void> {
   const params: Record<string, unknown> = {};
-  if (songIds.length > 0) {
-    params.id = songIds;
-  }
+  if (songIds.length > 0) params.id = songIds;
   if (current !== undefined) params.current = current;
   if (position !== undefined) params.position = position;
-  
   await api('savePlayQueue.view', params);
 }
 
@@ -355,7 +378,6 @@ export async function savePlayQueue(songIds: string[], current?: string, positio
 export async function getNowPlaying(): Promise<SubsonicNowPlaying[]> {
   try {
     const data = await api<{ nowPlaying: { entry?: SubsonicNowPlaying[] } | '' }>('getNowPlaying.view');
-    // Navidrome might return an empty string or empty object if nobody is playing
     if (!data.nowPlaying || typeof data.nowPlaying === 'string') return [];
     return data.nowPlaying.entry ?? [];
   } catch {

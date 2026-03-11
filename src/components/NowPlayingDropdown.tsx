@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PlayCircle, User, Radio, RefreshCw } from 'lucide-react';
 import { getNowPlaying, SubsonicNowPlaying, buildCoverArtUrl } from '../api/subsonic';
+import { useTranslation } from 'react-i18next';
 
 export default function NowPlayingDropdown() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [nowPlaying, setNowPlaying] = useState<SubsonicNowPlaying[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,6 @@ export default function NowPlayingDropdown() {
     }
   };
 
-  // Fetch when the dropdown is opened
   useEffect(() => {
     if (isOpen) {
       fetchNowPlaying();
@@ -40,23 +41,23 @@ export default function NowPlayingDropdown() {
 
   return (
     <div className="now-playing-dropdown" ref={dropdownRef} style={{ position: 'relative' }}>
-      <button 
-        className="btn btn-surface" 
+      <button
+        className="btn btn-surface"
         onClick={() => setIsOpen(!isOpen)}
-        data-tooltip="Wer hört was?"
+        data-tooltip={t('nowPlaying.tooltip')}
         data-tooltip-pos="bottom"
         style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
       >
         <Radio size={18} className={nowPlaying.length > 0 ? 'animate-pulse' : ''} style={{ color: nowPlaying.length > 0 ? 'var(--accent)' : 'inherit' }} />
         <span>Live</span>
         {nowPlaying.length > 0 && (
-          <span style={{ 
-            background: 'var(--accent)', 
-            color: 'var(--ctp-crust)', 
-            fontSize: '10px', 
-            fontWeight: 'bold', 
-            padding: '2px 6px', 
-            borderRadius: '10px' 
+          <span style={{
+            background: 'var(--accent)',
+            color: 'var(--ctp-crust)',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            padding: '2px 6px',
+            borderRadius: '10px'
           }}>
             {nowPlaying.length}
           </span>
@@ -64,7 +65,7 @@ export default function NowPlayingDropdown() {
       </button>
 
       {isOpen && (
-        <div 
+        <div
           className="glass animate-fade-in"
           style={{
             position: 'absolute',
@@ -83,9 +84,9 @@ export default function NowPlayingDropdown() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>Wer hört was?</h3>
-            <button 
-              onClick={fetchNowPlaying} 
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>{t('nowPlaying.title')}</h3>
+            <button
+              onClick={fetchNowPlaying}
               className={`btn btn-ghost ${loading ? 'animate-spin' : ''}`}
               style={{ width: '28px', height: '28px', padding: 0 }}
             >
@@ -95,11 +96,11 @@ export default function NowPlayingDropdown() {
 
           {loading && nowPlaying.length === 0 ? (
             <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-              Lädt...
+              {t('nowPlaying.loading')}
             </div>
           ) : nowPlaying.length === 0 ? (
             <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-              Gerade hört niemand Musik.
+              {t('nowPlaying.nobody')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -118,7 +119,7 @@ export default function NowPlayingDropdown() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', fontSize: '11px', color: 'var(--text-muted)' }}>
                       <User size={10} />
                       <span className="truncate">{stream.username} ({stream.playerName || 'Web'})</span>
-                      {stream.minutesAgo > 0 && <span>• vor {stream.minutesAgo}m</span>}
+                      {stream.minutesAgo > 0 && <span>• {t('nowPlaying.minutesAgo', { n: stream.minutesAgo })}</span>}
                     </div>
                   </div>
                 </div>

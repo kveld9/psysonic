@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import AlbumCard from '../components/AlbumCard';
 import { getAlbumList, SubsonicAlbum } from '../api/subsonic';
+import { useTranslation } from 'react-i18next';
 
 type SortType = 'alphabeticalByName' | 'alphabeticalByArtist' | 'newest' | 'random';
 
 export default function Albums() {
+  const { t } = useTranslation();
   const [albums, setAlbums] = useState<SubsonicAlbum[]>([]);
   const [sort, setSort] = useState<SortType>('alphabeticalByName');
   const [loading, setLoading] = useState(true);
@@ -51,16 +53,16 @@ export default function Albums() {
   }, [loadMore]);
 
   const sortOptions: { value: SortType; label: string }[] = [
-    { value: 'alphabeticalByName', label: 'A–Z (Album)' },
-    { value: 'alphabeticalByArtist', label: 'A–Z (Künstler)' },
-    { value: 'newest', label: 'Neueste zuerst' },
-    { value: 'random', label: 'Zufällig' },
+    { value: 'alphabeticalByName', label: t('albums.sortByName') },
+    { value: 'alphabeticalByArtist', label: t('albums.sortByArtist') },
+    { value: 'newest', label: t('albums.sortNewest') },
+    { value: 'random', label: t('albums.sortRandom') },
   ];
 
   return (
     <div className="content-body animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 className="page-title">Alle Alben</h1>
+        <h1 className="page-title">{t('albums.title')}</h1>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {sortOptions.map(o => (
             <button
@@ -84,7 +86,7 @@ export default function Albums() {
           <div className="album-grid-wrap">
             {albums.map(a => <AlbumCard key={a.id} album={a} />)}
           </div>
-          
+
           <div ref={observerTarget} style={{ height: '20px', margin: '2rem 0', display: 'flex', justifyContent: 'center' }}>
             {loading && hasMore && <div className="spinner" style={{ width: 20, height: 20 }} />}
           </div>

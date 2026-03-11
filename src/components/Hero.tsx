@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Play, ListPlus } from 'lucide-react';
 import { getRandomAlbums, SubsonicAlbum, buildCoverArtUrl, getAlbum } from '../api/subsonic';
 import { usePlayerStore } from '../store/playerStore';
+import { useTranslation } from 'react-i18next';
 
 export default function Hero() {
+  const { t } = useTranslation();
   const [album, setAlbum] = useState<SubsonicAlbum | null>(null);
   const navigate = useNavigate();
 
@@ -24,7 +26,7 @@ export default function Hero() {
     <div
       className="hero"
       role="banner"
-      aria-label="Album des Augenblicks"
+      aria-label={t('hero.eyebrow')}
       onClick={() => navigate(`/album/${album.id}`)}
       style={{ cursor: 'pointer' }}
     >
@@ -41,7 +43,7 @@ export default function Hero() {
           <img className="hero-cover" src={coverUrl} alt={`${album.name} Cover`} />
         )}
         <div className="hero-text">
-          <span className="hero-eyebrow">Album des Augenblicks</span>
+          <span className="hero-eyebrow">{t('hero.eyebrow')}</span>
           <h2 className="hero-title">{album.name}</h2>
           <p className="hero-artist">{album.artist}</p>
           <div className="hero-meta">
@@ -54,10 +56,10 @@ export default function Hero() {
               className="hero-play-btn"
               id="hero-play-btn"
               onClick={e => { e.stopPropagation(); navigate(`/album/${album.id}`); }}
-              aria-label={`Album ${album.name} abspielen`}
+              aria-label={`${t('hero.playAlbum')} ${album.name}`}
             >
               <Play size={18} fill="currentColor" />
-              Album abspielen
+              {t('hero.playAlbum')}
             </button>
             <button
               className="btn btn-surface"
@@ -74,10 +76,10 @@ export default function Hero() {
                 } catch (err) { }
               }}
               style={{ padding: '0 1.5rem', fontWeight: 600, fontSize: '0.95rem' }}
-              data-tooltip="Ganzes Album zur Warteschlange hinzufügen"
+              data-tooltip={t('hero.enqueueTooltip')}
             >
               <ListPlus size={18} />
-              Einreihen
+              {t('hero.enqueue')}
             </button>
           </div>
         </div>

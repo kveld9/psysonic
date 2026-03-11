@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { buildCoverArtUrl } from '../api/subsonic';
+import { useTranslation } from 'react-i18next';
 
 function formatTime(seconds: number): string {
   if (!seconds || isNaN(seconds)) return '0:00';
@@ -71,7 +72,7 @@ const FsProgress = memo(function FsProgress({ duration }: { duration: number }) 
             value={progress}
             onChange={handleSeek}
             style={{ '--pct': `${progress * 100}%` } as React.CSSProperties}
-            aria-label="Songfortschritt"
+            aria-label="progress"
           />
         </div>
         <span className="fs-time">{formatTime(duration)}</span>
@@ -84,10 +85,11 @@ const FsProgress = memo(function FsProgress({ duration }: { duration: number }) 
 
 // ─── Isolated play/pause button (subscribes to isPlaying only) ───
 const FsPlayBtn = memo(function FsPlayBtn() {
+  const { t } = useTranslation();
   const isPlaying  = usePlayerStore(s => s.isPlaying);
   const togglePlay = usePlayerStore(s => s.togglePlay);
   return (
-    <button className="fs-btn fs-btn-play" onClick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
+    <button className="fs-btn fs-btn-play" onClick={togglePlay} aria-label={isPlaying ? t('player.pause') : t('player.play')}>
       {isPlaying ? <Pause size={36} /> : <Play size={36} fill="currentColor" />}
     </button>
   );
@@ -98,6 +100,7 @@ interface FullscreenPlayerProps {
 }
 
 export default function FullscreenPlayer({ onClose }: FullscreenPlayerProps) {
+  const { t } = useTranslation();
   // Static/slow-changing state only — does NOT subscribe to progress or currentTime
   const currentTrack = usePlayerStore(s => s.currentTrack);
   const repeatMode   = usePlayerStore(s => s.repeatMode);
@@ -121,13 +124,13 @@ export default function FullscreenPlayer({ onClose }: FullscreenPlayerProps) {
   }, [onClose]);
 
   return (
-    <div className="fs-player" role="dialog" aria-modal="true" aria-label="Vollbild-Player">
+    <div className="fs-player" role="dialog" aria-modal="true" aria-label={t('player.fullscreen')}>
       {/* Crossfading blurred background */}
       <FsBg url={coverUrl} />
       <div className="fs-bg-overlay" aria-hidden="true" />
 
       {/* Close button */}
-      <button className="fs-close" onClick={onClose} aria-label="Vollbild schließen" data-tooltip="Schließen (Esc)">
+      <button className="fs-close" onClick={onClose} aria-label={t('player.closeFullscreen')} data-tooltip={t('player.closeTooltip')}>
         <ChevronDown size={28} />
       </button>
 
@@ -148,7 +151,7 @@ export default function FullscreenPlayer({ onClose }: FullscreenPlayerProps) {
         {/* Right column: upcoming tracks */}
         {upcoming.length > 0 && (
           <div className="fs-right">
-            <h2 className="fs-upcoming-title">Nächste Titel</h2>
+            <h2 className="fs-upcoming-title">{t('queue.nextTracks')}</h2>
             <div className="fs-upcoming-list">
               {upcoming.map((track, i) => (
                 <button
@@ -196,17 +199,17 @@ export default function FullscreenPlayer({ onClose }: FullscreenPlayerProps) {
           <button className="fs-btn fs-btn-sm" onClick={stop} data-tooltip="Stop">
             <Square size={20} fill="currentColor" />
           </button>
-          <button className="fs-btn" onClick={previous} aria-label="Vorheriger Titel">
+          <button className="fs-btn" onClick={previous} aria-label={t('player.prev')}>
             <SkipBack size={28} />
           </button>
           <FsPlayBtn />
-          <button className="fs-btn" onClick={next} aria-label="Nächster Titel">
+          <button className="fs-btn" onClick={next} aria-label={t('player.next')}>
             <SkipForward size={28} />
           </button>
           <button
             className={`fs-btn fs-btn-sm ${repeatMode !== 'off' ? 'active' : ''}`}
             onClick={toggleRepeat}
-            data-tooltip={`Wiederholen: ${repeatMode === 'off' ? 'Aus' : repeatMode === 'all' ? 'Alle' : 'Einen'}`}
+            data-tooltip={`${t('player.repeat')}: ${repeatMode === 'off' ? t('player.repeatOff') : repeatMode === 'all' ? t('player.repeatAll') : t('player.repeatOne')}`}
           >
             {repeatMode === 'one' ? <Repeat1 size={20} /> : <Repeat size={20} />}
           </button>

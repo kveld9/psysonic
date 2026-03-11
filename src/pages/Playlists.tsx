@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { SubsonicPlaylist, getPlaylists, getPlaylist, deletePlaylist } from '../api/subsonic';
 import { usePlayerStore } from '../store/playerStore';
 import { ListMusic, Play, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Playlists() {
+  const { t } = useTranslation();
   const [playlists, setPlaylists] = useState<SubsonicPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const playTrack = usePlayerStore(s => s.playTrack);
   const clearQueue = usePlayerStore(s => s.clearQueue);
 
@@ -45,7 +47,7 @@ export default function Playlists() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Playlist "${name}" wirklich löschen?`)) {
+    if (confirm(t('playlists.confirmDelete', { name }))) {
       try {
         await deletePlaylist(id);
         fetchPlaylists();
@@ -59,21 +61,20 @@ export default function Playlists() {
     <div className="content-body animate-fade-in">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
         <ListMusic size={32} style={{ color: 'var(--accent)' }} />
-        <h1 className="page-title" style={{ margin: 0 }}>Playlists</h1>
+        <h1 className="page-title" style={{ margin: 0 }}>{t('playlists.title')}</h1>
       </div>
 
       {loading ? (
-        <div className="empty-state">Lade Playlists...</div>
+        <div className="empty-state">{t('playlists.loading')}</div>
       ) : playlists.length === 0 ? (
-        <div className="empty-state">
-          Keine Playlists gefunden.<br/>
-          Nutze die Warteschlange, um Playlists zu erstellen.
+        <div className="empty-state" style={{ whiteSpace: 'pre-line' }}>
+          {t('playlists.empty')}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
           {playlists.map(p => (
-            <div 
-              key={p.id} 
+            <div
+              key={p.id}
               style={{
                 background: 'var(--surface0)',
                 borderRadius: '12px',
@@ -91,22 +92,22 @@ export default function Playlists() {
                   {p.name}
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--subtext0)' }}>
-                  {p.songCount} {p.songCount === 1 ? 'Track' : 'Tracks'} • {Math.floor(p.duration / 60)} Min.
+                  {t('playlists.track', { count: p.songCount })} • {Math.floor(p.duration / 60)} {t('playlists.minutes')}
                 </p>
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   onClick={() => handlePlay(p.id)}
                   style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
                 >
-                  <Play size={16} fill="currentColor" /> Abspielen
+                  <Play size={16} fill="currentColor" /> {t('playlists.play')}
                 </button>
-                <button 
-                  className="btn btn-ghost" 
+                <button
+                  className="btn btn-ghost"
                   onClick={() => handleDelete(p.id, p.name)}
-                  data-tooltip="Löschen"
+                  data-tooltip={t('playlists.deleteTooltip')}
                   style={{ width: '42px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--red)' }}
                 >
                   <Trash2 size={18} />

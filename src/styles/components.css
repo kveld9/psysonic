@@ -726,6 +726,12 @@
 .login-status--ok { background: rgba(166, 227, 161, 0.15); color: var(--positive); }
 .login-status--error { background: rgba(243, 139, 168, 0.15); color: var(--danger); }
 
+.login-saved-servers { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
+.login-saved-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: var(--space-1); }
+.login-server-btn { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); text-align: left; width: 100%; }
+.login-divider { display: flex; align-items: center; gap: var(--space-3); color: var(--text-muted); font-size: 12px; margin: var(--space-2) 0; }
+.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
 /* ─ Loading / Empty ─ */
 .loading-center { display: flex; justify-content: center; align-items: center; height: 200px; }
 .empty-state { text-align: center; padding: var(--space-10); color: var(--text-muted); }

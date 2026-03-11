@@ -275,13 +275,17 @@ export const usePlayerStore = create<PlayerState>()(
   // Internal: prefetch next N tracks
   prefetchUpcoming: (fromIndex: number, queue: Track[]) => {
     const { prefetched } = get();
+    // Unload and clear old prefetches to prevent memory leaks
+    prefetched.forEach((h, id) => {
+      h.unload();
+    });
+    prefetched.clear();
+
     const toFetch = queue.slice(fromIndex, fromIndex + 3);
     toFetch.forEach(track => {
-      if (!prefetched.has(track.id)) {
-        const url = buildStreamUrl(track.id);
-        const h = new Howl({ src: [url], html5: true, preload: true, autoplay: false });
-        prefetched.set(track.id, h);
-      }
+      const url = buildStreamUrl(track.id);
+      const h = new Howl({ src: [url], html5: true, preload: true, autoplay: false });
+      prefetched.set(track.id, h);
     });
     set({ prefetched: new Map(prefetched) });
   },

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Hero from '../components/Hero';
 import AlbumRow from '../components/AlbumRow';
 import { getAlbumList, SubsonicAlbum } from '../api/subsonic';
+import { useTranslation } from 'react-i18next';
 
 export default function Home() {
   const [starred, setStarred] = useState<SubsonicAlbum[]>([]);
@@ -42,6 +43,8 @@ export default function Home() {
     }
   };
 
+  const { t } = useTranslation();
+
   return (
     <div className="animate-fade-in">
       <Hero />
@@ -55,29 +58,29 @@ export default function Home() {
           <>
             {starred.length > 0 && (
               <AlbumRow 
-                title="Persönliche Favoriten" 
+                title={t('home.starred')} 
                 albums={starred} 
                 onLoadMore={() => loadMore('starred', starred, setStarred)}
-                moreText="Mehr laden" 
+                moreText={t('home.loadMore')} 
               />
             )}
             <AlbumRow 
-              title="Zuletzt hinzugefügt" 
+              title={t('home.recent')} 
               albums={recent} 
               onLoadMore={() => loadMore('newest', recent, setRecent)}
-              moreText="Mehr laden" 
+              moreText={t('home.loadMore')} 
             />
             <AlbumRow 
-              title="Meistgehört" 
+              title={t('home.mostPlayed')} 
               albums={mostPlayed} 
               onLoadMore={() => loadMore('frequent', mostPlayed, setMostPlayed)}
-              moreText="Mehr laden" 
+              moreText={t('home.loadMore')} 
             />
             <AlbumRow 
-              title="Entdecken" 
+              title={t('home.discover')} 
               albums={random} 
               onLoadMore={() => loadMore('random', random, setRandom)}
-              moreText="Mehr entdecken" 
+              moreText={t('home.discoverMore')} 
             />
           </>
         )}

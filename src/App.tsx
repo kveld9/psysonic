@@ -28,8 +28,8 @@ import { usePlayerStore } from './store/playerStore';
 import { useThemeStore } from './store/themeStore';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn } = useAuthStore();
-  if (!isLoggedIn) return <Navigate to="/login" replace />;
+  const { isLoggedIn, servers, activeServerId } = useAuthStore();
+  if (!isLoggedIn || !activeServerId || servers.length === 0) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 

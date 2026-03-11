@@ -1,38 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wifi, WifiOff, Eye, EyeOff } from 'lucide-react';
+import { Wifi, WifiOff, Eye, EyeOff, Server } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { ping } from '../api/subsonic';
+import { pingWithCredentials } from '../api/subsonic';
+import { useTranslation } from 'react-i18next';
 
 const PsysonicLogo = () => (
-  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="64" height="64" rx="18" fill="url(#grad-login)" />
-    <text x="8" y="47" fontFamily="Inter, sans-serif" fontWeight="800" fontSize="42" fill="white">P</text>
-    <line x1="40" y1="18" x2="58" y2="18" stroke="white" strokeWidth="3.5" strokeLinecap="round" opacity="0.9"/>
-    <line x1="37" y1="26" x2="58" y2="26" stroke="white" strokeWidth="3.5" strokeLinecap="round" opacity="0.75"/>
-    <line x1="40" y1="34" x2="58" y2="34" stroke="white" strokeWidth="3.5" strokeLinecap="round" opacity="0.9"/>
-    <line x1="37" y1="42" x2="58" y2="42" stroke="white" strokeWidth="3.5" strokeLinecap="round" opacity="0.6"/>
-    <line x1="42" y1="50" x2="58" y2="50" stroke="white" strokeWidth="3.5" strokeLinecap="round" opacity="0.4"/>
-    <defs>
-      <linearGradient id="grad-login" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#cba6f7"/>
-        <stop offset="1" stopColor="#89b4fa"/>
-      </linearGradient>
-    </defs>
-  </svg>
+  <img src="/logo.png" width="64" height="64" alt="Psysonic" style={{ borderRadius: 18 }} />
 );
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setCredentials, setLoggedIn, setConnecting, setConnectionError, connectionError } = useAuthStore();
+  const { t } = useTranslation();
+  const { addServer, updateServer, setActiveServer, setLoggedIn, setConnecting, setConnectionError, servers } = useAuthStore();
 
-  const [form, setForm] = useState({
-    serverName: '',
-    lanIp: '',
-    externalUrl: '',
-    username: '',
-    password: '',
-  });
+  const [form, setForm] = useState({ serverName: '', url: '', username: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [status, setStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
@@ -40,36 +22,67 @@ export default function Login() {
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const handleConnect = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.lanIp && !form.externalUrl) {
-      setTestMessage('Bitte LAN-IP oder externe URL eingeben.');
+  const attemptConnect = async (profile: { name: string; url: string; username: string; password: string }) => {
+    if (!profile.url.trim()) {
+      setTestMessage(t('login.urlRequired'));
       setStatus('error');
       return;
     }
 
     setStatus('testing');
-    setTestMessage('Verbinde…');
+    setTestMessage(t('login.connecting'));
     setConnecting(true);
-    setCredentials(form);
     setConnectionError(null);
 
-    // Small delay to let store update
-    await new Promise(r => setTimeout(r, 100));
+    // Test connection directly with entered credentials — don't touch the store yet.
+    // This avoids any race condition with Zustand's async store rehydration.
+    let ok = false;
+    try {
+      ok = await pingWithCredentials(profile.url.trim(), profile.username.trim(), profile.password);
+    } catch {
+      ok = false;
+    }
 
-    const ok = await ping();
     setConnecting(false);
 
     if (ok) {
+      // Connection succeeded — now persist to store
+      const existing = servers.find(s => s.url === profile.url.trim() && s.username === profile.username.trim());
+      let serverId: string;
+      if (existing) {
+        updateServer(existing.id, {
+          name: profile.name.trim() || profile.url.trim(),
+          password: profile.password,
+        });
+        serverId = existing.id;
+      } else {
+        serverId = addServer({
+          name: profile.name.trim() || profile.url.trim(),
+          url: profile.url.trim(),
+          username: profile.username.trim(),
+          password: profile.password,
+        });
+      }
+      setActiveServer(serverId);
       setLoggedIn(true);
       setStatus('ok');
-      setTestMessage('Verbunden!');
+      setTestMessage(t('login.connected'));
       setTimeout(() => navigate('/'), 600);
     } else {
       setStatus('error');
-      setConnectionError('Verbindung fehlgeschlagen – bitte Daten prüfen.');
-      setTestMessage('Verbindung fehlgeschlagen.');
+      setConnectionError(t('login.error'));
+      setTestMessage(t('login.error'));
     }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await attemptConnect({ name: form.serverName, url: form.url, username: form.username, password: form.password });
+  };
+
+  const handleQuickConnect = async (srv: typeof servers[0]) => {
+    setForm({ serverName: srv.name, url: srv.url, username: srv.username, password: srv.password });
+    await attemptConnect({ name: srv.name, url: srv.url, username: srv.username, password: srv.password });
   };
 
   return (
@@ -80,64 +93,72 @@ export default function Login() {
           <PsysonicLogo />
         </div>
         <h1 className="login-title">Psysonic</h1>
-        <p className="login-subtitle">Dein Navidrome Desktop Player</p>
+        <p className="login-subtitle">{t('login.subtitle')}</p>
 
-        <form className="login-form" onSubmit={handleConnect} noValidate>
+        {/* Saved servers quick-connect */}
+        {servers.length > 0 && (
+          <div className="login-saved-servers">
+            <div className="login-saved-label">{t('login.savedServers')}</div>
+            {servers.map(srv => (
+              <button
+                key={srv.id}
+                className="btn btn-surface login-server-btn"
+                onClick={() => handleQuickConnect(srv)}
+                disabled={status === 'testing'}
+              >
+                <Server size={14} style={{ flexShrink: 0 }} />
+                <div style={{ textAlign: 'left', minWidth: 0 }}>
+                  <div style={{ fontWeight: 600 }} className="truncate">{srv.name || srv.url}</div>
+                  <div style={{ fontSize: 11, opacity: 0.7 }} className="truncate">{srv.username}@{srv.url}</div>
+                </div>
+              </button>
+            ))}
+            <div className="login-divider"><span>{t('login.addNew')}</span></div>
+          </div>
+        )}
+
+        <form className="login-form" onSubmit={handleFormSubmit} noValidate>
           <div className="form-group">
-            <label htmlFor="login-server-name">Server-Name (optional)</label>
+            <label htmlFor="login-server-name">{t('login.serverName')}</label>
             <input
               id="login-server-name"
               className="input"
               type="text"
-              placeholder="Mein Navidrome"
+              placeholder={t('login.serverNamePlaceholder')}
               value={form.serverName}
               onChange={update('serverName')}
               autoComplete="off"
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="login-lan-ip">LAN-IP / URL</label>
-              <input
-                id="login-lan-ip"
-                className="input"
-                type="text"
-                placeholder="192.168.1.100:4533"
-                value={form.lanIp}
-                onChange={update('lanIp')}
-                autoComplete="off"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="login-external-url">Externe URL (FQDN)</label>
-              <input
-                id="login-external-url"
-                className="input"
-                type="text"
-                placeholder="music.example.com"
-                value={form.externalUrl}
-                onChange={update('externalUrl')}
-                autoComplete="off"
-              />
-            </div>
+          <div className="form-group">
+            <label htmlFor="login-url">{t('login.serverUrl')}</label>
+            <input
+              id="login-url"
+              className="input"
+              type="text"
+              placeholder={t('login.serverUrlPlaceholder')}
+              value={form.url}
+              onChange={update('url')}
+              autoComplete="off"
+            />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="login-username">Benutzername</label>
+              <label htmlFor="login-username">{t('login.username')}</label>
               <input
                 id="login-username"
                 className="input"
                 type="text"
-                placeholder="admin"
+                placeholder={t('login.usernamePlaceholder')}
                 value={form.username}
                 onChange={update('username')}
                 autoComplete="username"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="login-password">Passwort</label>
+              <label htmlFor="login-password">{t('login.password')}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   id="login-password"
@@ -153,7 +174,7 @@ export default function Login() {
                   type="button"
                   style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
                   onClick={() => setShowPass(v => !v)}
-                  aria-label={showPass ? 'Passwort verstecken' : 'Passwort anzeigen'}
+                  aria-label={showPass ? t('login.hidePassword') : t('login.showPassword')}
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -177,7 +198,7 @@ export default function Login() {
             id="login-connect-btn"
             disabled={status === 'testing'}
           >
-            {status === 'testing' ? 'Verbinde…' : 'Verbinden'}
+            {status === 'testing' ? t('login.connecting') : t('login.connect')}
           </button>
         </form>
       </div>

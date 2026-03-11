@@ -3,16 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { getArtists, SubsonicArtist, buildCoverArtUrl } from '../api/subsonic';
 import { Users, LayoutGrid, List } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
+import { useTranslation } from 'react-i18next';
 
-const ALPHABET = ['Alle', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+const ALL_SENTINEL = 'ALL';
+const ALPHABET = [ALL_SENTINEL, '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 
 export default function Artists() {
+  const { t } = useTranslation();
   const [artists, setArtists] = useState<SubsonicArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [letterFilter, setLetterFilter] = useState('Alle');
+  const [letterFilter, setLetterFilter] = useState(ALL_SENTINEL);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  
+
   const [visibleCount, setVisibleCount] = useState(50);
   const navigate = useNavigate();
   const openContextMenu = usePlayerStore(state => state.openContextMenu);
@@ -32,8 +35,8 @@ export default function Artists() {
 
   // Filter pipeline
   let filtered = artists;
-  
-  if (letterFilter !== 'Alle') {
+
+  if (letterFilter !== ALL_SENTINEL) {
     filtered = filtered.filter(a => {
       const first = a.name[0]?.toUpperCase() ?? '#';
       const isAlpha = /^[A-Z]$/.test(first);
@@ -63,31 +66,31 @@ export default function Artists() {
     <div className="content-body animate-fade-in">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h1 className="page-title" style={{ marginBottom: 0 }}>Künstler</h1>
+          <h1 className="page-title" style={{ marginBottom: 0 }}>{t('artists.title')}</h1>
           <input
             className="input"
             style={{ maxWidth: 220 }}
-            placeholder="Suchen…"
+            placeholder={t('artists.search')}
             value={filter}
             onChange={e => setFilter(e.target.value)}
             id="artist-filter-input"
           />
         </div>
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button 
+          <button
             className={`btn btn-surface ${viewMode === 'grid' ? 'btn-sort-active' : ''}`}
             onClick={() => setViewMode('grid')}
             style={viewMode === 'grid' ? { background: 'var(--accent)', color: 'var(--ctp-crust)', padding: '0.5rem' } : { padding: '0.5rem' }}
-            data-tooltip="Grid ansicht"
+            data-tooltip={t('artists.gridView')}
           >
             <LayoutGrid size={20} />
           </button>
-          <button 
+          <button
             className={`btn btn-surface ${viewMode === 'list' ? 'btn-sort-active' : ''}`}
             onClick={() => setViewMode('list')}
             style={viewMode === 'list' ? { background: 'var(--accent)', color: 'var(--ctp-crust)', padding: '0.5rem' } : { padding: '0.5rem' }}
-            data-tooltip="Listenansicht"
+            data-tooltip={t('artists.listView')}
           >
             <List size={20} />
           </button>
@@ -111,7 +114,7 @@ export default function Artists() {
               transition: 'all 0.2s'
             }}
           >
-            {l}
+            {l === ALL_SENTINEL ? t('artists.all') : l}
           </button>
         ))}
       </div>
@@ -123,8 +126,8 @@ export default function Artists() {
           {visible.map(artist => {
             const coverId = artist.coverArt || artist.id;
             return (
-              <div 
-                key={artist.id} 
+              <div
+                key={artist.id}
                 className="artist-card"
                 onClick={() => navigate(`/artist/${artist.id}`)}
                 onContextMenu={(e) => {
@@ -134,8 +137,8 @@ export default function Artists() {
               >
                 <div className="artist-card-avatar" style={{ position: 'relative', overflow: 'hidden' }}>
                   {coverId ? (
-                    <img 
-                      src={buildCoverArtUrl(coverId, 200)} 
+                    <img
+                      src={buildCoverArtUrl(coverId, 200)}
                       alt=""
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => {
@@ -151,7 +154,7 @@ export default function Artists() {
                 <div>
                   <div className="artist-card-name">{artist.name}</div>
                   {artist.albumCount != null && (
-                    <div className="artist-card-meta">{artist.albumCount} Alben</div>
+                    <div className="artist-card-meta">{t('artists.albumCount', { count: artist.albumCount })}</div>
                   )}
                 </div>
               </div>
@@ -181,8 +184,8 @@ export default function Artists() {
                     >
                       <div className="artist-avatar" style={{ position: 'relative', overflow: 'hidden' }}>
                         {coverId ? (
-                          <img 
-                            src={buildCoverArtUrl(coverId, 100)} 
+                          <img
+                            src={buildCoverArtUrl(coverId, 100)}
                             alt=""
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             onError={(e) => {
@@ -198,7 +201,7 @@ export default function Artists() {
                       <div style={{ textAlign: 'left' }}>
                         <div className="artist-name">{artist.name}</div>
                         {artist.albumCount != null && (
-                          <div className="artist-meta">{artist.albumCount} Alben</div>
+                          <div className="artist-meta">{t('artists.albumCount', { count: artist.albumCount })}</div>
                         )}
                       </div>
                     </button>
@@ -213,14 +216,14 @@ export default function Artists() {
       {!loading && hasMore && (
         <div style={{ margin: '2rem 0', display: 'flex', justifyContent: 'center' }}>
           <button className="btn btn-ghost" onClick={loadMore}>
-            Mehr laden
+            {t('artists.loadMore')}
           </button>
         </div>
       )}
-      
+
       {!loading && filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          Keine Künstler gefunden.
+          {t('artists.notFound')}
         </div>
       )}
     </div>

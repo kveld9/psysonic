@@ -4,8 +4,10 @@ import ArtistRow from '../components/ArtistRow';
 import { getStarred, SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../api/subsonic';
 import { usePlayerStore } from '../store/playerStore';
 import { Play } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Favorites() {
+  const { t } = useTranslation();
   const [albums, setAlbums] = useState<SubsonicAlbum[]>([]);
   const [artists, setArtists] = useState<SubsonicArtist[]>([]);
   const [songs, setSongs] = useState<SubsonicSong[]>([]);
@@ -37,28 +39,27 @@ export default function Favorites() {
   return (
     <div className="content-body animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
       <div style={{ marginBottom: '-1.5rem' }}>
-        <h1 className="page-title">Favoriten</h1>
+        <h1 className="page-title">{t('favorites.title')}</h1>
       </div>
 
       {!hasAnyFavorites ? (
-        <div className="empty-state">Du hast noch keine Favoriten gespeichert.</div>
+        <div className="empty-state">{t('favorites.empty')}</div>
       ) : (
         <>
           {artists.length > 0 && (
-            <ArtistRow title="Künstler" artists={artists} />
+            <ArtistRow title={t('favorites.artists')} artists={artists} />
           )}
 
           {albums.length > 0 && (
-            <AlbumRow title="Alben" albums={albums} />
+            <AlbumRow title={t('favorites.albums')} albums={albums} />
           )}
 
           {songs.length > 0 && (
             <section className="album-row-section">
               <div className="album-row-header" style={{ marginBottom: '1rem' }}>
-                <h2 className="section-title" style={{ marginBottom: 0 }}>Songs</h2>
+                <h2 className="section-title" style={{ marginBottom: 0 }}>{t('favorites.songs')}</h2>
               </div>
               <div className="tracklist" style={{ padding: 0 }}>
-                {/* Wir können für die Favoriten-Seite ruhig alle Songs anzeigen, statt nur 10 wie auf der Startseite */}
                 {songs.map((song) => (
                   <div
                     key={song.id}
@@ -74,14 +75,11 @@ export default function Favorites() {
                         albumId: song.albumId, duration: song.duration, coverArt: song.coverArt, track: song.track,
                         year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating,
                       };
-                      e.dataTransfer.setData('application/json', JSON.stringify({
-                        type: 'song',
-                        track
-                      }));
+                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'song', track }));
                     }}
                   >
-                    <button 
-                      className="btn btn-ghost" 
+                    <button
+                      className="btn btn-ghost"
                       style={{ padding: 4 }}
                       onClick={(e) => { e.stopPropagation(); playTrack(song, songs); }}
                     >
