@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Star, ExternalLink, X, ChevronLeft, Download, ListPlus, Info } from 'lucide-react';
-import { SubsonicSong } from '../api/subsonic';
+import { SubsonicSong, buildCoverArtUrl } from '../api/subsonic';
 import CachedImage from './CachedImage';
+import CoverLightbox from './CoverLightbox';
 import { useTranslation } from 'react-i18next';
 
 function formatDuration(seconds: number): string {
@@ -48,6 +49,7 @@ function BioModal({ bio, onClose }: { bio: string; onClose: () => void }) {
     </div>
   );
 }
+
 
 interface AlbumInfo {
   id: string;
@@ -97,6 +99,7 @@ export default function AlbumHeader({
 }: AlbumHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const totalDuration = songs.reduce((acc, s) => acc + s.duration, 0);
   const totalSize = songs.reduce((acc, s) => acc + (s.size ?? 0), 0);
@@ -104,6 +107,13 @@ export default function AlbumHeader({
   return (
     <>
       {bioOpen && bio && <BioModal bio={bio} onClose={onCloseBio} />}
+      {lightboxOpen && info.coverArt && (
+        <CoverLightbox
+          src={buildCoverArtUrl(info.coverArt, 2000)}
+          alt={`${info.name} Cover`}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
 
       <div className="album-detail-header">
         {resolvedCoverUrl && (
@@ -121,7 +131,14 @@ export default function AlbumHeader({
           </button>
           <div className="album-detail-hero">
             {coverUrl ? (
-              <CachedImage className="album-detail-cover" src={coverUrl} cacheKey={coverKey} alt={`${info.name} Cover`} />
+              <button
+                className="album-detail-cover-btn"
+                onClick={() => setLightboxOpen(true)}
+                data-tooltip="Vergrößern"
+                aria-label={`${info.name} Cover vergrößern`}
+              >
+                <CachedImage className="album-detail-cover" src={coverUrl} cacheKey={coverKey} alt={`${info.name} Cover`} />
+              </button>
             ) : (
               <div className="album-detail-cover album-cover-placeholder">♪</div>
             )}

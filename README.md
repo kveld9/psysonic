@@ -22,9 +22,9 @@ Designed specifically for users hosting their own music via Navidrome or other S
 
 ## ✨ Features
 
-- 🎨 **Gorgeous UI**: 9 deeply integrated themes (Catppuccin series, Nord series, Psychowave) with smooth glassmorphism effects and micro-animations.
+- 🎨 **Gorgeous UI**: 21 deeply integrated themes — Catppuccin, Nord, Retro (Gruvbox), Tokyo Night, and Psysonic originals (Classic Winamp, Poison, Nucleo, Psychowave) — with smooth glassmorphism effects and micro-animations.
 - ⚡ **Blazing Fast**: Built with Rust & Tauri — native audio engine (rodio), minimal RAM usage compared to typical Electron apps.
-- 🌍 **Internationalization (i18n)**: Fully translated into English and German.
+- 🌍 **Internationalization (i18n)**: Fully translated into English, German, French, and Dutch.
 - 📻 **Live "Now Playing"**: See what other users on your server are currently listening to in real-time.
 - 🎵 **Last.fm Integration** *(Beta)*: Direct scrobbling, Now Playing updates, love/unlove, Similar Artists, and top stats — no Navidrome configuration required.
 - 💾 **IndexedDB Caching**: Ultra-fast loading times with persistent IndexedDB image caching for cover art and artist images.
@@ -53,19 +53,17 @@ Designed specifically for users hosting their own music via Navidrome or other S
 - [x] Multi-server support
 - [x] IndexedDB image caching
 - [x] Random Mix with keyword filter & Super Genre mix
-- [x] 9 themes: Catppuccin series, Nord series, Psychowave
-- [x] Internationalization (English + German)
+- [x] 21 themes: Catppuccin, Nord, Retro (Gruvbox), Tokyo Night, Psysonic originals (Classic Winamp, Poison, Nucleo, Psychowave)
+- [x] Internationalization (English, German, French, Dutch)
 - [x] AUR package (Arch / CachyOS)
 
 ### 🚧 In Progress
-- [ ] **Psychowave theme** — visual refinement still ongoing
 - [ ] **Last.fm integration** — stabilising, moving out of beta
 - [ ] **Gapless playback** — edge case stabilisation
 - [ ] **Crossfade** — stability improvements
 
 ### 📋 Planned
 - [ ] FLAC seeking fix
-- [ ] More themes
 - [ ] General UI polish & visual refinement
 - [ ] More languages
 

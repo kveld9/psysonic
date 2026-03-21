@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 const PsysonicLogo = () => (
-  <img src="/logo-psysonic.png" alt="Psysonic Logo" width="36" height="36" style={{ borderRadius: '8px' }} />
+  <img src="/logo-psysonic.png" alt="Psysonic Logo" width="36" height="36" />
 );
 
 const navItems = [

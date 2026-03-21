@@ -37,6 +37,7 @@ interface AuthState {
   isLoggedIn: boolean;
   isConnecting: boolean;
   connectionError: string | null;
+  lastfmSessionError: boolean;
 
   // Actions
   addServer: (profile: Omit<ServerProfile, 'id'>) => string;
@@ -49,6 +50,7 @@ interface AuthState {
   setLastfm: (apiKey: string, apiSecret: string, sessionKey: string, username: string) => void;
   connectLastfm: (sessionKey: string, username: string) => void;
   disconnectLastfm: () => void;
+  setLastfmSessionError: (v: boolean) => void;
   setMinimizeToTray: (v: boolean) => void;
   setScrobblingEnabled: (v: boolean) => void;
   setMaxCacheMb: (v: number) => void;
@@ -94,6 +96,7 @@ export const useAuthStore = create<AuthState>()(
       isLoggedIn: false,
       isConnecting: false,
       connectionError: null,
+      lastfmSessionError: false,
 
       addServer: (profile) => {
         const id = generateId();
@@ -132,7 +135,9 @@ export const useAuthStore = create<AuthState>()(
         set({ lastfmSessionKey: sessionKey, lastfmUsername: username }),
 
       disconnectLastfm: () =>
-        set({ lastfmSessionKey: '', lastfmUsername: '' }),
+        set({ lastfmSessionKey: '', lastfmUsername: '', lastfmSessionError: false }),
+
+      setLastfmSessionError: (v) => set({ lastfmSessionError: v }),
 
       setMinimizeToTray: (v) => set({ minimizeToTray: v }),
       setScrobblingEnabled: (v) => set({ scrobblingEnabled: v }),

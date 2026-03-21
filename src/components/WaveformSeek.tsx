@@ -59,8 +59,7 @@ function drawWaveform(
   ctx.clearRect(0, 0, w, h);
 
   const style = getComputedStyle(document.documentElement);
-  const colorBlue     = style.getPropertyValue('--ctp-blue').trim()     || '#89b4fa';
-  const colorMauve    = style.getPropertyValue('--ctp-mauve').trim()    || '#cba6f7';
+  const colorAccent   = style.getPropertyValue('--accent').trim()       || '#cba6f7';
   const colorBuffered = style.getPropertyValue('--ctp-overlay0').trim() || '#6c7086';
   const colorUnplayed = style.getPropertyValue('--ctp-surface1').trim() || '#313244';
 
@@ -97,14 +96,11 @@ function drawWaveform(
     ctx.fillRect(x, (h - barH) / 2, x2Of(i) - x, barH);
   }
 
-  // Pass 3 — played (gradient + glow)
+  // Pass 3 — played (accent color + glow)
   if (progress > 0) {
-    const grad = ctx.createLinearGradient(0, 0, progress * w, 0);
-    grad.addColorStop(0, colorBlue);
-    grad.addColorStop(1, colorMauve);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = grad;
-    ctx.shadowColor = colorMauve;
+    ctx.fillStyle = colorAccent;
+    ctx.shadowColor = colorAccent;
     ctx.shadowBlur = 5;
     for (let i = 0; i < BAR_COUNT; i++) {
       if (i / BAR_COUNT >= progress) break;

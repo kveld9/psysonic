@@ -45,6 +45,7 @@ export default function Help() {
         { q: t('help.q22'), a: t('help.a22') },
         { q: t('help.q23'), a: t('help.a23') },
         { q: t('help.q24'), a: t('help.a24') },
+        { q: t('help.q29'), a: t('help.a29') },
       ],
     },
     {
@@ -100,7 +101,7 @@ export default function Help() {
     <div className="content-body animate-fade-in">
       <h1 className="page-title" style={{ marginBottom: '2rem' }}>{t('help.title')}</h1>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem', alignItems: 'start' }}>
         {sections.map((section, si) => (
           <section key={si} className="settings-section">
             <div className="settings-section-header">

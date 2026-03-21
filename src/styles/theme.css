@@ -253,9 +253,11 @@
   --accent-glow:   rgba(136, 192, 208, 0.3);
   --text-primary:  #eceff4;
   --text-secondary:#e5e9f0;
-  --text-muted:    #8894a4;
-  --border:        #434c5e;
-  --border-subtle: #3b4252;
+  --text-muted:       #8894a4;
+  --border:           #434c5e;
+  --border-subtle:    #3b4252;
+  --border-dropdown:  #576070;
+  --shadow-dropdown:  rgba(0, 0, 0, 0.55);
   --positive:      #a3be8c;
   --warning:       #ebcb8b;
   --danger:        #bf616a;
@@ -361,9 +363,11 @@
   --accent-glow:   rgba(136, 192, 208, 0.35);
   --text-primary:  #eceff4;
   --text-secondary:#e5e9f0;
-  --text-muted:    #7898b4;
-  --border:        #2d3f52;
-  --border-subtle: #253545;
+  --text-muted:       #7898b4;
+  --border:           #2d3f52;
+  --border-subtle:    #253545;
+  --border-dropdown:  #3d546e;
+  --shadow-dropdown:  rgba(0, 0, 0, 0.6);
   --positive:      #a3be8c;
   --warning:       #ebcb8b;
   --danger:        #bf616a;
@@ -414,67 +418,789 @@
   --accent-glow:   rgba(180, 142, 173, 0.3);
   --text-primary:  #eceff4;
   --text-secondary:#e5e9f0;
-  --text-muted:    #8894a4;
-  --border:        #434c5e;
-  --border-subtle: #3b4252;
+  --text-muted:       #8894a4;
+  --border:           #434c5e;
+  --border-subtle:    #3b4252;
+  --border-dropdown:  #576070;
+  --shadow-dropdown:  rgba(0, 0, 0, 0.55);
   --positive:      #a3be8c;
   --warning:       #ebcb8b;
   --danger:        #bf616a;
 }
 
+/* ─── Poison ─── */
+[data-theme='poison'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%231bd655%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  /* ── Palette — charcoal grays + phosphor green ── */
+  --ctp-crust:     #0e0e0e;
+  --ctp-mantle:    #161616;
+  --ctp-base:      #1f1f1f;
+  --ctp-surface0:  #282828;
+  --ctp-surface1:  #323232;
+  --ctp-surface2:  #3e3e3e;
+  --ctp-overlay0:  #525252;
+  --ctp-overlay1:  #686868;
+  --ctp-overlay2:  #848484;
+  --ctp-text:      #d0d0cc;
+  --ctp-subtext1:  #a8a8a4;
+  --ctp-subtext0:  #787874;
+  /* Phosphor green accent — the Winamp LED display color */
+  --ctp-mauve:     #1bd655;
+  --ctp-lavender:  #28e860;
+  --ctp-green:     #1bd655;
+  --ctp-teal:      #1ab8a8;
+  --ctp-sky:       #58a8e0;
+  --ctp-blue:      #4888d0;
+  --ctp-sapphire:  #3870b8;
+  --ctp-pink:      #c86888;
+  --ctp-flamingo:  #b85858;
+  --ctp-rosewater: #c88080;
+  --ctp-yellow:    #c8a830;
+  --ctp-peach:     #c07838;
+  --ctp-maroon:    #a03030;
+  --ctp-red:       #c03030;
+
+  /* ── Semantic tokens ── */
+  --bg-app:        #1f1f1f;
+  --bg-sidebar:    #161616;
+  --bg-card:       #282828;
+  --bg-hover:      #323232;
+  --bg-player:     #0e0e0e;
+  --bg-glass:      rgba(22, 22, 22, 0.90);
+  --accent:        #1bd655;
+  --accent-dim:    rgba(27, 214, 85, 0.12);
+  --accent-glow:   rgba(27, 214, 85, 0.35);
+  --text-primary:  #d0d0cc;
+  --text-secondary:#a8a8a4;
+  --text-muted:    #686866;
+  --border:        #3a3a38;
+  --border-subtle: #282826;
+  --positive:      #1bd655;
+  --warning:       #c8a830;
+  --danger:        #c03030;
+}
+
+/* ── Winamp: LED display glow + tactile buttons ── */
+[data-theme='poison'] .player-track-name {
+  text-shadow: 0 0 8px rgba(27, 214, 85, 0.7), 0 0 2px rgba(27, 214, 85, 0.4);
+  color: #1bd655;
+}
+
+[data-theme='poison'] .player-track-artist {
+  color: #1bd655;
+  opacity: 0.7;
+}
+
+[data-theme='poison'] .btn {
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='poison'] .player-btn,
+[data-theme='poison'] .player-btn-primary {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Classic Winamp — Winamp 2.x Base Skin ─── */
+[data-theme='classic-winamp'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23c8c8d0%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  /* ── Palette ── */
+  --ctp-crust:     #000000;
+  --ctp-mantle:    #1e1e28;
+  --ctp-base:      #2b2b3a;
+  --ctp-surface0:  #353545;
+  --ctp-surface1:  #404055;
+  --ctp-surface2:  #4e4e65;
+  --ctp-overlay0:  #5a5a75;
+  --ctp-overlay1:  #6e6e88;
+  --ctp-overlay2:  #8a8a96;
+  --ctp-text:      #c8c8d0;
+  --ctp-subtext1:  #a0a0ac;
+  --ctp-subtext0:  #8a8a96;
+  /* Winamp orange accent + iconic green glow */
+  --ctp-mauve:     #d4cc46;
+  --ctp-lavender:  #e0d860;
+  --ctp-green:     #00ff00;
+  --ctp-teal:      #00cc88;
+  --ctp-sky:       #5ab8e0;
+  --ctp-blue:      #4898d0;
+  --ctp-sapphire:  #3878b8;
+  --ctp-pink:      #c06888;
+  --ctp-flamingo:  #b85858;
+  --ctp-rosewater: #c88080;
+  --ctp-yellow:    #e8c050;
+  --ctp-peach:     #d08840;
+  --ctp-maroon:    #a03030;
+  --ctp-red:       #c03030;
+
+  /* ── Semantic tokens ── */
+  --bg-app:        #2b2b3a;
+  --bg-sidebar:    #1e1e28;
+  --bg-card:       #353545;
+  --bg-hover:      #404055;
+  --bg-player:     #000000;
+  --bg-glass:      rgba(43, 43, 58, 0.90);
+  --accent:        #d4cc46;
+  --accent-dim:    rgba(212, 204, 70, 0.15);
+  --accent-glow:   rgba(212, 204, 70, 0.35);
+  --volume-accent: #de9b35;
+  --text-primary:  #c8c8d0;
+  --text-secondary:#a0a0ac;
+  --text-muted:    #6e6e88;
+  --border:        #5a5a75;
+  --border-subtle: #353545;
+  --positive:      #00cc66;
+  --warning:       #d4cc46;
+  --danger:        #c03030;
+}
+
+/* ── Classic Winamp: LCD display + bevel buttons ── */
+[data-theme='classic-winamp'] .player-track-name {
+  color: #00ff00;
+  text-shadow: 0 0 6px rgba(0, 255, 0, 0.65), 0 0 2px rgba(0, 255, 0, 0.4);
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  letter-spacing: 0.04em;
+}
+
+[data-theme='classic-winamp'] .player-track-artist {
+  color: #00cc00;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  opacity: 0.85;
+}
+
+[data-theme='classic-winamp'] .btn {
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.4);
+}
+
+[data-theme='classic-winamp'] .player-btn,
+[data-theme='classic-winamp'] .player-btn-primary {
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.55), 0 2px 5px rgba(0,0,0,0.5);
+}
+
+/* ─── Nucleo — Classic HiFi / Winamp Brass ─── */
+[data-theme='nucleo'] {
+  color-scheme: light;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%238c7356%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  /* ── Palette ── */
+  --ctp-crust:     #c8a458;
+  --ctp-mantle:    #dfc08f;
+  --ctp-base:      #e9d3ac;
+  --ctp-surface0:  #eedbb8;
+  --ctp-surface1:  #f5e4c3;
+  --ctp-surface2:  #f9ecd4;
+  --ctp-overlay0:  #b09060;
+  --ctp-overlay1:  #987848;
+  --ctp-overlay2:  #805c30;
+  --ctp-text:      #2c1e10;
+  --ctp-subtext1:  #5a3e20;
+  --ctp-subtext0:  #8c7356;
+  /* Accents — silver metal + muted brass tones */
+  --ctp-mauve:     #9e9a92;   /* silver — primary accent */
+  --ctp-lavender:  #b8b4ac;   /* lighter silver */
+  --ctp-pink:      #c06880;
+  --ctp-flamingo:  #c06050;
+  --ctp-rosewater: #d08070;
+  --ctp-blue:      #5878a8;   /* muted steel blue */
+  --ctp-sapphire:  #4868a0;
+  --ctp-sky:       #6898b8;
+  --ctp-teal:      #487878;
+  --ctp-green:     #587838;   /* muted olive */
+  --ctp-yellow:    #a88020;   /* dark burnished gold */
+  --ctp-peach:     #b87040;
+  --ctp-maroon:    #903030;
+  --ctp-red:       #a03828;
+
+  /* ── Semantic tokens ── */
+  --bg-app:        #f5e4c3;
+  --bg-sidebar:    #e9d3ac;
+  --bg-card:       #eedbb8;
+  --bg-hover:      #e3cc9e;
+  --bg-player:     #dfc08f;
+  --bg-glass:      rgba(245, 228, 195, 0.90);
+  --accent:        #9e9a92;
+  --accent-dim:    rgba(158, 154, 146, 0.15);
+  --accent-glow:   rgba(158, 154, 146, 0.35);
+  --text-primary:  #2c1e10;
+  --text-secondary:#5a3e20;
+  --text-muted:    #8c7356;
+  --border:        #b89a69;
+  --border-subtle: #dfc08f;
+  --positive:      #587838;
+  --warning:       #a88020;
+  --danger:        #a03828;
+}
+
+/* ── Nucleo: skeuomorphic detail layer ── */
+[data-theme='nucleo'] .sidebar {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.06) 0px,
+    rgba(255,255,255,0.06) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+}
+
+[data-theme='nucleo'] .player-bar {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.05) 0px,
+    rgba(255,255,255,0.05) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+}
+
+[data-theme='nucleo'] .player-track-name {
+  text-shadow: 0 0 10px rgba(255, 244, 219, 0.75), 0 0 2px rgba(255, 244, 219, 0.4);
+}
+
+[data-theme='nucleo'] .btn {
+  box-shadow: 0 2px 4px rgba(44, 30, 16, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='nucleo'] .btn-surface {
+  background: #c8a860;
+  color: #2c1e10;
+}
+[data-theme='nucleo'] .btn-surface:hover { background: #b89448; }
+
+[data-theme='nucleo'] .btn-ghost:hover {
+  background: #c8a860;
+  color: #2c1e10;
+}
+
+[data-theme='nucleo'] .player-btn,
+[data-theme='nucleo'] .player-btn-primary {
+  box-shadow: 0 2px 5px rgba(44, 30, 16, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
 /* ─── Psychowave — Synthwave / Retrowave ─── */
 [data-theme='psychowave'] {
   color-scheme: dark;
-  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23c9a8ff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23b09ee0%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
 
   /* ── Palette ── */
-  --ctp-crust:     #120720;
-  --ctp-mantle:    #160a28;
-  --ctp-base:      #1c0b35;
-  --ctp-surface0:  #2a1050;
-  --ctp-surface1:  #381860;
-  --ctp-surface2:  #4a2878;
-  --ctp-overlay0:  #5e3d90;
-  --ctp-overlay1:  #7b50b8;
-  --ctp-overlay2:  #9868d8;
-  /* Soft lavender text */
-  --ctp-text:      #f0e6ff;
-  --ctp-subtext1:  #c9a8ff;
-  --ctp-subtext0:  #a882e0;
-  /* Neon accents */
-  --ctp-mauve:     #ff2d78;   /* hot pink — primary accent & button gradient start */
-  --ctp-lavender:  #bf5fff;   /* electric purple — button gradient end */
-  --ctp-pink:      #ff2d78;
-  --ctp-flamingo:  #ff6b9d;
-  --ctp-rosewater: #ff8fc0;
-  --ctp-blue:      #00d4ff;   /* electric cyan */
-  --ctp-sapphire:  #007aff;
-  --ctp-sky:       #00bfff;
-  --ctp-teal:      #00e5cc;
-  --ctp-green:     #39ff14;   /* neon green */
-  --ctp-yellow:    #ffd700;   /* neon gold */
-  --ctp-peach:     #ff8c42;
-  --ctp-maroon:    #ff4d6d;
-  --ctp-red:       #ff2d55;
+  --ctp-crust:     #0d0c1a;
+  --ctp-mantle:    #110f22;
+  --ctp-base:      #161428;
+  --ctp-surface0:  #1f1c38;
+  --ctp-surface1:  #2a2750;
+  --ctp-surface2:  #383468;
+  --ctp-overlay0:  #4a4580;
+  --ctp-overlay1:  #6460a8;
+  --ctp-overlay2:  #8078c8;
+  /* Text */
+  --ctp-text:      #e6e0f6;
+  --ctp-subtext1:  #b09ee0;
+  --ctp-subtext0:  #8878c0;
+  /* Accents — muted synthwave palette */
+  --ctp-mauve:     #a06ae0;   /* soft violet — primary accent */
+  --ctp-lavender:  #7878d8;   /* muted indigo — gradient end */
+  --ctp-pink:      #c060a8;   /* dusty rose */
+  --ctp-flamingo:  #c07090;
+  --ctp-rosewater: #c89090;
+  --ctp-blue:      #58a8e8;   /* steel blue */
+  --ctp-sapphire:  #4880c8;
+  --ctp-sky:       #60c0d8;
+  --ctp-teal:      #40a8a8;
+  --ctp-green:     #58c878;   /* soft mint green */
+  --ctp-yellow:    #c8a848;   /* muted gold */
+  --ctp-peach:     #c87848;
+  --ctp-maroon:    #c05868;
+  --ctp-red:       #b04060;
 
   /* ── Semantic tokens ── */
-  --bg-app:        #1c0b35;
-  --bg-sidebar:    #160a28;
-  --bg-card:       #2a1050;
-  --bg-hover:      #381860;
-  --bg-player:     #120720;
-  --bg-glass:      rgba(28, 11, 53, 0.82);
-  --accent:        #ff2d78;
-  --accent-dim:    rgba(255, 45, 120, 0.15);
-  --accent-glow:   rgba(255, 45, 120, 0.45);
-  --text-primary:  #f0e6ff;
-  --text-secondary:#c9a8ff;
-  --text-muted:    #9b72d0;
-  --border:        #4a2878;
-  --border-subtle: #2a1050;
-  --positive:      #39ff14;
-  --warning:       #ffd700;
-  --danger:        #ff2d55;
+  --bg-app:        #161428;
+  --bg-sidebar:    #110f22;
+  --bg-card:       #1f1c38;
+  --bg-hover:      #2a2750;
+  --bg-player:     #0d0c1a;
+  --bg-glass:      rgba(22, 20, 40, 0.85);
+  --accent:        #a06ae0;
+  --accent-dim:    rgba(160, 106, 224, 0.12);
+  --accent-glow:   rgba(160, 106, 224, 0.30);
+  --text-primary:  #e6e0f6;
+  --text-secondary:#b09ee0;
+  --text-muted:    #706898;
+  --border:        #383468;
+  --border-subtle: #1f1c38;
+  --positive:      #58c878;
+  --warning:       #c8a848;
+  --danger:        #b04060;
+}
+
+/* ─── Gruvbox Dark Hard ─── */
+[data-theme='gruvbox-dark-hard'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ebdbb2%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #1d2021;
+  --ctp-mantle:    #1d2021;
+  --ctp-base:      #282828;
+  --ctp-surface0:  #3c3836;
+  --ctp-surface1:  #504945;
+  --ctp-surface2:  #665c54;
+  --ctp-overlay0:  #7c6f64;
+  --ctp-overlay1:  #928374;
+  --ctp-overlay2:  #a89984;
+  --ctp-text:      #ebdbb2;
+  --ctp-subtext1:  #d5c4a1;
+  --ctp-subtext0:  #bdae93;
+  --ctp-mauve:     #d3869b;
+  --ctp-lavender:  #d3869b;
+  --ctp-pink:      #d3869b;
+  --ctp-flamingo:  #fb4934;
+  --ctp-rosewater: #fb4934;
+  --ctp-blue:      #83a598;
+  --ctp-sapphire:  #83a598;
+  --ctp-sky:       #8ec07c;
+  --ctp-teal:      #8ec07c;
+  --ctp-green:     #b8bb26;
+  --ctp-yellow:    #fabd2f;
+  --ctp-peach:     #fe8019;
+  --ctp-maroon:    #fb4934;
+  --ctp-red:       #cc241d;
+
+  --bg-app:        #1d2021;
+  --bg-sidebar:    #141617;
+  --bg-card:       #3c3836;
+  --bg-hover:      #504945;
+  --bg-player:     #1d2021;
+  --bg-glass:      rgba(29, 32, 33, 0.82);
+  --accent:        #fabd2f;
+  --accent-dim:    rgba(250, 189, 47, 0.15);
+  --accent-glow:   rgba(250, 189, 47, 0.3);
+  --text-primary:  #ebdbb2;
+  --text-secondary:#d5c4a1;
+  --text-muted:    #928374;
+  --border:        #504945;
+  --border-subtle: #3c3836;
+  --border-dropdown: #665c54;
+  --shadow-dropdown: rgba(0, 0, 0, 0.6);
+  --positive:      #b8bb26;
+  --warning:       #fabd2f;
+  --danger:        #fb4934;
+}
+
+/* ─── Gruvbox Dark Medium ─── */
+[data-theme='gruvbox-dark-medium'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ebdbb2%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #1d2021;
+  --ctp-mantle:    #1d2021;
+  --ctp-base:      #282828;
+  --ctp-surface0:  #3c3836;
+  --ctp-surface1:  #504945;
+  --ctp-surface2:  #665c54;
+  --ctp-overlay0:  #7c6f64;
+  --ctp-overlay1:  #928374;
+  --ctp-overlay2:  #a89984;
+  --ctp-text:      #ebdbb2;
+  --ctp-subtext1:  #d5c4a1;
+  --ctp-subtext0:  #bdae93;
+  --ctp-mauve:     #d3869b;
+  --ctp-lavender:  #d3869b;
+  --ctp-pink:      #d3869b;
+  --ctp-flamingo:  #fb4934;
+  --ctp-rosewater: #fb4934;
+  --ctp-blue:      #83a598;
+  --ctp-sapphire:  #83a598;
+  --ctp-sky:       #8ec07c;
+  --ctp-teal:      #8ec07c;
+  --ctp-green:     #b8bb26;
+  --ctp-yellow:    #fabd2f;
+  --ctp-peach:     #fe8019;
+  --ctp-maroon:    #fb4934;
+  --ctp-red:       #cc241d;
+
+  --bg-app:        #282828;
+  --bg-sidebar:    #1d2021;
+  --bg-card:       #3c3836;
+  --bg-hover:      #504945;
+  --bg-player:     #1d2021;
+  --bg-glass:      rgba(40, 40, 40, 0.82);
+  --accent:        #fabd2f;
+  --accent-dim:    rgba(250, 189, 47, 0.15);
+  --accent-glow:   rgba(250, 189, 47, 0.3);
+  --text-primary:  #ebdbb2;
+  --text-secondary:#d5c4a1;
+  --text-muted:    #928374;
+  --border:        #504945;
+  --border-subtle: #3c3836;
+  --border-dropdown: #665c54;
+  --shadow-dropdown: rgba(0, 0, 0, 0.55);
+  --positive:      #b8bb26;
+  --warning:       #fabd2f;
+  --danger:        #fb4934;
+}
+
+/* ─── Gruvbox Dark Soft ─── */
+[data-theme='gruvbox-dark-soft'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ebdbb2%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #1d2021;
+  --ctp-mantle:    #282828;
+  --ctp-base:      #32302f;
+  --ctp-surface0:  #3c3836;
+  --ctp-surface1:  #504945;
+  --ctp-surface2:  #665c54;
+  --ctp-overlay0:  #7c6f64;
+  --ctp-overlay1:  #928374;
+  --ctp-overlay2:  #a89984;
+  --ctp-text:      #ebdbb2;
+  --ctp-subtext1:  #d5c4a1;
+  --ctp-subtext0:  #bdae93;
+  --ctp-mauve:     #d3869b;
+  --ctp-lavender:  #d3869b;
+  --ctp-pink:      #d3869b;
+  --ctp-flamingo:  #fb4934;
+  --ctp-rosewater: #fb4934;
+  --ctp-blue:      #83a598;
+  --ctp-sapphire:  #83a598;
+  --ctp-sky:       #8ec07c;
+  --ctp-teal:      #8ec07c;
+  --ctp-green:     #b8bb26;
+  --ctp-yellow:    #fabd2f;
+  --ctp-peach:     #fe8019;
+  --ctp-maroon:    #fb4934;
+  --ctp-red:       #cc241d;
+
+  --bg-app:        #32302f;
+  --bg-sidebar:    #282828;
+  --bg-card:       #45403d;
+  --bg-hover:      #504945;
+  --bg-player:     #282828;
+  --bg-glass:      rgba(50, 48, 47, 0.82);
+  --accent:        #fabd2f;
+  --accent-dim:    rgba(250, 189, 47, 0.15);
+  --accent-glow:   rgba(250, 189, 47, 0.3);
+  --text-primary:  #ebdbb2;
+  --text-secondary:#d5c4a1;
+  --text-muted:    #928374;
+  --border:        #504945;
+  --border-subtle: #3c3836;
+  --border-dropdown: #665c54;
+  --shadow-dropdown: rgba(0, 0, 0, 0.5);
+  --positive:      #b8bb26;
+  --warning:       #fabd2f;
+  --danger:        #fb4934;
+}
+
+/* ─── Gruvbox Light Hard ─── */
+[data-theme='gruvbox-light-hard'] {
+  color-scheme: light;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23504945%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #ebdbb2;
+  --ctp-mantle:    #f2e5bc;
+  --ctp-base:      #f9f5d7;
+  --ctp-surface0:  #f2e5bc;
+  --ctp-surface1:  #ebdbb2;
+  --ctp-surface2:  #d5c4a1;
+  --ctp-overlay0:  #bdae93;
+  --ctp-overlay1:  #a89984;
+  --ctp-overlay2:  #928374;
+  --ctp-text:      #3c3836;
+  --ctp-subtext1:  #504945;
+  --ctp-subtext0:  #665c54;
+  --ctp-mauve:     #8f3f71;
+  --ctp-lavender:  #8f3f71;
+  --ctp-pink:      #8f3f71;
+  --ctp-flamingo:  #9d0006;
+  --ctp-rosewater: #cc241d;
+  --ctp-blue:      #076678;
+  --ctp-sapphire:  #076678;
+  --ctp-sky:       #427b58;
+  --ctp-teal:      #427b58;
+  --ctp-green:     #79740e;
+  --ctp-yellow:    #b57614;
+  --ctp-peach:     #af3a03;
+  --ctp-maroon:    #9d0006;
+  --ctp-red:       #cc241d;
+
+  --bg-app:        #f9f5d7;
+  --bg-sidebar:    #f2e5bc;
+  --bg-card:       #f2e5bc;
+  --bg-hover:      #ebdbb2;
+  --bg-player:     #f2e5bc;
+  --bg-glass:      rgba(249, 245, 215, 0.9);
+  --accent:        #b57614;
+  --accent-dim:    rgba(181, 118, 20, 0.15);
+  --accent-glow:   rgba(181, 118, 20, 0.25);
+  --text-primary:  #3c3836;
+  --text-secondary:#504945;
+  --text-muted:    #7c6f64;
+  --border:        #d5c4a1;
+  --border-subtle: #ebdbb2;
+  --positive:      #79740e;
+  --warning:       #b57614;
+  --danger:        #9d0006;
+}
+
+/* ─── Gruvbox Light Medium ─── */
+[data-theme='gruvbox-light-medium'] {
+  color-scheme: light;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23504945%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #ebdbb2;
+  --ctp-mantle:    #f2e5bc;
+  --ctp-base:      #fbf1c7;
+  --ctp-surface0:  #f2e5bc;
+  --ctp-surface1:  #ebdbb2;
+  --ctp-surface2:  #d5c4a1;
+  --ctp-overlay0:  #bdae93;
+  --ctp-overlay1:  #a89984;
+  --ctp-overlay2:  #928374;
+  --ctp-text:      #3c3836;
+  --ctp-subtext1:  #504945;
+  --ctp-subtext0:  #665c54;
+  --ctp-mauve:     #8f3f71;
+  --ctp-lavender:  #8f3f71;
+  --ctp-pink:      #8f3f71;
+  --ctp-flamingo:  #9d0006;
+  --ctp-rosewater: #cc241d;
+  --ctp-blue:      #076678;
+  --ctp-sapphire:  #076678;
+  --ctp-sky:       #427b58;
+  --ctp-teal:      #427b58;
+  --ctp-green:     #79740e;
+  --ctp-yellow:    #b57614;
+  --ctp-peach:     #af3a03;
+  --ctp-maroon:    #9d0006;
+  --ctp-red:       #cc241d;
+
+  --bg-app:        #fbf1c7;
+  --bg-sidebar:    #f2e5bc;
+  --bg-card:       #f2e5bc;
+  --bg-hover:      #ebdbb2;
+  --bg-player:     #f2e5bc;
+  --bg-glass:      rgba(251, 241, 199, 0.9);
+  --accent:        #b57614;
+  --accent-dim:    rgba(181, 118, 20, 0.15);
+  --accent-glow:   rgba(181, 118, 20, 0.25);
+  --text-primary:  #3c3836;
+  --text-secondary:#504945;
+  --text-muted:    #7c6f64;
+  --border:        #d5c4a1;
+  --border-subtle: #ebdbb2;
+  --positive:      #79740e;
+  --warning:       #b57614;
+  --danger:        #9d0006;
+}
+
+/* ─── Gruvbox Light Soft ─── */
+[data-theme='gruvbox-light-soft'] {
+  color-scheme: light;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23504945%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #ebdbb2;
+  --ctp-mantle:    #f2e5bc;
+  --ctp-base:      #f2e5bc;
+  --ctp-surface0:  #ebdbb2;
+  --ctp-surface1:  #d5c4a1;
+  --ctp-surface2:  #bdae93;
+  --ctp-overlay0:  #a89984;
+  --ctp-overlay1:  #928374;
+  --ctp-overlay2:  #7c6f64;
+  --ctp-text:      #3c3836;
+  --ctp-subtext1:  #504945;
+  --ctp-subtext0:  #665c54;
+  --ctp-mauve:     #8f3f71;
+  --ctp-lavender:  #8f3f71;
+  --ctp-pink:      #8f3f71;
+  --ctp-flamingo:  #9d0006;
+  --ctp-rosewater: #cc241d;
+  --ctp-blue:      #076678;
+  --ctp-sapphire:  #076678;
+  --ctp-sky:       #427b58;
+  --ctp-teal:      #427b58;
+  --ctp-green:     #79740e;
+  --ctp-yellow:    #b57614;
+  --ctp-peach:     #af3a03;
+  --ctp-maroon:    #9d0006;
+  --ctp-red:       #cc241d;
+
+  --bg-app:        #f2e5bc;
+  --bg-sidebar:    #ebdbb2;
+  --bg-card:       #ebdbb2;
+  --bg-hover:      #d5c4a1;
+  --bg-player:     #ebdbb2;
+  --bg-glass:      rgba(242, 229, 188, 0.9);
+  --accent:        #b57614;
+  --accent-dim:    rgba(181, 118, 20, 0.15);
+  --accent-glow:   rgba(181, 118, 20, 0.25);
+  --text-primary:  #3c3836;
+  --text-secondary:#504945;
+  --text-muted:    #7c6f64;
+  --border:        #d5c4a1;
+  --border-subtle: #ebdbb2;
+  --positive:      #79740e;
+  --warning:       #b57614;
+  --danger:        #9d0006;
+}
+
+/* ─── Tokyo Night ─── */
+[data-theme='tokyo-night'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23a9b1d6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #16161e;
+  --ctp-mantle:    #1a1b26;
+  --ctp-base:      #1a1b26;
+  --ctp-surface0:  #24283b;
+  --ctp-surface1:  #2f334d;
+  --ctp-surface2:  #3b3f5c;
+  --ctp-overlay0:  #414868;
+  --ctp-overlay1:  #565f89;
+  --ctp-overlay2:  #6272a4;
+  --ctp-text:      #c0caf5;
+  --ctp-subtext1:  #a9b1d6;
+  --ctp-subtext0:  #9aa5ce;
+  --ctp-mauve:     #bb9af7;
+  --ctp-lavender:  #c0caf5;
+  --ctp-pink:      #f7768e;
+  --ctp-flamingo:  #ff9e64;
+  --ctp-rosewater: #f7768e;
+  --ctp-blue:      #7aa2f7;
+  --ctp-sapphire:  #7dcfff;
+  --ctp-sky:       #7dcfff;
+  --ctp-teal:      #2ac3de;
+  --ctp-green:     #9ece6a;
+  --ctp-yellow:    #e0af68;
+  --ctp-peach:     #ff9e64;
+  --ctp-maroon:    #f7768e;
+  --ctp-red:       #f7768e;
+
+  --bg-app:        #1a1b26;
+  --bg-sidebar:    #16161e;
+  --bg-card:       #24283b;
+  --bg-hover:      #2f334d;
+  --bg-player:     #16161e;
+  --bg-glass:      rgba(26, 27, 38, 0.82);
+  --accent:        #7aa2f7;
+  --accent-dim:    rgba(122, 162, 247, 0.15);
+  --accent-glow:   rgba(122, 162, 247, 0.3);
+  --text-primary:  #c0caf5;
+  --text-secondary:#a9b1d6;
+  --text-muted:    #565f89;
+  --border:        #2f334d;
+  --border-subtle: #24283b;
+  --border-dropdown: #3d425e;
+  --shadow-dropdown: rgba(0, 0, 0, 0.55);
+  --positive:      #9ece6a;
+  --warning:       #e0af68;
+  --danger:        #f7768e;
+}
+
+/* ─── Tokyo Night Storm ─── */
+[data-theme='tokyo-night-storm'] {
+  color-scheme: dark;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23a9b1d6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #1f2335;
+  --ctp-mantle:    #1f2335;
+  --ctp-base:      #24283b;
+  --ctp-surface0:  #2f334d;
+  --ctp-surface1:  #3b3f5c;
+  --ctp-surface2:  #414868;
+  --ctp-overlay0:  #565f89;
+  --ctp-overlay1:  #6272a4;
+  --ctp-overlay2:  #737aa2;
+  --ctp-text:      #c0caf5;
+  --ctp-subtext1:  #a9b1d6;
+  --ctp-subtext0:  #9aa5ce;
+  --ctp-mauve:     #bb9af7;
+  --ctp-lavender:  #c0caf5;
+  --ctp-pink:      #f7768e;
+  --ctp-flamingo:  #ff9e64;
+  --ctp-rosewater: #f7768e;
+  --ctp-blue:      #7aa2f7;
+  --ctp-sapphire:  #7dcfff;
+  --ctp-sky:       #7dcfff;
+  --ctp-teal:      #2ac3de;
+  --ctp-green:     #9ece6a;
+  --ctp-yellow:    #e0af68;
+  --ctp-peach:     #ff9e64;
+  --ctp-maroon:    #f7768e;
+  --ctp-red:       #f7768e;
+
+  --bg-app:        #24283b;
+  --bg-sidebar:    #1f2335;
+  --bg-card:       #2f334d;
+  --bg-hover:      #3b3f5c;
+  --bg-player:     #1f2335;
+  --bg-glass:      rgba(36, 40, 59, 0.82);
+  --accent:        #7aa2f7;
+  --accent-dim:    rgba(122, 162, 247, 0.15);
+  --accent-glow:   rgba(122, 162, 247, 0.3);
+  --text-primary:  #c0caf5;
+  --text-secondary:#a9b1d6;
+  --text-muted:    #565f89;
+  --border:        #3b3f5c;
+  --border-subtle: #2f334d;
+  --border-dropdown: #414868;
+  --shadow-dropdown: rgba(0, 0, 0, 0.55);
+  --positive:      #9ece6a;
+  --warning:       #e0af68;
+  --danger:        #f7768e;
+}
+
+/* ─── Tokyo Night Light ─── */
+[data-theme='tokyo-night-light'] {
+  color-scheme: light;
+  --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23343b58%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+
+  --ctp-crust:     #cbccd1;
+  --ctp-mantle:    #d5d6db;
+  --ctp-base:      #d5d6db;
+  --ctp-surface0:  #e9e9ec;
+  --ctp-surface1:  #c4c5cc;
+  --ctp-surface2:  #b4b5be;
+  --ctp-overlay0:  #a0a1ab;
+  --ctp-overlay1:  #9699a3;
+  --ctp-overlay2:  #8488a0;
+  --ctp-text:      #343b58;
+  --ctp-subtext1:  #565a6e;
+  --ctp-subtext0:  #6b6f85;
+  --ctp-mauve:     #5a4a78;
+  --ctp-lavender:  #34548a;
+  --ctp-pink:      #8f2f5c;
+  --ctp-flamingo:  #965027;
+  --ctp-rosewater: #8c4351;
+  --ctp-blue:      #34548a;
+  --ctp-sapphire:  #0f4b6e;
+  --ctp-sky:       #0f4b6e;
+  --ctp-teal:      #0f4b6e;
+  --ctp-green:     #485e30;
+  --ctp-yellow:    #8f5e15;
+  --ctp-peach:     #965027;
+  --ctp-maroon:    #8c4351;
+  --ctp-red:       #8c4351;
+
+  --bg-app:        #d5d6db;
+  --bg-sidebar:    #cbccd1;
+  --bg-card:       #e9e9ec;
+  --bg-hover:      #c4c5cc;
+  --bg-player:     #cbccd1;
+  --bg-glass:      rgba(213, 214, 219, 0.9);
+  --accent:        #34548a;
+  --accent-dim:    rgba(52, 84, 138, 0.15);
+  --accent-glow:   rgba(52, 84, 138, 0.25);
+  --text-primary:  #343b58;
+  --text-secondary:#565a6e;
+  --text-muted:    #9699a3;
+  --border:        #c4c5cc;
+  --border-subtle: #d5d6db;
+  --positive:      #485e30;
+  --warning:       #8f5e15;
+  --danger:        #8c4351;
 }
 
 /* ─── Global Base Settings ─── */
@@ -525,6 +1251,8 @@
 
 html, body, #root {
   height: 100%;
+  min-width: 1280px;
+  min-height: 720px;
   overflow: hidden;
 }
 
@@ -616,7 +1344,7 @@ body.is-dragging * {
   color: var(--ctp-crust);
   font-weight: 600;
 }
-.btn-primary:hover { background: var(--ctp-lavender); transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+.btn-primary:hover { background: var(--accent); filter: brightness(1.1); transform: translateY(-1px); box-shadow: var(--shadow-glow); }
 .btn-primary:active { transform: translateY(0); }
 
 .btn-ghost {

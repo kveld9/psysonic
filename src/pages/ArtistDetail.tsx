@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getArtist, getArtistInfo, getTopSongs, getSimilarSongs2, search, SubsonicArtist, SubsonicAlbum, SubsonicSong, SubsonicArtistInfo, buildCoverArtUrl, coverArtCacheKey, star, unstar } from '../api/subsonic';
 import AlbumCard from '../components/AlbumCard';
 import CachedImage from '../components/CachedImage';
+import CoverLightbox from '../components/CoverLightbox';
 import { ArrowLeft, Users, ExternalLink, Star, Play, Shuffle, Radio } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
 import { usePlayerStore } from '../store/playerStore';
@@ -49,6 +50,8 @@ export default function ArtistDetail() {
   const [openedLink, setOpenedLink] = useState<string | null>(null);
   const [similarArtists, setSimilarArtists] = useState<SubsonicArtist[]>([]);
   const [similarLoading, setSimilarLoading] = useState(false);
+  const [featuredLoading, setFeaturedLoading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const playTrack = usePlayerStore(state => state.playTrack);
   const enqueue = usePlayerStore(state => state.enqueue);
@@ -58,51 +61,59 @@ export default function ArtistDetail() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    let ownAlbumIds: Set<string>;
+    setFeaturedAlbums([]);
     getArtist(id).then(artistData => {
       setArtist(artistData.artist);
       setAlbums(artistData.albums);
       setIsStarred(!!artistData.artist.starred);
-      ownAlbumIds = new Set(artistData.albums.map(a => a.id));
       return Promise.all([
         getArtistInfo(id).catch(() => null),
         getTopSongs(artistData.artist.name).catch(() => []),
-        search(artistData.artist.name, { songCount: 500, artistCount: 0, albumCount: 0 }).catch(() => ({ songs: [], albums: [], artists: [] })),
       ]);
-    }).then(([artistInfo, songsData, searchResults]) => {
+    }).then(([artistInfo, songsData]) => {
       if (artistInfo !== undefined) setInfo(artistInfo as SubsonicArtistInfo | null);
       if (songsData !== undefined) setTopSongs(songsData as SubsonicSong[]);
-
-      const featuredSongs = (searchResults.songs ?? []).filter(
-        song => song.artistId === id && !ownAlbumIds.has(song.albumId)
-      );
-      const albumMap = new Map<string, SubsonicAlbum>();
-      featuredSongs.forEach(song => {
-        if (!albumMap.has(song.albumId)) {
-          albumMap.set(song.albumId, {
-            id: song.albumId,
-            name: song.album,
-            artist: song.albumArtist ?? '',
-            artistId: '',
-            coverArt: song.coverArt,
-            songCount: 1,
-            duration: song.duration,
-            year: song.year,
-          });
-        } else {
-          const a = albumMap.get(song.albumId)!;
-          a.songCount++;
-          a.duration += song.duration;
-        }
-      });
-      setFeaturedAlbums([...albumMap.values()]);
-
       setLoading(false);
     }).catch(err => {
       console.error(err);
       setLoading(false);
     });
   }, [id]);
+
+  // "Also Featured On" — loaded in background after main content renders
+  useEffect(() => {
+    if (!id || !artist) return;
+    const ownAlbumIds = new Set(albums.map(a => a.id));
+    setFeaturedLoading(true);
+    search(artist.name, { songCount: 500, artistCount: 0, albumCount: 0 })
+      .catch(() => ({ songs: [], albums: [], artists: [] }))
+      .then(searchResults => {
+        const featuredSongs = (searchResults.songs ?? []).filter(
+          song => song.artistId === id && !ownAlbumIds.has(song.albumId)
+        );
+        const albumMap = new Map<string, SubsonicAlbum>();
+        featuredSongs.forEach(song => {
+          if (!albumMap.has(song.albumId)) {
+            albumMap.set(song.albumId, {
+              id: song.albumId,
+              name: song.album,
+              artist: song.albumArtist ?? '',
+              artistId: '',
+              coverArt: song.coverArt,
+              songCount: 1,
+              duration: song.duration,
+              year: song.year,
+            });
+          } else {
+            const a = albumMap.get(song.albumId)!;
+            a.songCount++;
+            a.duration += song.duration;
+          }
+        });
+        setFeaturedAlbums([...albumMap.values()]);
+        setFeaturedLoading(false);
+      });
+  }, [artist?.id]);
 
   useEffect(() => {
     if (!artist || !lastfmIsConfigured()) return;
@@ -213,16 +224,30 @@ export default function ArtistDetail() {
         <ArrowLeft size={16} /> <span>{t('artistDetail.back')}</span>
       </button>
 
+      {lightboxOpen && (
+        <CoverLightbox
+          src={buildCoverArtUrl(coverId, 2000)}
+          alt={artist.name}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+
       <div className="artist-detail-header">
         <div className="artist-detail-avatar">
           {coverId ? (
-            <CachedImage
-              src={buildCoverArtUrl(coverId, 300)}
-              cacheKey={coverArtCacheKey(coverId, 300)}
-              alt={artist.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-            />
+            <button
+              className="artist-detail-avatar-btn"
+              onClick={() => setLightboxOpen(true)}
+              aria-label={`${artist.name} Bild vergrößern`}
+            >
+              <CachedImage
+                src={buildCoverArtUrl(coverId, 300)}
+                cacheKey={coverArtCacheKey(coverId, 300)}
+                alt={artist.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+            </button>
           ) : (
             <Users size={64} color="var(--text-muted)" />
           )}
@@ -389,14 +414,22 @@ export default function ArtistDetail() {
       )}
 
       {/* Also Featured On */}
-      {featuredAlbums.length > 0 && (
+      {(featuredLoading || featuredAlbums.length > 0) && (
         <>
           <h2 className="section-title" style={{ marginTop: '2rem', marginBottom: '1rem' }}>
             {t('artistDetail.featuredOn')}
           </h2>
-          <div className="album-grid-wrap">
-            {featuredAlbums.map(a => <AlbumCard key={a.id} album={a} />)}
-          </div>
+          {featuredLoading ? (
+            <div className="album-grid-wrap">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} style={{ flex: '0 0 clamp(140px, 15vw, 180px)', borderRadius: '8px', background: 'var(--bg-card)', aspectRatio: '1', opacity: 0.5 }} />
+              ))}
+            </div>
+          ) : (
+            <div className="album-grid-wrap" style={{ animation: 'fadeIn 0.3s ease' }}>
+              {featuredAlbums.map(a => <AlbumCard key={a.id} album={a} />)}
+            </div>
+          )}
         </>
       )}
     </div>

@@ -40,7 +40,7 @@ export default function PlayerBar() {
   }, [setVolume]);
 
   const volumeStyle = {
-    background: `linear-gradient(to right, var(--ctp-mauve) ${volume * 100}%, var(--ctp-surface2) ${volume * 100}%)`,
+    background: `linear-gradient(to right, var(--volume-accent, var(--accent)) ${volume * 100}%, var(--ctp-surface2) ${volume * 100}%)`,
   };
 
   return (

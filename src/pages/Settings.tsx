@@ -1,15 +1,16 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { version as appVersion } from '../../package.json';
 import changelogRaw from '../../CHANGELOG.md?raw';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Wifi, WifiOff, Globe, Music2, Sliders, LogOut, CheckCircle2, FolderOpen,
   Palette, Server, Plus, Trash2, Eye, EyeOff, Info, ExternalLink, Shuffle, X, Play
 } from 'lucide-react';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
-import { lastfmGetToken, lastfmAuthUrl, lastfmGetSession, lastfmIsConfigured, lastfmGetUserInfo, LastfmUserInfo } from '../api/lastfm';
+import { lastfmGetToken, lastfmAuthUrl, lastfmGetSession, lastfmGetUserInfo, LastfmUserInfo } from '../api/lastfm';
 import LastfmIcon from '../components/LastfmIcon';
 import CustomSelect from '../components/CustomSelect';
+import ThemePicker from '../components/ThemePicker';
 import { useAuthStore, ServerProfile } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { pingWithCredentials } from '../api/subsonic';
@@ -83,9 +84,10 @@ export default function Settings() {
   const auth = useAuthStore();
   const theme = useThemeStore();
   const navigate = useNavigate();
+  const { state: routeState } = useLocation();
   const { t, i18n } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState<Tab>('playback');
+  const [activeTab, setActiveTab] = useState<Tab>((routeState as { tab?: Tab } | null)?.tab ?? 'playback');
   const [connStatus, setConnStatus] = useState<Record<string, 'idle' | 'testing' | 'ok' | 'error'>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [newGenre, setNewGenre] = useState('');
@@ -287,7 +289,12 @@ export default function Settings() {
               {/* Crossfade */}
               <div className="settings-toggle-row">
                 <div>
-                  <div style={{ fontWeight: 500 }}>{t('settings.crossfade')}</div>
+                  <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {t('settings.crossfade')}
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--accent)', color: 'var(--ctp-base)', opacity: 0.85, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                      {t('settings.experimental')}
+                    </span>
+                  </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.crossfadeDesc')}</div>
                 </div>
                 <label className="toggle-switch" aria-label={t('settings.crossfade')}>
@@ -318,7 +325,12 @@ export default function Settings() {
               {/* Gapless */}
               <div className="settings-toggle-row">
                 <div>
-                  <div style={{ fontWeight: 500 }}>{t('settings.gapless')}</div>
+                  <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {t('settings.gapless')}
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--accent)', color: 'var(--ctp-base)', opacity: 0.85, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                      {t('settings.experimental')}
+                    </span>
+                  </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.gaplessDesc')}</div>
                 </div>
                 <label className="toggle-switch" aria-label={t('settings.gapless')}>
@@ -329,80 +341,6 @@ export default function Settings() {
             </div>
           </section>
 
-          {/* Last.fm */}
-          <section className="settings-section">
-            <div className="settings-section-header">
-              <Music2 size={18} />
-              <h2>{t('settings.lfmTitle')}</h2>
-            </div>
-            <div className="settings-card">
-              {auth.lastfmSessionKey ? (
-                /* ── Connected state ── */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '10px', background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
-                    <div style={{ flexShrink: 0, color: '#e31c23' }}><LastfmIcon size={20} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>@{auth.lastfmUsername}</div>
-                      {lfmUserInfo && (
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: '0.75rem' }}>
-                          <span>{t('settings.lfmScrobbles', { n: lfmUserInfo.playcount.toLocaleString() })}</span>
-                          <span>{t('settings.lfmMemberSince', { year: new Date(lfmUserInfo.registeredAt * 1000).getFullYear() })}</span>
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      className="btn btn-ghost"
-                      style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }}
-                      onClick={() => auth.disconnectLastfm()}
-                    >
-                      {t('settings.lfmDisconnect')}
-                    </button>
-                  </div>
-                  <div className="settings-toggle-row">
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{t('settings.scrobbleEnabled')}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.scrobbleDesc')}</div>
-                    </div>
-                    <label className="toggle-switch" aria-label={t('settings.scrobbleEnabled')}>
-                      <input type="checkbox" checked={auth.scrobblingEnabled} onChange={e => auth.setScrobblingEnabled(e.target.checked)} id="scrobbling-toggle" />
-                      <span className="toggle-track" />
-                    </label>
-                  </div>
-                </div>
-              ) : lfmState === 'waiting' ? (
-                /* ── Waiting for browser auth — auto-polling ── */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: 13, color: 'var(--text-secondary)' }}>
-                    <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                    {t('settings.lfmConnecting')}
-                  </div>
-                  <button className="btn btn-ghost" style={{ alignSelf: 'flex-start', fontSize: 12 }}
-                    onClick={() => { setLfmState('idle'); setLfmPendingToken(null); }}>
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              ) : (
-                /* ── Not connected ── */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    {t('settings.lfmConnectDesc')}
-                  </p>
-                  {lfmState === 'error' && (
-                    <p style={{ fontSize: 12, color: 'var(--danger)' }}>{lfmError}</p>
-                  )}
-                  {lastfmIsConfigured() ? (
-                    <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={startLastfmConnect}>
-                      {t('settings.lfmConnect')}
-                    </button>
-                  ) : (
-                    <p style={{ fontSize: 12, color: 'var(--warning)' }}>
-                      VITE_LASTFM_API_KEY / VITE_LASTFM_API_SECRET not set in build environment.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
         </>
       )}
 
@@ -530,23 +468,7 @@ export default function Settings() {
               <h2>{t('settings.theme')}</h2>
             </div>
             <div className="settings-card">
-              <div className="form-group" style={{ maxWidth: '300px' }}>
-                <CustomSelect
-                  value={theme.theme}
-                  onChange={v => theme.setTheme(v as any)}
-                  options={[
-                    { value: 'mocha', label: 'Catppuccin Mocha' },
-                    { value: 'macchiato', label: 'Catppuccin Macchiato' },
-                    { value: 'frappe', label: 'Catppuccin Frappé' },
-                    { value: 'latte', label: 'Catppuccin Latte' },
-                    { value: 'nord', label: 'Nord · Polar Night' },
-                    { value: 'nord-snowstorm', label: 'Nord · Snowstorm' },
-                    { value: 'nord-frost', label: 'Nord · Frost' },
-                    { value: 'nord-aurora', label: 'Nord · Aurora' },
-                    { value: 'psychowave', label: 'Psychowave' },
-                  ]}
-                />
-              </div>
+              <ThemePicker value={theme.theme} onChange={v => theme.setTheme(v as any)} />
             </div>
           </section>
 
@@ -561,7 +483,9 @@ export default function Settings() {
                   value={i18n.language}
                   onChange={v => i18n.changeLanguage(v)}
                   options={[
+                    { value: 'nl', label: t('settings.languageNl') },
                     { value: 'en', label: t('settings.languageEn') },
+                    { value: 'fr', label: t('settings.languageFr') },
                     { value: 'de', label: t('settings.languageDe') },
                   ]}
                 />
@@ -651,6 +575,75 @@ export default function Settings() {
                 <Plus size={16} /> {t('settings.addServer')}
               </button>
             )}
+          </section>
+
+          {/* Last.fm */}
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <LastfmIcon size={18} />
+              <h2>{t('settings.lfmTitle')}</h2>
+            </div>
+            <div className="settings-card">
+              {auth.lastfmSessionKey ? (
+                /* ── Connected state ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '10px', background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)' }}>
+                    <div style={{ flexShrink: 0, color: '#e31c23' }}><LastfmIcon size={20} /></div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>@{auth.lastfmUsername}</div>
+                      {lfmUserInfo && (
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: '0.75rem' }}>
+                          <span>{t('settings.lfmScrobbles', { n: lfmUserInfo.playcount.toLocaleString() })}</span>
+                          <span>{t('settings.lfmMemberSince', { year: new Date(lfmUserInfo.registeredAt * 1000).getFullYear() })}</span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      className="btn btn-ghost"
+                      style={{ fontSize: 12, padding: '4px 10px', flexShrink: 0 }}
+                      onClick={() => auth.disconnectLastfm()}
+                    >
+                      {t('settings.lfmDisconnect')}
+                    </button>
+                  </div>
+                  <div className="settings-toggle-row">
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{t('settings.scrobbleEnabled')}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.scrobbleDesc')}</div>
+                    </div>
+                    <label className="toggle-switch" aria-label={t('settings.scrobbleEnabled')}>
+                      <input type="checkbox" checked={auth.scrobblingEnabled} onChange={e => auth.setScrobblingEnabled(e.target.checked)} id="scrobbling-toggle" />
+                      <span className="toggle-track" />
+                    </label>
+                  </div>
+                </div>
+              ) : lfmState === 'waiting' ? (
+                /* ── Waiting for browser auth — auto-polling ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                    {t('settings.lfmConnecting')}
+                  </div>
+                  <button className="btn btn-ghost" style={{ alignSelf: 'flex-start', fontSize: 12 }}
+                    onClick={() => { setLfmState('idle'); setLfmPendingToken(null); }}>
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              ) : (
+                /* ── Not connected ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {t('settings.lfmConnectDesc')}
+                  </p>
+                  {lfmState === 'error' && (
+                    <p style={{ fontSize: 12, color: 'var(--danger)' }}>{lfmError}</p>
+                  )}
+                  <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={startLastfmConnect}>
+                    {t('settings.lfmConnect')}
+                  </button>
+                </div>
+              )}
+            </div>
           </section>
 
           {/* Downloads + Tray */}

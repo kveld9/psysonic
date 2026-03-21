@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-03-21
+
+### Added
+
+#### Three New Themes
+- **Poison**: Dark charcoal background (`#1a1a1a`) with phosphor green (`#1bd655`) accent — high-contrast, industrial aesthetic. LCD glow text-shadow on the now-playing track name.
+- **Nucleo**: Warm brass/cream light theme inspired by vintage hi-fi equipment. Warm white cards, gold/amber accents, brushed-metal bevel buttons, and a warm LCD glow on the player track name. `color-scheme: light`.
+- **Classic Winamp**: Cool gray-blue dark theme (`#2b2b3a`) channelling the classic Winamp 2.x skin. Yellow primary accent (`#d4cc46`), orange volume slider override (`--volume-accent: #de9b35`), Courier New monospace font with bright-green LCD glow for the track name.
+
+#### Psychowave Theme — Major Overhaul
+- Psychowave recoloured from loud neon pink/purple to a refined deep violet palette: background `#161428`, accent `#a06ae0`. All neon colours replaced with muted, tasteful variants. No longer marked as WIP.
+
+#### ThemePicker Redesign
+- Themes reorganised into semantic groups: **Catppuccin**, **Nord**, **Retro** (formerly Gruvbox), **Tokyo Night**, and a new **Psysonic Themes** section (Classic Winamp, Poison, Nucleo, Psychowave). The separate *Experimental* group is removed.
+- "Gruvbox" renamed to **Retro**.
+
+#### Image Lightbox
+- Clicking the **album cover** on an Album Detail page or the **artist avatar** on an Artist Detail page opens a full-screen lightbox showing the high-resolution image (up to 2000 px). Click outside or press Escape to close.
+- Both use a shared `CoverLightbox` component — consistent behaviour across the app.
+
+#### Queue Toolbar — Complete Redesign
+- The queue panel now has a **centred icon toolbar** with round buttons (border-radius 50%, solid accent fill when active):
+  - **Shuffle** — Fisher-Yates shuffle, keeps current track at position 0
+  - **Save** — save queue as playlist
+  - **Load** — load a playlist into the queue
+  - **Clear** — remove all tracks from the queue
+  - **Gapless** (∞ icon) — toggle gapless playback on/off
+  - **Crossfade** (≋ icon) — toggle crossfade on/off; when inactive, clicking enables crossfade *and* opens a popover slider
+- **Crossfade popover**: a small overlay below the Crossfade button with a range slider (1–10 s) to configure the fade duration. Clicking the active Crossfade button disables crossfade and closes the popover. Closes on outside click.
+- **Queue header**: title enlarged to 16 px/700, track count and total duration shown inline next to the title in accent colour. Close (×) button removed.
+- **Tech info overlay**: codec and bitrate displayed as a frosted glass badge (`backdrop-filter: blur(4px)`) overlaid on the bottom edge of the cover art image.
+
+#### French & Dutch Translations
+- Full UI translation added for **French** (`fr`) and **Dutch** (`nl`) — all namespaces covered.
+- Language selector in Settings now lists all four languages sorted alphabetically (Dutch, English, French, German).
+
+#### Help Page — Layout & Content Update
+- **2-column grid layout** for the accordion — makes better use of horizontal space on widescreen displays.
+- New Q&A entry: **Crossfade & Gapless** (Playback section) — explains what each feature does, how to enable them, and their experimental status.
+- Updated entries: Themes (reflects all 21 themes), Languages (4 languages), Scrobbling (direct Last.fm), System browser links, Linux distribution (no AppImage).
+
+#### Settings — Experimental Labels
+- Crossfade and Gapless toggles in Settings → Playback now show an **"Experimental"** badge next to their label.
+
+### Fixed
+
+- **Now Playing dropdown — refresh button**: The refresh icon spin was applied to the entire button, blocking clicks during the animation. Spin state is now separate from the background poll loading state — the button is always clickable, and the icon spins for a minimum of 600 ms for clear visual feedback.
+- **Crossfade popover positioning**: Popover was overflowing the right edge of the viewport. Now right-aligned relative to the Crossfade button and positioned below it.
+
+---
+
 ## [1.7.2] - 2026-03-20
 
 ### Fixed

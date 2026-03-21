@@ -160,9 +160,9 @@ function handleAudioProgress(current_time: number, duration: number) {
     }
   }
 
-  // Gapless preload: buffer next track when 30s remain
+  // Pre-buffer / pre-chain next track when 30 s remain.
   const { gaplessEnabled } = useAuthStore.getState();
-  if (gaplessEnabled && dur - current_time < 30 && dur - current_time > 0) {
+  if (dur - current_time < 30 && dur - current_time > 0) {
     const { queue, queueIndex, repeatMode } = store;
     const nextIdx = queueIndex + 1;
     const nextTrack = repeatMode === 'one'
@@ -170,7 +170,30 @@ function handleAudioProgress(current_time: number, duration: number) {
       : (nextIdx < queue.length ? queue[nextIdx] : (repeatMode === 'all' ? queue[0] : null));
     if (nextTrack && nextTrack.id !== track.id) {
       const nextUrl = buildStreamUrl(nextTrack.id);
-      invoke('audio_preload', { url: nextUrl, durationHint: nextTrack.duration }).catch(() => {});
+      if (gaplessEnabled) {
+        // Gapless ON: decode + chain directly into the Sink now, 30 s in
+        // advance. By the time the track boundary arrives, the next source is
+        // already live — no IPC round-trip at the gap point.
+        const authState = useAuthStore.getState();
+        const replayGainDb = authState.replayGainEnabled
+          ? (authState.replayGainMode === 'album'
+              ? nextTrack.replayGainAlbumDb
+              : nextTrack.replayGainTrackDb) ?? null
+          : null;
+        const replayGainPeak = authState.replayGainEnabled
+          ? (nextTrack.replayGainPeak ?? null)
+          : null;
+        invoke('audio_chain_preload', {
+          url: nextUrl,
+          volume: store.volume,
+          durationHint: nextTrack.duration,
+          replayGainDb,
+          replayGainPeak,
+        }).catch(() => {});
+      } else {
+        // Gapless OFF: just pre-download bytes so audio_play finds them cached.
+        invoke('audio_preload', { url: nextUrl, durationHint: nextTrack.duration }).catch(() => {});
+      }
     }
   }
 }
@@ -218,16 +241,18 @@ export function initAudioListeners(): () => void {
   // Sync Last.fm loved tracks cache on startup.
   usePlayerStore.getState().syncLastfmLovedTracks();
 
-  // Initial sync of crossfade settings to Rust audio engine on startup.
-  const { crossfadeEnabled, crossfadeSecs } = useAuthStore.getState();
+  // Initial sync of audio settings to Rust engine on startup.
+  const { crossfadeEnabled, crossfadeSecs, gaplessEnabled } = useAuthStore.getState();
   invoke('audio_set_crossfade', { enabled: crossfadeEnabled, secs: crossfadeSecs }).catch(() => {});
+  invoke('audio_set_gapless', { enabled: gaplessEnabled }).catch(() => {});
 
-  // Keep crossfade settings in sync whenever auth store changes.
+  // Keep audio settings in sync whenever auth store changes.
   const unsubAuth = useAuthStore.subscribe((state) => {
     invoke('audio_set_crossfade', {
       enabled: state.crossfadeEnabled,
       secs: state.crossfadeSecs,
     }).catch(() => {});
+    invoke('audio_set_gapless', { enabled: state.gaplessEnabled }).catch(() => {});
   });
 
   return () => {

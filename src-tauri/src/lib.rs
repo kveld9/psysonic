@@ -184,6 +184,8 @@ pub fn run() {
             audio::audio_set_eq,
             audio::audio_preload,
             audio::audio_set_crossfade,
+            audio::audio_set_gapless,
+            audio::audio_chain_preload,
             lastfm_request,
         ])
         .run(tauri::generate_context!())

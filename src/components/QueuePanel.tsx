@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Track, usePlayerStore } from '../store/playerStore';
-import { Play, Music, Star, X, Trash2, Save, FolderOpen, Shuffle } from 'lucide-react';
+import { Play, Music, Star, X, Trash2, Save, FolderOpen, Shuffle, Infinity, Waves } from 'lucide-react';
 import { buildCoverArtUrl, getAlbum, getPlaylists, getPlaylist, createPlaylist, deletePlaylist, SubsonicPlaylist } from '../api/subsonic';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
 function formatTime(seconds: number): string {
   if (!seconds || isNaN(seconds)) return '0:00';
@@ -129,6 +130,30 @@ export default function QueuePanel() {
   const shuffleQueue = usePlayerStore(s => s.shuffleQueue);
   const enqueue = usePlayerStore(s => s.enqueue);
   const contextMenu = usePlayerStore(s => s.contextMenu);
+
+  const crossfadeEnabled = useAuthStore(s => s.crossfadeEnabled);
+  const crossfadeSecs = useAuthStore(s => s.crossfadeSecs);
+  const gaplessEnabled = useAuthStore(s => s.gaplessEnabled);
+  const setCrossfadeEnabled = useAuthStore(s => s.setCrossfadeEnabled);
+  const setCrossfadeSecs = useAuthStore(s => s.setCrossfadeSecs);
+  const setGaplessEnabled = useAuthStore(s => s.setGaplessEnabled);
+
+  const [showCrossfadePopover, setShowCrossfadePopover] = useState(false);
+  const crossfadeBtnRef = useRef<HTMLButtonElement>(null);
+  const crossfadePopoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showCrossfadePopover) return;
+    const handle = (e: MouseEvent) => {
+      if (
+        crossfadeBtnRef.current?.contains(e.target as Node) ||
+        crossfadePopoverRef.current?.contains(e.target as Node)
+      ) return;
+      setShowCrossfadePopover(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [showCrossfadePopover]);
 
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -255,8 +280,8 @@ export default function QueuePanel() {
       }}
     >
       <div className="queue-header">
-        <div>
-          <h2 style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>{t('queue.title')}</h2>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0, flexShrink: 0 }}>{t('queue.title')}</h2>
           {queue.length > 0 && (() => {
             const totalSecs = queue.reduce((acc, t) => acc + (t.duration || 0), 0);
             const h = Math.floor(totalSecs / 3600);
@@ -266,30 +291,11 @@ export default function QueuePanel() {
               ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
               : `${m}:${s.toString().padStart(2, '0')}`;
             return (
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
                 {queue.length} {queue.length === 1 ? t('queue.trackSingular') : t('queue.trackPlural')} · {dur}
-              </div>
+              </span>
             );
           })()}
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button onClick={() => shuffleQueue()} style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }} aria-label={t('queue.shuffle')} data-tooltip={t('queue.shuffle')} disabled={queue.length < 2}>
-            <Shuffle size={14} />
-          </button>
-          <button onClick={handleSave} style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }} aria-label={t('queue.savePlaylist')} data-tooltip={t('queue.save')}>
-            <Save size={14} />
-          </button>
-          <button onClick={handleLoad} style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }} aria-label={t('queue.loadPlaylist')} data-tooltip={t('queue.load')}>
-            <FolderOpen size={14} />
-          </button>
-          <button onClick={handleClear} style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }} aria-label={t('queue.clear')} data-tooltip={t('queue.clear')}>
-            <Trash2 size={14} />
-          </button>
-          <div style={{ width: '1px', height: '14px', background: 'var(--border)', margin: '0 4px' }} />
-          <button onClick={toggleQueue} style={{ color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }} aria-label={t('queue.close')} data-tooltip={t('queue.hide')}>
-            <X size={16} />
-          </button>
         </div>
       </div>
 
@@ -300,6 +306,13 @@ export default function QueuePanel() {
               <img src={buildCoverArtUrl(currentTrack.coverArt, 128)} alt="" loading="eager" />
             ) : (
               <div className="fallback"><Music size={32} /></div>
+            )}
+            {(currentTrack.bitRate || currentTrack.suffix) && (
+              <div className="queue-current-tech">
+                {currentTrack.bitRate && currentTrack.suffix
+                  ? `${currentTrack.bitRate} · ${currentTrack.suffix.toUpperCase()}`
+                  : currentTrack.suffix?.toUpperCase() ?? ''}
+              </div>
             )}
           </div>
           <div className="queue-current-info">
@@ -319,19 +332,77 @@ export default function QueuePanel() {
             {currentTrack.year && (
               <div className="queue-current-sub">{currentTrack.year}</div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-              <div className="queue-current-tech">
-                {currentTrack.bitRate && currentTrack.suffix ? (
-                  `${currentTrack.bitRate} kbps · ${currentTrack.suffix.toUpperCase()}`
-                ) : (
-                  currentTrack.suffix?.toUpperCase() ?? ''
-                )}
-              </div>
-              {renderStars(currentTrack.userRating)}
-            </div>
+            {renderStars(currentTrack.userRating)}
           </div>
         </div>
       )}
+
+      <div className="queue-toolbar">
+        <button className="queue-round-btn" onClick={() => shuffleQueue()} disabled={queue.length < 2} data-tooltip={t('queue.shuffle')} aria-label={t('queue.shuffle')}>
+          <Shuffle size={13} />
+        </button>
+        <button className="queue-round-btn" onClick={handleSave} data-tooltip={t('queue.savePlaylist')} aria-label={t('queue.savePlaylist')}>
+          <Save size={13} />
+        </button>
+        <button className="queue-round-btn" onClick={handleLoad} data-tooltip={t('queue.loadPlaylist')} aria-label={t('queue.loadPlaylist')}>
+          <FolderOpen size={13} />
+        </button>
+        <button className="queue-round-btn" onClick={handleClear} data-tooltip={t('queue.clear')} aria-label={t('queue.clear')}>
+          <Trash2 size={13} />
+        </button>
+        <div className="queue-toolbar-sep" />
+        <button
+          className={`queue-round-btn${gaplessEnabled ? ' active' : ''}`}
+          onClick={() => setGaplessEnabled(!gaplessEnabled)}
+          data-tooltip={t('queue.gapless')}
+          aria-label={t('queue.gapless')}
+        >
+          <Infinity size={13} />
+        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            ref={crossfadeBtnRef}
+            className={`queue-round-btn${crossfadeEnabled || showCrossfadePopover ? ' active' : ''}`}
+            onClick={() => {
+              if (crossfadeEnabled) {
+                setCrossfadeEnabled(false);
+                setShowCrossfadePopover(false);
+              } else {
+                setCrossfadeEnabled(true);
+                setShowCrossfadePopover(true);
+              }
+            }}
+            data-tooltip={showCrossfadePopover ? undefined : t('queue.crossfade')}
+            aria-label={t('queue.crossfade')}
+          >
+            <Waves size={13} />
+          </button>
+          {showCrossfadePopover && (
+            <div className="crossfade-popover" ref={crossfadePopoverRef}>
+              <div className="crossfade-popover-label">
+                <Waves size={11} />
+                {t('queue.crossfade')}
+                <span className="crossfade-popover-value">{crossfadeSecs}s</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={0.5}
+                value={crossfadeSecs}
+                onChange={e => {
+                  setCrossfadeSecs(Number(e.target.value));
+                  setCrossfadeEnabled(true);
+                }}
+                className="crossfade-popover-slider"
+              />
+              <div className="crossfade-popover-range">
+                <span>1s</span><span>10s</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {currentTrack && queue.length > 0 && <div className="queue-divider"><span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>{t('queue.nextTracks')}</span></div>}
       

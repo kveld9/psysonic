@@ -32,6 +32,7 @@ import ContextMenu from './components/ContextMenu';
 import DownloadFolderModal from './components/DownloadFolderModal';
 import TooltipPortal from './components/TooltipPortal';
 import ConnectionIndicator from './components/ConnectionIndicator';
+import LastfmIndicator from './components/LastfmIndicator';
 import OfflineOverlay from './components/OfflineOverlay';
 import { useConnectionStatus } from './hooks/useConnectionStatus';
 import { useAuthStore } from './store/authStore';
@@ -140,6 +141,7 @@ function AppShell() {
           <LiveSearch />
           <div className="spacer" />
           <ConnectionIndicator status={connStatus} isLan={isLan} serverName={serverName} />
+          <LastfmIndicator />
           <NowPlayingDropdown />
           <button
             className="collapse-btn"

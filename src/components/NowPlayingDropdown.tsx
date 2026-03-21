@@ -14,6 +14,7 @@ export default function NowPlayingDropdown() {
   const isPlaying = usePlayerStore(s => s.isPlaying);
   const ownUsername = useAuthStore(s => s.getActiveServer()?.username ?? '');
   const [loading, setLoading] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchNowPlaying = async () => {
@@ -26,6 +27,13 @@ export default function NowPlayingDropdown() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setSpinning(true);
+    fetchNowPlaying().finally(() => {
+      setTimeout(() => setSpinning(false), 600);
+    });
   };
 
   // Poll in background so the badge stays current without opening the dropdown
@@ -104,11 +112,11 @@ export default function NowPlayingDropdown() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
             <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>{t('nowPlaying.title')}</h3>
             <button
-              onClick={fetchNowPlaying}
-              className={`btn btn-ghost ${loading ? 'animate-spin' : ''}`}
-              style={{ width: '28px', height: '28px', padding: 0 }}
+              onClick={handleRefresh}
+              className="btn btn-ghost"
+              style={{ width: '28px', height: '28px', padding: 0, justifyContent: 'center' }}
             >
-              <RefreshCw size={14} />
+              <RefreshCw size={14} className={spinning ? 'animate-spin' : ''} />
             </button>
           </div>
 

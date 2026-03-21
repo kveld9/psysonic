@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { useAuthStore } from '../store/authStore';
 
 const API_KEY = '9917fb39049225a13bec225ad6d49054';
 const API_SECRET = '03817dda02bee87a178aab7581abae3b';
@@ -15,13 +16,24 @@ function errMsg(e: unknown): string {
 
 async function call(params: Record<string, string>, sign = false, get = false): Promise<any> {
   const entries = Object.entries(params) as [string, string][];
-  return invoke('lastfm_request', {
-    params: entries,
-    sign,
-    get,
-    apiKey: API_KEY,
-    apiSecret: API_SECRET,
-  });
+  try {
+    const result = await invoke('lastfm_request', {
+      params: entries,
+      sign,
+      get,
+      apiKey: API_KEY,
+      apiSecret: API_SECRET,
+    });
+    // Clear session error on any successful authenticated call
+    if (sign) useAuthStore.getState().setLastfmSessionError(false);
+    return result;
+  } catch (e) {
+    // Last.fm error codes 4, 9, 14 = auth/session invalid
+    if (sign && /^Last\.fm (4|9|14)\b/.test(errMsg(e))) {
+      useAuthStore.getState().setLastfmSessionError(true);
+    }
+    throw e;
+  }
 }
 
 export async function lastfmGetToken(): Promise<string> {

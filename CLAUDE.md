@@ -34,7 +34,7 @@ There are no test scripts. TypeScript compilation (`tsc`) is part of the build.
 - **Audio**: Rust/rodio engine (`src-tauri/src/audio.rs`) — downloads track bytes via reqwest, decodes with symphonia, plays via rodio. Replaces Howler.js. See detailed notes in the Notes section.
 - **API**: All server communication goes through `src/api/subsonic.ts` — a thin wrapper around axios using Subsonic token auth (MD5 hash of password + salt)
 - **Last.fm**: `src/api/lastfm.ts` — direct Last.fm API integration (scrobbling, Now Playing, love/unlove, similar artists, top stats, recent tracks). API key + secret from `VITE_LASTFM_API_KEY` / `VITE_LASTFM_API_SECRET` env vars (bundled at build time).
-- **i18n**: react-i18next, all translations inline in `src/i18n.ts` (English + German)
+- **i18n**: react-i18next, all translations inline in `src/i18n.ts` (English, German, French, Dutch)
 
 ### Key files
 
@@ -50,14 +50,15 @@ There are no test scripts. TypeScript compilation (`tsc`) is part of the build.
 | `src/store/authStore.ts` | Multi-server support via `ServerProfile[]` + `activeServerId`. `getBaseUrl()` / `getActiveServer()` used by subsonic.ts. Also stores Last.fm session key, username, scrobbling toggle. Persisted via **`localStorage`** (synchronous — do not change to async storage). |
 | `src/store/playerStore.ts` | Playback state, queue, scrobbling at 50% via Last.fm, server queue sync (debounced 1.5s). On `playTrack`: calls `reportNowPlaying` (Navidrome) + `lastfmUpdateNowPlaying` (Last.fm) independently. Persists `currentTrack`, `queue`, `queueIndex`, `currentTime` for cold-start resume. |
 | `src-tauri/src/audio.rs` | Rust audio engine: `audio_play`, `audio_pause`, `audio_resume`, `audio_stop`, `audio_seek`, `audio_set_volume` commands. Emits `audio:playing`, `audio:progress` (500ms), `audio:ended`, `audio:error` events. |
-| `src/store/themeStore.ts` | Theme selection (9 themes), applied as `data-theme` on `<html>` |
+| `src/store/themeStore.ts` | Theme selection (21 themes), applied as `data-theme` on `<html>` |
 | `src-tauri/src/lib.rs` | Tray menu, media key global shortcuts (disabled on Linux), `exit_app` command |
 | `src/App.tsx` | Root routing, `RequireAuth` guard, `TauriEventBridge` (media keys → store actions), `<TooltipPortal />` mount |
-| `src/i18n.ts` | All translations (en + de) inline. Language persisted in `localStorage('psysonic_language')`. |
+| `src/i18n.ts` | All translations (en + de + fr + nl) inline. Language persisted in `localStorage('psysonic_language')`. |
 | `src/components/Sidebar.tsx` | Sidebar nav + `UpdateToast` component. On mount (1.5s delay) fetches `https://api.github.com/repos/Psychotoxical/psysonic/releases/latest`, compares `tag_name` against `version` imported directly from `package.json` (build-time constant — more reliable than `getVersion()` from Tauri API), and shows a toast above Statistics only when a newer version exists. Silently no-ops if offline. |
 | `src/components/AlbumHeader.tsx` | Extracted from AlbumDetail — cover art, album info, play/enqueue buttons, bio modal, download. |
 | `src/components/AlbumTrackList.tsx` | Extracted from AlbumDetail — tracklist with star ratings, codec labels, VA artist column, context menu. |
-| `src/components/QueuePanel.tsx` | Queue sidebar. Shows song count + total duration below title. Items get `.context-active` class while their context menu is open. |
+| `src/components/QueuePanel.tsx` | Queue sidebar. Toolbar with round buttons (Shuffle, Save, Load, Clear, Gapless ∞, Crossfade ≋). Header shows title + count + duration inline. Crossfade popover (range slider 1–10 s) anchored below the ≋ button. Tech info (codec/bitrate) as frosted-glass overlay on cover art. Items get `.context-active` class while their context menu is open. |
+| `src/components/CoverLightbox.tsx` | Full-screen image lightbox. Props: `{ src, alt, onClose }`. ESC key + overlay click to close. Used in `AlbumHeader` and `ArtistDetail`. |
 | `packages/aur/PKGBUILD` | AUR package definition for Arch/CachyOS. Installs a wrapper script at `/usr/bin/psysonic` that sets `GDK_BACKEND=x11`, `WEBKIT_DISABLE_COMPOSITING_MODE=1`, `WEBKIT_DISABLE_DMABUF_RENDERER=1` before launching the binary. |
 
 ### Multi-server support
@@ -106,19 +107,33 @@ Use `getActiveServer()` to get the current server, `getBaseUrl()` to get its URL
 Add a function to `src/api/subsonic.ts` using the `api<T>()` helper. The helper automatically injects auth params and unwraps `subsonic-response`.
 
 ### Themes
-9 themes are available, selectable in Settings via `CustomSelect`. `themeStore` persists the choice and sets `data-theme` on `<html>`. All component CSS uses semantic tokens (`--accent`, `--text-primary`, etc.) — only the player button gradient and a few decorative elements reference `--ctp-*` palette vars directly, so every theme must define the full `--ctp-*` set.
+21 themes are available, selectable in Settings via `ThemePicker` (grouped). `themeStore` persists the choice and sets `data-theme` on `<html>`. All component CSS uses semantic tokens (`--accent`, `--text-primary`, etc.) — only the player button gradient and a few decorative elements reference `--ctp-*` palette vars directly, so every theme must define the full `--ctp-*` set.
 
-| Theme | Style | Accent |
-|---|---|---|
-| `mocha` | Catppuccin dark | Mauve |
-| `macchiato` | Catppuccin medium-dark | Mauve |
-| `frappe` | Catppuccin medium | Mauve |
-| `latte` | Catppuccin light | Mauve |
-| `nord` | Nord Polar Night dark | Frost `#88c0d0` |
-| `nord-snowstorm` | Nord Snow Storm light | Deep-Blue `#5e81ac` |
-| `nord-frost` | Nord deep ocean blue | Frost `#88c0d0` |
-| `nord-aurora` | Nord Polar Night + aurora | Purple `#b48ead` |
-| `psychowave` | Synthwave/retrowave deep purple | Purple `#c084fc` — WIP |
+`--volume-accent` overrides the volume slider colour independently of `--accent` (used by Classic Winamp for orange volume, yellow accent elsewhere).
+
+| Theme | Group | Style | Accent |
+|---|---|---|---|
+| `mocha` | Catppuccin | dark | Mauve |
+| `macchiato` | Catppuccin | medium-dark | Mauve |
+| `frappe` | Catppuccin | medium | Mauve |
+| `latte` | Catppuccin | light | Mauve |
+| `nord` | Nord | Polar Night dark | Frost `#88c0d0` |
+| `nord-snowstorm` | Nord | Snow Storm light | Deep-Blue `#5e81ac` |
+| `nord-frost` | Nord | deep ocean blue | Frost `#88c0d0` |
+| `nord-aurora` | Nord | Polar Night + aurora | Purple `#b48ead` |
+| `gruvbox-dark-hard` | Retro | Gruvbox dark hard | Orange `#fe8019` |
+| `gruvbox-dark-medium` | Retro | Gruvbox dark medium | Orange `#fe8019` |
+| `gruvbox-dark-soft` | Retro | Gruvbox dark soft | Orange `#fe8019` |
+| `gruvbox-light-hard` | Retro | Gruvbox light hard | Orange `#af3a03` |
+| `gruvbox-light-medium` | Retro | Gruvbox light medium | Orange `#af3a03` |
+| `gruvbox-light-soft` | Retro | Gruvbox light soft | Orange `#af3a03` |
+| `tokyo-night` | Tokyo Night | dark blue | Purple `#7aa2f7` |
+| `tokyo-night-storm` | Tokyo Night | stormy blue-gray | Purple `#7aa2f7` |
+| `tokyo-night-light` | Tokyo Night | light | Purple `#7aa2f7` |
+| `classic-winamp` | Psysonic | cool gray-blue dark, LCD glow, Courier New | Yellow `#d4cc46`, volume `#de9b35` |
+| `poison` | Psysonic | dark charcoal, phosphor green LCD glow | Green `#1bd655` |
+| `nucleo` | Psysonic | warm brass/cream light | Gold `#c8a860` |
+| `psychowave` | Psysonic | deep violet synthwave | Purple `#a06ae0` |
 
 **Light-theme gotcha**: The Hero and Fullscreen Player sit on top of album-art backgrounds with dark overlays. Their text colors are hardcoded white (not `var(--text-primary)`) so they stay readable in light themes (Latte, Nord Snowstorm).
 
@@ -132,7 +147,7 @@ Artist images are intentionally **not loaded** on the Artists overview page (gri
 `src/components/NowPlayingDropdown.tsx` polls `getNowPlaying` every 10 seconds in the background. Navidrome keeps stale "now playing" entries for several minutes after playback stops. To fix this: entries belonging to the current user (`ownUsername`) are filtered by the **local `isPlaying` state** from `playerStore` — so the badge disappears instantly when the user pauses or stops, without waiting for the server to clear the entry. Clicking an entry navigates to the album page (`/album/:albumId`) if `stream.albumId` is available.
 
 ### i18n
-All German strings live exclusively in `src/i18n.ts` — never hardcode German in `.tsx` files. Translation namespaces: `sidebar`, `home`, `hero`, `search`, `nowPlaying`, `contextMenu`, `albumDetail`, `artistDetail`, `favorites`, `randomMix`, `randomAlbums`, `playlists`, `albums`, `artists`, `statistics`, `login`, `common`, `settings`, `help`, `queue`, `player`.
+All non-English strings live exclusively in `src/i18n.ts` — never hardcode translated text in `.tsx` files. Four languages: `en`, `de`, `fr`, `nl`. Translation namespaces: `sidebar`, `home`, `hero`, `search`, `nowPlaying`, `contextMenu`, `albumDetail`, `artistDetail`, `favorites`, `randomMix`, `randomAlbums`, `playlists`, `albums`, `artists`, `statistics`, `login`, `common`, `settings`, `help`, `queue`, `player`.
 
 **German terminology**: "Queue" is always "Warteschlange" in German — never leave "Queue" untranslated in DE strings.
 
@@ -181,7 +196,8 @@ The workflow is split into three jobs: `create-release` (creates the GitHub Rele
 - **Playlists page**: List layout (not card grid) with sort buttons (Name / Tracks / Duration, toggle asc/desc) and a filter input. Play icon and delete button appear on row hover.
 - **Statistics page**: Library stat cards (Artists / Albums / Songs), Recently Played, Most Played, Highest Rated. Last.fm section (when configured): top artists/albums/tracks with period filter + recent scrobbles. No genre chart (removed). Data loaded in parallel via `Promise.allSettled`.
 - **Context menu**: `song` and `queue-item` types both have "Go to Album" (`Disc3` icon, shown only when `song.albumId` exists) and "Favorite" options. Context menu type union: `'song' | 'album' | 'artist' | 'queue-item' | 'album-song'`.
-- **QueuePanel meta box**: Shows title (no link) → artist (linked to `/artist/:id`) → album (linked to `/album/:id`) → year (if available). Cover art is 90×90 px, top-aligned. Default panel width 340 px. Header shows song count + total duration below the queue title.
+- **QueuePanel meta box**: Shows title (no link) → artist (linked to `/artist/:id`) → album (linked to `/album/:id`) → year (if available). Cover art is 90×90 px, top-aligned with codec/bitrate frosted-glass overlay at bottom. Default panel width 340 px. Header: title 16px/700, song count + total duration inline in `--accent` colour.
+- **Queue toolbar**: 6 round buttons (`queue-round-btn`, `border-radius: 50%`) centred in a row. Active state: `background: var(--accent); color: var(--ctp-base)`. Crossfade (≋) button: inactive click → enable + open popover; active click → disable + close. Popover: `position: absolute; top: calc(100% + 10px); right: 0; width: 170px` — right-aligned to prevent viewport overflow.
 - **Queue hover**: Queue items use `.context-active` CSS class when their context menu is open, keeping the hover highlight visible.
 - **Random Mix hover**: Row uses `.context-active` CSS class when a context menu is open for that song. `contextMenuSongId` state cleared via `useEffect` when `contextMenu.isOpen` becomes false.
 - **Favorites songs**: Full tracklist layout matching AlbumDetail — `track-row-va` grid with `#`, Title, Artist, Duration columns and a header row. Artist name clickable → artist page. "Add all to queue" button (`btn btn-surface`) next to the section title sends all favorited songs to the queue.
@@ -192,4 +208,6 @@ The workflow is split into three jobs: `create-release` (creates the GitHub Rele
 - **Tooltips**: Use `data-tooltip="text"` on any element — never native `title=`. `data-tooltip-pos="top|bottom|left|right"` (default: top). `data-tooltip-wrap` for multi-line. Rendered by `TooltipPortal` in `App.tsx` via `document.body` portal.
 - **Scrobbling**: At 50% playback, `playerStore` calls `lastfmScrobble()` directly. Navidrome is NOT used for scrobbling. Both `reportNowPlaying` (Navidrome) and `lastfmUpdateNowPlaying` (Last.fm) are called on every `playTrack()` — independently, fire-and-forget.
 - **Last.fm API key**: Stored in `.env` as `VITE_LASTFM_API_KEY` / `VITE_LASTFM_API_SECRET`. Bundled into the JS at build time (Vite). Not in git. For desktop apps this is acceptable — Last.fm's own docs acknowledge client-side keys can't be truly hidden.
-- **Version**: 1.7.1
+- **NowPlayingDropdown refresh**: `spinning` state is separate from `loading` — button is always clickable. Spin lasts min 600 ms via `setTimeout`. Background poll (`loading`) does not block the button.
+- **CoverLightbox**: Shared component (`src/components/CoverLightbox.tsx`). Props: `{ src, alt, onClose }`. ESC + overlay click to close. Used in `AlbumHeader` (album cover) and `ArtistDetail` (artist avatar, wrapped in `.artist-detail-avatar-btn`).
+- **Version**: 1.8.0
