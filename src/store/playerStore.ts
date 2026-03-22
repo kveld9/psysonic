@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { buildStreamUrl, getPlayQueue, savePlayQueue, reportNowPlaying, SubsonicSong } from '../api/subsonic';
+import { buildStreamUrl, getPlayQueue, savePlayQueue, reportNowPlaying, scrobbleSong, SubsonicSong } from '../api/subsonic';
 import { lastfmScrobble, lastfmUpdateNowPlaying, lastfmLoveTrack, lastfmUnloveTrack, lastfmGetTrackLoved, lastfmGetAllLovedTracks } from '../api/lastfm';
 import { useAuthStore } from './authStore';
 
@@ -155,9 +155,10 @@ function handleAudioProgress(current_time: number, duration: number) {
   const progress = current_time / dur;
   usePlayerStore.setState({ currentTime: current_time, progress, buffered: 0 });
 
-  // Scrobble at 50% directly via Last.fm
+  // Scrobble at 50%: Last.fm + Navidrome (updates play_date / recently played)
   if (progress >= 0.5 && !store.scrobbled) {
     usePlayerStore.setState({ scrobbled: true });
+    scrobbleSong(track.id, Date.now());
     const { scrobblingEnabled, lastfmSessionKey } = useAuthStore.getState();
     if (scrobblingEnabled && lastfmSessionKey) {
       lastfmScrobble(track, Date.now(), lastfmSessionKey);

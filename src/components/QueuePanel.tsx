@@ -329,16 +329,14 @@ export default function QueuePanel() {
             )}
           </div>
           <div className="queue-current-info">
-            <h3 className="truncate" data-tooltip={currentTrack.title}>{currentTrack.title}</h3>
+            <h3 className="truncate">{currentTrack.title}</h3>
             <div
               className="queue-current-sub truncate"
-              data-tooltip={currentTrack.artist}
               style={{ cursor: currentTrack.artistId ? 'pointer' : 'default' }}
               onClick={() => currentTrack.artistId && navigate(`/artist/${currentTrack.artistId}`)}
             >{currentTrack.artist}</div>
             <div
               className="queue-current-sub truncate"
-              data-tooltip={currentTrack.album}
               style={{ cursor: currentTrack.albumId ? 'pointer' : 'default' }}
               onClick={() => currentTrack.albumId && navigate(`/album/${currentTrack.albumId}`)}
             >{currentTrack.album}</div>

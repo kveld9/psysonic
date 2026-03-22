@@ -32,7 +32,7 @@ const THEME_GROUPS: { group: string; themes: ThemeDef[] }[] = [
     ],
   },
   {
-    group: 'Betriebssysteme',
+    group: 'Operating Systems',
     themes: [
       { id: 'cupertino-light', label: 'Cupertino Light', bg: '#ffffff', card: '#f2f2f7', accent: '#0071e3' },
       { id: 'cupertino-dark',  label: 'Cupertino Dark',  bg: '#1e1e1f', card: '#2d2d2f', accent: '#007aff' },
@@ -75,6 +75,16 @@ const THEME_GROUPS: { group: string; themes: ThemeDef[] }[] = [
       { id: 'tokyo-night',       label: 'Standard', bg: '#1a1b26', card: '#24283b', accent: '#7aa2f7' },
       { id: 'tokyo-night-storm', label: 'Storm',    bg: '#24283b', card: '#2f334d', accent: '#7aa2f7' },
       { id: 'tokyo-night-light', label: 'Light',    bg: '#d5d6db', card: '#e9e9ec', accent: '#34548a' },
+    ],
+  },
+  {
+    group: 'Movies',
+    themes: [
+      { id: 'middle-earth', label: 'Middle Earth', bg: '#f4e4bc', card: '#2a1d15', accent: '#d4af37' },
+      { id: 'morpheus',     label: 'Morpheus',     bg: '#0a0a0a', card: '#000000', accent: '#00ff41' },
+      { id: 'pandora',      label: 'Pandora',      bg: '#0c1b22', card: '#142b35', accent: '#00f2ff' },
+      { id: 'stark-hud',   label: 'Stark HUD',    bg: '#0b0f15', card: '#05070a', accent: '#00f2ff' },
+      { id: 'blade',       label: 'Blade',        bg: '#121212', card: '#050505', accent: '#b30000' },
     ],
   },
 ];

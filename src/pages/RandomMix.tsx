@@ -351,7 +351,7 @@ export default function RandomMix() {
                   <button className="btn btn-ghost" style={{ padding: 4 }} onClick={e => { e.stopPropagation(); playTrack(song, genreMixSongs); }}>
                     <Play size={14} fill="currentColor" />
                   </button>
-                  <div className="track-info"><span className="track-title" data-tooltip={song.title}>{song.title}</span></div>
+                  <div className="track-info"><span className="track-title">{song.title}</span></div>
                   <div className="track-artist-cell"><span className="track-artist">{song.artist}</span></div>
                   <div className="track-info"><span className="track-title" style={{ fontSize: '0.85rem', color: 'var(--subtext0)' }}>{song.album}</span></div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.genre ?? '—'}</div>
@@ -415,15 +415,15 @@ export default function RandomMix() {
               </button>
 
               <div className="track-info">
-                <span className="track-title" data-tooltip={song.title}>{song.title}</span>
+                <span className="track-title">{song.title}</span>
               </div>
 
               <div className="track-artist-cell">
-                <span className="track-artist" data-tooltip={song.artist}>{song.artist}</span>
+                <span className="track-artist">{song.artist}</span>
               </div>
 
               <div className="track-info">
-                <span className="track-title" style={{ fontSize: '0.85rem', color: 'var(--subtext0)' }} data-tooltip={song.album}>{song.album}</span>
+                <span className="track-title" style={{ fontSize: '0.85rem', color: 'var(--subtext0)' }}>{song.album}</span>
               </div>
 
               {(() => {

@@ -167,7 +167,7 @@ export async function getAlbumList(
   offset = 0,
   extra: Record<string, unknown> = {}
 ): Promise<SubsonicAlbum[]> {
-  const data = await api<{ albumList2: { album: SubsonicAlbum[] } }>('getAlbumList2.view', { type, size, offset, ...extra });
+  const data = await api<{ albumList2: { album: SubsonicAlbum[] } }>('getAlbumList2.view', { type, size, offset, _t: Date.now(), ...extra });
   return data.albumList2?.album ?? [];
 }
 

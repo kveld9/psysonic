@@ -75,7 +75,6 @@ export default function PlayerBar() {
         <div className="player-track-meta">
           <div
             className="player-track-name"
-            data-tooltip={currentTrack?.title ?? ''}
             style={{ cursor: currentTrack?.albumId ? 'pointer' : 'default' }}
             onClick={() => currentTrack?.albumId && navigate(`/album/${currentTrack.albumId}`)}
           >
@@ -83,7 +82,6 @@ export default function PlayerBar() {
           </div>
           <div
             className="player-track-artist"
-            data-tooltip={currentTrack?.artist ?? ''}
             style={{ cursor: currentTrack?.artistId ? 'pointer' : 'default' }}
             onClick={() => currentTrack?.artistId && navigate(`/artist/${currentTrack.artistId}`)}
           >

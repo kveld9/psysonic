@@ -31,7 +31,7 @@ export default function ArtistCardLocal({ artist }: Props) {
         )}
       </div>
       <div className="artist-card-info">
-        <span className="artist-card-name" data-tooltip={artist.name}>{artist.name}</span>
+        <span className="artist-card-name">{artist.name}</span>
         {typeof artist.albumCount === 'number' && (
           <span className="artist-card-meta">
             {artist.albumCount} {artist.albumCount === 1 ? 'Album' : 'Alben'}

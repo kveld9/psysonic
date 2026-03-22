@@ -212,11 +212,11 @@ export default function Settings() {
   };
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: 'server',      label: t('settings.tabServer'),      icon: <Server size={15} /> },
+    { id: 'appearance',  label: t('settings.tabAppearance'),  icon: <Palette size={15} /> },
     { id: 'playback',    label: t('settings.tabPlayback'),    icon: <Play size={15} /> },
     { id: 'library',     label: t('settings.tabLibrary'),     icon: <Shuffle size={15} /> },
-    { id: 'appearance',  label: t('settings.tabAppearance'),  icon: <Palette size={15} /> },
     { id: 'shortcuts',   label: t('settings.tabShortcuts'),   icon: <Keyboard size={15} /> },
-    { id: 'server',      label: t('settings.tabServer'),      icon: <Server size={15} /> },
     { id: 'about',       label: t('settings.tabAbout'),       icon: <Info size={15} /> },
   ];
 
@@ -331,11 +331,8 @@ export default function Settings() {
               {/* Gapless */}
               <div className="settings-toggle-row">
                 <div>
-                  <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ fontWeight: 500 }}>
                     {t('settings.gapless')}
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--accent)', color: 'var(--ctp-base)', opacity: 0.85, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                      {t('settings.experimental')}
-                    </span>
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.gaplessDesc')}</div>
                 </div>
@@ -470,16 +467,6 @@ export default function Settings() {
         <>
           <section className="settings-section">
             <div className="settings-section-header">
-              <Palette size={18} />
-              <h2>{t('settings.theme')}</h2>
-            </div>
-            <div className="settings-card">
-              <ThemePicker value={theme.theme} onChange={v => theme.setTheme(v as any)} />
-            </div>
-          </section>
-
-          <section className="settings-section">
-            <div className="settings-section-header">
               <Globe size={18} />
               <h2>{t('settings.language')}</h2>
             </div>
@@ -496,6 +483,16 @@ export default function Settings() {
                   ]}
                 />
               </div>
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <Palette size={18} />
+              <h2>{t('settings.theme')}</h2>
+            </div>
+            <div className="settings-card">
+              <ThemePicker value={theme.theme} onChange={v => theme.setTheme(v as any)} />
             </div>
           </section>
 

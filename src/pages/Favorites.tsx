@@ -106,7 +106,7 @@ export default function Favorites() {
                         {i + 1}
                       </div>
                       <div className="track-info">
-                        <span className="track-title" data-tooltip={song.title}>{song.title}</span>
+                        <span className="track-title">{song.title}</span>
                       </div>
                       <div className="track-artist-cell">
                         <span

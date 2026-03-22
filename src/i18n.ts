@@ -64,6 +64,8 @@ const enTranslation = {
     goToArtist: 'Go to Artist',
     readMore: 'Read more',
     showLess: 'Show less',
+    genreInfo: 'Genre',
+    trackInfo: 'Track Info',
   },
   contextMenu: {
     playNow: 'Play Now',
@@ -590,6 +592,8 @@ const deTranslation = {
     goToArtist: 'Zum Künstler',
     readMore: 'Mehr lesen',
     showLess: 'Weniger anzeigen',
+    genreInfo: 'Genre',
+    trackInfo: 'Track-Info',
   },
   contextMenu: {
     playNow: 'Direkt abspielen',
@@ -1116,6 +1120,8 @@ const frTranslation = {
     goToArtist: "Aller à l'artiste",
     readMore: 'Lire la suite',
     showLess: 'Réduire',
+    genreInfo: 'Genre',
+    trackInfo: 'Infos piste',
   },
   contextMenu: {
     playNow: 'Lire maintenant',
@@ -1642,6 +1648,8 @@ const nlTranslation = {
     goToArtist: 'Naar artiest',
     readMore: 'Meer lezen',
     showLess: 'Minder tonen',
+    genreInfo: 'Genre',
+    trackInfo: 'Trackinfo',
   },
   contextMenu: {
     playNow: 'Nu afspelen',

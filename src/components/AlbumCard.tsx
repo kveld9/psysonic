@@ -59,8 +59,8 @@ export default function AlbumCard({ album }: AlbumCardProps) {
         </div>
       </div>
       <div className="album-card-info">
-        <p className="album-card-title truncate" data-tooltip={album.name}>{album.name}</p>
-        <p className="album-card-artist truncate" data-tooltip={album.artist}>{album.artist}</p>
+        <p className="album-card-title truncate">{album.name}</p>
+        <p className="album-card-artist truncate">{album.artist}</p>
         {album.year && <p className="album-card-year">{album.year}</p>}
       </div>
     </div>

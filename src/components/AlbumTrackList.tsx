@@ -144,7 +144,7 @@ export default function AlbumTrackList({
                       : (song.track ?? i + 1)}
               </div>
               <div className="track-info">
-                <span className="track-title" data-tooltip={song.title}>{song.title}</span>
+                <span className="track-title">{song.title}</span>
               </div>
               {hasVariousArtists && (
                 <div className="track-artist-cell">

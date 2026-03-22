@@ -13,6 +13,9 @@ export default function TooltipPortal() {
   const boxRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0 });
 
+  const tooltipRef = useRef<TooltipState | null>(null);
+  tooltipRef.current = tooltip;
+
   useEffect(() => {
     const onOver = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest('[data-tooltip]') as HTMLElement | null;
@@ -26,15 +29,19 @@ export default function TooltipPortal() {
         wrap: target.hasAttribute('data-tooltip-wrap'),
       });
     };
-    const onOut = (e: MouseEvent) => {
+    const onOut = () => setTooltip(null);
+    const onMove = (e: MouseEvent) => {
+      if (!tooltipRef.current) return;
       const target = (e.target as HTMLElement).closest('[data-tooltip]');
-      if (target) setTooltip(null);
+      if (!target) setTooltip(null);
     };
     document.addEventListener('mouseover', onOver);
     document.addEventListener('mouseout', onOut);
+    document.addEventListener('mousemove', onMove, { passive: true });
     return () => {
       document.removeEventListener('mouseover', onOver);
       document.removeEventListener('mouseout', onOut);
+      document.removeEventListener('mousemove', onMove);
     };
   }, []);
 

@@ -11,7 +11,7 @@ interface FontState {
 export const useFontStore = create<FontState>()(
   persist(
     (set) => ({
-      font: 'inter',
+      font: 'lexend',
       setFont: (font) => set({ font }),
     }),
     { name: 'psysonic_font' }

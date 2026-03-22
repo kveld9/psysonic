@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-03-22
+
+### Added
+
+#### Five New Themes — Movies
+- **Middle Earth**: Warm parchment light theme. Cream/beige background, dark ebony player and sidebar, gold accent (`#d4af37`). Georgia serif for track names, subtle noise texture.
+- **Morpheus**: Pure black terminal aesthetic inspired by The Matrix. Phosphor green accent (`#00ff41`), monospace font.
+- **Pandora**: Deep bioluminescent navy inspired by Avatar. Cyan accent (`#00f2ff`), large radii, glow effects.
+- **Stark HUD**: Near-black tactical HUD inspired by Iron Man. Cyan accent, JetBrains Mono, uppercase track name.
+- **Blade**: Deep black with blood-red accent (`#b30000`). Sharp radii, uppercase track name.
+- All five themes in a new **Movies** group in the theme picker.
+
+### Changed
+
+- **Settings — tab order**: Reordered to Server → Appearance → Playback → Library → Shortcuts → About.
+- **Settings — Appearance**: Language selector moved to the top of the tab, above Theme and Font.
+- **Settings — Theme picker**: "Betriebssysteme" group renamed to "Operating Systems".
+- **Default font**: Changed from Inter to **Lexend** for new installations.
+- **Gapless playback**: Experimental badge removed — gapless is now considered stable.
+- **Now Playing — background**: Ken Burns animation (40 s, subtle scale + translate). Background blur increased to eliminate JPEG block artefacts at high blur values.
+- **Now Playing — Similar Artists**: Tag cloud redesigned into 2 rows with varied font sizes and vertical offsets for a natural look.
+- **Statistics**: "Now Playing" indicator rendered as a styled badge matching the app's badge style.
+
 ## [1.10.0] - 2026-03-22
 
 ### Added

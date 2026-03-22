@@ -45,7 +45,7 @@ Designed specifically for users hosting their own music via Navidrome or other S
 - [x] 10-band graphic EQ with built-in and custom presets
 - [x] Crossfade between tracks
 - [x] Replay Gain (track + album mode)
-- [x] Gapless playback *(experimental)*
+- [x] Gapless playback
 - [x] Waveform seekbar
 - [x] Last.fm scrobbling, Now Playing & love/unlove *(beta)*
 - [x] Similar Artists via Last.fm, filtered to library
@@ -53,7 +53,7 @@ Designed specifically for users hosting their own music via Navidrome or other S
 - [x] Multi-server support
 - [x] IndexedDB image caching
 - [x] Random Mix with keyword filter & Super Genre mix
-- [x] 30 themes across 7 groups: Catppuccin, Nord, Retro (Gruvbox), Tokyo Night, Betriebssysteme, Psysonic originals, Psysonic Mediaplayer
+- [x] 35 themes across 8 groups: Catppuccin, Nord, Retro (Gruvbox), Tokyo Night, Operating Systems, Movies, Psysonic originals, Psysonic Mediaplayer
 - [x] Internationalization (English, German, French, Dutch)
 - [x] AUR package (Arch / CachyOS)
 - [x] Configurable keybindings
@@ -61,7 +61,6 @@ Designed specifically for users hosting their own music via Navidrome or other S
 
 ### 🚧 In Progress
 - [ ] **Last.fm integration** — stabilising, moving out of beta
-- [ ] **Gapless playback** — edge case stabilisation
 - [ ] **Crossfade** — stability improvements
 
 ### 📋 Planned

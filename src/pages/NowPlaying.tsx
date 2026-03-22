@@ -107,30 +107,49 @@ const EQBars = memo(function EQBars({ isPlaying }: { isPlaying: boolean }) {
 // ─── Tag Cloud ────────────────────────────────────────────────────────────────
 
 interface TagCloudProps {
-  genre?: string;
-  year?: number;
   similarArtists: Array<{ id: string; name: string }>;
   onArtistClick: (id: string) => void;
 }
 
-function TagCloud({ genre, year, similarArtists, onArtistClick }: TagCloudProps) {
+function strHash(s: string): number {
+  let h = 0;
+  for (const c of s) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return h;
+}
+
+function TagCloud({ similarArtists, onArtistClick }: TagCloudProps) {
   const { t } = useTranslation();
-  const hasTags = genre || year || similarArtists.length > 0;
-  if (!hasTags) return null;
+  if (similarArtists.length === 0) return null;
+
+  const getTagStyle = (name: string, idx: number): React.CSSProperties => {
+    const h = strHash(name);
+    const sizePool = [12, 13, 14, 15, 16, 17, 18, 20, 22];
+    const size = sizePool[(h + idx * 7) % sizePool.length];
+    const weight = size >= 19 ? 700 : size >= 16 ? 500 : 400;
+    const pad = size >= 18 ? '7px 15px' : size >= 15 ? '6px 12px' : '5px 10px';
+    const opacity = 0.6 + ((h % 5) * 0.08);
+    const verticals = [-10, -6, -3, 0, 4, 7, 10, -8, 3, -4, 8, -1, 5, -7, 2];
+    const ty = verticals[(h + idx * 4) % verticals.length];
+    return { fontSize: `${size}px`, fontWeight: weight, padding: pad, opacity, transform: `translateY(${ty}px)` };
+  };
 
   return (
     <div className="np-tag-cloud">
-      {genre && <span className="np-tag np-tag-accent">{genre}</span>}
-      {year && <span className="np-tag">{year}</span>}
-      {similarArtists.slice(0, 6).map(a => (
-        <span
-          key={a.id}
-          className="np-tag np-tag-clickable"
-          onClick={() => onArtistClick(a.id)}
-          data-tooltip={t('nowPlaying.goToArtist')}
-        >
-          {a.name}
-        </span>
+      <div className="np-tag-cloud-header">{t('artistDetail.similarArtists')}</div>
+      {([similarArtists.slice(0, 3), similarArtists.slice(3, 6)] as const).map((row, rowIdx) => (
+        <div key={rowIdx} className="np-tag-cloud-tags" style={rowIdx === 0 ? { marginBottom: '26px' } : undefined}>
+          {row.map((a, i) => (
+            <span
+              key={a.id}
+              className="np-tag np-tag-clickable"
+              style={getTagStyle(a.name, rowIdx * 3 + i)}
+              onClick={() => onArtistClick(a.id)}
+              data-tooltip={t('nowPlaying.goToArtist')}
+            >
+              {a.name}
+            </span>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -165,6 +184,53 @@ const NpBg = memo(function NpBg({ url }: { url: string }) {
   );
 });
 
+// ─── Album Tracklist ──────────────────────────────────────────────────────────
+
+interface NpTrackListProps {
+  albumTracks: SubsonicSong[];
+  currentTrackId: string;
+  album: string;
+  albumId?: string;
+  onNavigate: (path: string) => void;
+}
+
+const NpTrackList = memo(function NpTrackList({ albumTracks, currentTrackId, album, albumId, onNavigate }: NpTrackListProps) {
+  const { t } = useTranslation();
+  if (albumTracks.length === 0) return null;
+  return (
+    <div className="np-info-card">
+      <div className="np-card-header">
+        <h3 className="np-card-title">{t('nowPlaying.fromAlbum')}: <em style={{ fontStyle: 'normal', color: 'rgba(255,255,255,0.6)' }}>{album}</em></h3>
+        {albumId && (
+          <button className="np-card-link" onClick={() => onNavigate(`/album/${albumId}`)}>
+            {t('nowPlaying.viewAlbum')} <ExternalLink size={12} />
+          </button>
+        )}
+      </div>
+      <div className="np-album-tracklist">
+        {albumTracks.map(track => {
+          const isActive = track.id === currentTrackId;
+          return (
+            <div key={track.id}
+              className={`np-album-track${isActive ? ' active' : ''}`}
+              onClick={() => albumId && onNavigate(`/album/${albumId}`)}
+            >
+              <span className="np-album-track-num">
+                {isActive
+                  ? <Star size={10} fill="var(--accent)" color="var(--accent)" />
+                  : track.track ?? '—'
+                }
+              </span>
+              <span className="np-album-track-title truncate">{track.title}</span>
+              <span className="np-album-track-dur">{formatTime(track.duration)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function NowPlaying() {
@@ -173,6 +239,8 @@ export default function NowPlaying() {
 
   const currentTrack    = usePlayerStore(s => s.currentTrack);
   const isPlaying       = usePlayerStore(s => s.isPlaying);
+
+  const stableNavigate = useCallback((path: string) => navigate(path), [navigate]);
 
   // Extra song metadata
   const [songMeta, setSongMeta] = useState<SubsonicSong | null>(null);
@@ -213,6 +281,42 @@ export default function NowPlaying() {
   const coverKey      = currentTrack?.coverArt ? coverArtCacheKey(currentTrack.coverArt, 800) : '';
   const resolvedCover = useCachedUrl(coverFetchUrl, coverKey);
 
+  // Ambilight — sample 8 zones (4 corners + 4 edge midpoints)
+  const [ambilightColors, setAmbilightColors] = useState({
+    tl: '0,0,0', tc: '0,0,0', tr: '0,0,0',
+    ml: '0,0,0',                             mr: '0,0,0',
+    bl: '0,0,0', bc: '0,0,0', br: '0,0,0',
+  });
+  useEffect(() => {
+    if (!resolvedCover) return;
+    const img = new Image();
+    img.onload = () => {
+      const S = 30;
+      const canvas = document.createElement('canvas');
+      canvas.width = S; canvas.height = S;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, S, S);
+      const data = ctx.getImageData(0, 0, S, S).data;
+      const t = Math.floor(S * 0.25), m = Math.floor(S * 0.5), b2 = Math.floor(S * 0.75);
+      const avg = (x0: number, y0: number, x1: number, y1: number) => {
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+          const i = (y * S + x) * 4;
+          r += data[i]; g += data[i+1]; b += data[i+2]; n++;
+        }
+        return `${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)}`;
+      };
+      setAmbilightColors({
+        tl: avg(0, 0, t, t),         tc: avg(t, 0, b2, t),        tr: avg(b2, 0, S, t),
+        ml: avg(0, t, t, b2),                                       mr: avg(b2, t, S, b2),
+        bl: avg(0, b2, t, S),        bc: avg(t, b2, b2, S),        br: avg(b2, b2, S, S),
+      });
+    };
+    img.src = resolvedCover;
+  }, [resolvedCover]);
+
+
   const similarArtists = artistInfo?.similarArtist ?? [];
 
   return (
@@ -225,17 +329,10 @@ export default function NowPlaying() {
             {/* ── Hero Card ── */}
             <div className="np-hero-card">
 
-              {/* Left: cover + meta info */}
+              {/* Left: meta info */}
               <div className="np-hero-left">
-                <div className="np-hero-cover-wrap">
-                  {resolvedCover && <img src={resolvedCover} alt="" className="np-cover-glow" aria-hidden />}
-                  {resolvedCover
-                    ? <img src={resolvedCover} alt="" className="np-cover" />
-                    : <div className="np-cover np-cover-fallback"><Music size={52} /></div>
-                  }
-                </div>
                 <div className="np-hero-info">
-                  <div className="np-title">{currentTrack.title}</div>
+                  <div className="np-title" style={{ color: 'var(--accent)' }}>{currentTrack.title}</div>
                   <div className="np-artist-album">
                     <span className="np-link"
                       onClick={() => currentTrack.artistId && navigate(`/artist/${currentTrack.artistId}`)}
@@ -263,13 +360,30 @@ export default function NowPlaying() {
                 </div>
               </div>
 
-              {/* Center: EQ bars */}
-              <EQBars isPlaying={isPlaying} />
+              {/* Center: cover */}
+              <div className="np-hero-cover-wrap">
+                <div style={{
+                  position: 'absolute', inset: '-20px', zIndex: 0,
+                  background: `
+                    radial-gradient(circle at 0%   0%,   rgba(${ambilightColors.tl},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 50%  0%,   rgba(${ambilightColors.tc},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 100% 0%,   rgba(${ambilightColors.tr},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 0%   50%,  rgba(${ambilightColors.ml},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 100% 50%,  rgba(${ambilightColors.mr},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 0%   100%, rgba(${ambilightColors.bl},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 50%  100%, rgba(${ambilightColors.bc},0.85) 0%, transparent 55%),
+                    radial-gradient(circle at 100% 100%, rgba(${ambilightColors.br},0.85) 0%, transparent 55%)
+                  `,
+                  filter: 'blur(28px)',
+                }} />
+                {resolvedCover
+                  ? <img src={resolvedCover} alt="" className="np-cover" style={{ position: 'relative', zIndex: 1 }} />
+                  : <div className="np-cover np-cover-fallback" style={{ position: 'relative', zIndex: 1 }}><Music size={52} /></div>
+                }
+              </div>
 
               {/* Right: tag cloud */}
               <TagCloud
-                genre={songMeta?.genre}
-                year={currentTrack.year}
                 similarArtists={similarArtists}
                 onArtistClick={id => navigate(`/artist/${id}`)}
               />
@@ -306,39 +420,13 @@ export default function NowPlaying() {
               </div>
             )}
 
-            {/* ── From this Album ── */}
-            {albumTracks.length > 0 && (
-              <div className="np-info-card">
-                <div className="np-card-header">
-                  <h3 className="np-card-title">{t('nowPlaying.fromAlbum')}: <em style={{ fontStyle: 'normal', color: 'rgba(255,255,255,0.6)' }}>{currentTrack.album}</em></h3>
-                  {currentTrack.albumId && (
-                    <button className="np-card-link" onClick={() => navigate(`/album/${currentTrack.albumId}`)}>
-                      {t('nowPlaying.viewAlbum')} <ExternalLink size={12} />
-                    </button>
-                  )}
-                </div>
-                <div className="np-album-tracklist">
-                  {albumTracks.map(track => {
-                    const isActive = track.id === currentTrack.id;
-                    return (
-                      <div key={track.id}
-                        className={`np-album-track${isActive ? ' active' : ''}`}
-                        onClick={() => currentTrack.albumId && navigate(`/album/${currentTrack.albumId}`)}
-                      >
-                        <span className="np-album-track-num">
-                          {isActive
-                            ? <Star size={10} fill="var(--accent)" color="var(--accent)" />
-                            : track.track ?? '—'
-                          }
-                        </span>
-                        <span className="np-album-track-title truncate">{track.title}</span>
-                        <span className="np-album-track-dur">{formatTime(track.duration)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <NpTrackList
+              albumTracks={albumTracks}
+              currentTrackId={currentTrack.id}
+              album={currentTrack.album}
+              albumId={currentTrack.albumId}
+              onNavigate={stableNavigate}
+            />
           </>
         ) : (
           <div className="np-empty-state">

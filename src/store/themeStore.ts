@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type Theme = 'mocha' | 'macchiato' | 'frappe' | 'latte' | 'nord' | 'nord-snowstorm' | 'nord-frost' | 'nord-aurora' | 'psychowave' | 'wnamp' | 'poison' | 'nucleo' | 'navy-jukebox' | 'cobalt-media' | 'onyx-cinema' | 'vintage-tube-radio' | 'neon-drift' | 'aero-glass' | 'luna-teal' | 'cupertino-light' | 'cupertino-dark' | 'gruvbox-dark-hard' | 'gruvbox-dark-medium' | 'gruvbox-dark-soft' | 'gruvbox-light-hard' | 'gruvbox-light-medium' | 'gruvbox-light-soft' | 'tokyo-night' | 'tokyo-night-storm' | 'tokyo-night-light' | 'spotless' | 'dzr0' | 'cupertino-beats';
+type Theme = 'mocha' | 'macchiato' | 'frappe' | 'latte' | 'nord' | 'nord-snowstorm' | 'nord-frost' | 'nord-aurora' | 'psychowave' | 'wnamp' | 'poison' | 'nucleo' | 'navy-jukebox' | 'cobalt-media' | 'onyx-cinema' | 'vintage-tube-radio' | 'neon-drift' | 'aero-glass' | 'luna-teal' | 'cupertino-light' | 'cupertino-dark' | 'gruvbox-dark-hard' | 'gruvbox-dark-medium' | 'gruvbox-dark-soft' | 'gruvbox-light-hard' | 'gruvbox-light-medium' | 'gruvbox-light-soft' | 'tokyo-night' | 'tokyo-night-storm' | 'tokyo-night-light' | 'spotless' | 'dzr0' | 'cupertino-beats' | 'middle-earth' | 'morpheus' | 'pandora' | 'stark-hud' | 'blade';
 
 interface ThemeState {
   theme: Theme;
