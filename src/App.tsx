@@ -135,9 +135,9 @@ function AppShell() {
       } as React.CSSProperties}
       onContextMenu={e => e.preventDefault()}
     >
-      <Sidebar 
-        isCollapsed={isSidebarCollapsed} 
-        toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
       <main className="main-content">
         <header className="content-header">
@@ -147,12 +147,12 @@ function AppShell() {
           <LastfmIndicator />
           <NowPlayingDropdown />
           <button
-            className="collapse-btn"
+            className="queue-toggle-btn"
             onClick={toggleQueue}
             data-tooltip={t('player.toggleQueue')}
             data-tooltip-pos="bottom"
           >
-            {isQueueVisible ? <PanelRightClose size={24} /> : <PanelRight size={24} />}
+            {isQueueVisible ? <PanelRightClose size={18} /> : <PanelRight size={18} />}
           </button>
         </header>
         <div className="content-body" style={{ padding: 0, position: 'relative' }}>

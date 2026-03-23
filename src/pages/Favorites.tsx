@@ -67,7 +67,7 @@ export default function Favorites() {
                     const tracks = songs.map(s => ({
                       id: s.id, title: s.title, artist: s.artist, album: s.album,
                       albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt,
-                      track: s.track, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+                      track: s.track, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
                     }));
                     enqueue(tracks);
                   }}
@@ -87,7 +87,7 @@ export default function Favorites() {
                   const track = {
                     id: song.id, title: song.title, artist: song.artist, album: song.album,
                     albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt,
-                    track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred,
+                    track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred, genre: song.genre,
                   };
                   return (
                     <div

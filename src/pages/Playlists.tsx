@@ -63,7 +63,7 @@ export default function Playlists() {
         id: s.id, title: s.title, artist: s.artist, album: s.album,
         albumId: s.albumId, artistId: s.artistId, duration: s.duration,
         coverArt: s.coverArt, track: s.track, year: s.year,
-        bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+        bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
       }));
       if (tracks.length > 0) { clearQueue(); playTrack(tracks[0], tracks); }
     } catch (e) { console.error('Failed to play playlist', e); }

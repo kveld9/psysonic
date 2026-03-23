@@ -9,7 +9,6 @@
     "sidebar main queue"
     "player  player player";
   height: 100vh;
-  overflow: hidden;
   background: var(--bg-app);
 }
 
@@ -39,6 +38,7 @@
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   position: relative;
+  z-index: 2;
 }
 
 .sidebar-brand {
@@ -186,12 +186,12 @@
 
 .collapse-btn {
   position: absolute;
-  top: 50%;
-  right: -13px;
+  top: calc(50% - var(--player-height) / 2);
+  left: calc(var(--sidebar-width) - 11px);
   transform: translateY(-50%);
   z-index: 101;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
@@ -200,19 +200,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   box-shadow: var(--shadow-sm);
-}
-
-.sidebar:hover .collapse-btn {
-  opacity: 1;
 }
 
 .collapse-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
   box-shadow: var(--shadow-md);
+}
+
+.queue-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.queue-toggle-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 /* ─── Update Toast ─── */
@@ -749,13 +764,18 @@
 }
 
 .queue-current-track {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.queue-current-track-body {
   padding: var(--space-3) var(--space-4);
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: var(--space-3);
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-subtle);
 }
 
 .queue-current-cover {
@@ -803,17 +823,18 @@
 }
 
 .queue-current-tech {
-  position: absolute;
-  top: 0;
-  right: 0;
+  width: 100%;
   font-size: 9px;
   font-family: monospace;
   letter-spacing: 0.05em;
   background: var(--ctp-surface1);
   color: var(--accent);
-  padding: 2px 6px;
-  border-radius: 0 0 0 var(--radius-sm);
+  padding: 3px var(--space-4);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  backdrop-filter: blur(8px);
 }
 
 .queue-divider {

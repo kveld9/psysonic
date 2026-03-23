@@ -24,6 +24,7 @@ export interface Track {
   replayGainAlbumDb?: number;
   replayGainPeak?: number;
   starred?: string;
+  genre?: string;
 }
 
 export function songToTrack(song: SubsonicSong): Track {
@@ -45,6 +46,7 @@ export function songToTrack(song: SubsonicSong): Track {
     replayGainAlbumDb: song.replayGain?.albumGain,
     replayGainPeak: song.replayGain?.trackPeak,
     starred: song.starred,
+    genre: song.genre,
   };
 }
 

@@ -58,7 +58,7 @@ export default function LiveSearch() {
     ...(results.artists.map(a => ({ id: a.id, action: () => { navigate(`/artist/${a.id}`); setOpen(false); setQuery(''); } }))),
     ...(results.albums.map(a => ({ id: a.id, action: () => { navigate(`/album/${a.id}`); setOpen(false); setQuery(''); } }))),
     ...(results.songs.map(s => ({ id: s.id, action: () => {
-      playTrack({ id: s.id, title: s.title, artist: s.artist, album: s.album, albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating });
+      playTrack({ id: s.id, title: s.title, artist: s.artist, album: s.album, albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre });
       setOpen(false); setQuery('');
     }}))),
   ] : [];
@@ -176,7 +176,7 @@ export default function LiveSearch() {
                     return (
                       <button key={s.id} className={`search-result-item${activeIndex === i ? ' active' : ''}`}
                         onClick={() => {
-                          playTrack({ id: s.id, title: s.title, artist: s.artist, album: s.album, albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating });
+                          playTrack({ id: s.id, title: s.title, artist: s.artist, album: s.album, albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre });
                           setOpen(false); setQuery('');
                         }}
                         role="option" aria-selected={activeIndex === i}>

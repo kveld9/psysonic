@@ -61,7 +61,7 @@ function UpdateToast({ isCollapsed, latestVersion }: { isCollapsed: boolean; lat
 
 export default function Sidebar({
   isCollapsed = false,
-  toggleCollapse
+  toggleCollapse,
 }: {
   isCollapsed?: boolean;
   toggleCollapse?: () => void;

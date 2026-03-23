@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-03-23
+
+### Added
+
+- **Queue — Genre · Format · Bitrate Strip**: The meta box above the queue now shows a full-width frosted strip with Genre, audio format, and bitrate (e.g. `Electronic · FLAC · 1411 kbps`). Genre is sourced directly from track metadata and is now propagated through all 11 track construction sites across the codebase.
+- **Lyrics — Accent Color Highlight**: The active synced lyrics line is now highlighted in the theme accent color instead of bold+larger text. Eliminates layout jumps caused by the font-weight change pushing lines to wrap.
+
+### Fixed
+
+- **Sidebar — Collapse Button**: The collapse button now correctly sits on the right border of the sidebar, straddling the dividing line between sidebar and main content, and is always visible.
+
+### Changed
+
+- **Queue — Tech Info**: Codec/bitrate badge replaced by the new full-width Genre · Format · Bitrate strip at the top of the meta box.
+
+---
+
 ## [1.14.0] - 2026-03-22
 
 ### Critical Fixes

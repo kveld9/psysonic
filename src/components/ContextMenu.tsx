@@ -69,7 +69,7 @@ export default function ContextMenu() {
         const radioTracks = [...top, ...similar].map(s => ({
           id: s.id, title: s.title, artist: s.artist, album: s.album,
           albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-          year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+          year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
         }));
         playTrack(radioTracks[0], radioTracks);
       }
@@ -135,7 +135,7 @@ export default function ContextMenu() {
                   const tracks = albumData.songs.map(s => ({
                     id: s.id, title: s.title, artist: s.artist, album: s.album,
                     albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-                    year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+                    year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
                   }));
                   enqueue(tracks);
                 })}>

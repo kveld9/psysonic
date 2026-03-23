@@ -342,10 +342,10 @@ export default function RandomMix() {
               {genreMixSongs.map(song => (
                 <div key={song.id} className={`track-row${contextMenuSongId === song.id ? ' context-active' : ''}`} style={{ gridTemplateColumns: '36px 1fr 1fr 1fr 120px 80px' }}
                   onDoubleClick={() => playTrack(song, genreMixSongs)} role="row" draggable
-                  onContextMenu={e => { e.preventDefault(); setContextMenuSongId(song.id); openContextMenu(e.clientX, e.clientY, { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred }, 'song'); }}
+                  onContextMenu={e => { e.preventDefault(); setContextMenuSongId(song.id); openContextMenu(e.clientX, e.clientY, { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred, genre: song.genre }, 'song'); }}
                   onDragStart={e => {
                     e.dataTransfer.effectAllowed = 'copy';
-                    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'song', track: { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating } }));
+                    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'song', track: { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, genre: song.genre } }));
                   }}
                 >
                   <button className="btn btn-ghost" style={{ padding: 4 }} onClick={e => { e.stopPropagation(); playTrack(song, genreMixSongs); }}>
@@ -391,7 +391,7 @@ export default function RandomMix() {
               draggable
               onContextMenu={e => {
                 e.preventDefault();
-                const track = { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred };
+                const track = { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred, genre: song.genre };
                 setContextMenuSongId(song.id);
                 openContextMenu(e.clientX, e.clientY, track, 'song');
               }}
@@ -400,7 +400,7 @@ export default function RandomMix() {
                 const track = {
                   id: song.id, title: song.title, artist: song.artist, album: song.album,
                   albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track,
-                  year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating,
+                  year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, genre: song.genre,
                 };
                 e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'song', track }));
               }}

@@ -35,12 +35,12 @@ export default function SearchResults() {
       id: song.id, title: song.title, artist: song.artist, album: song.album,
       albumId: song.albumId, artistId: song.artistId, duration: song.duration,
       coverArt: song.coverArt, year: song.year, bitRate: song.bitRate,
-      suffix: song.suffix, userRating: song.userRating,
+      suffix: song.suffix, userRating: song.userRating, genre: song.genre,
     }, list.map(s => ({
       id: s.id, title: s.title, artist: s.artist, album: s.album,
       albumId: s.albumId, artistId: s.artistId, duration: s.duration,
       coverArt: s.coverArt, year: s.year, bitRate: s.bitRate,
-      suffix: s.suffix, userRating: s.userRating,
+      suffix: s.suffix, userRating: s.userRating, genre: s.genre,
     })));
   };
 
@@ -99,7 +99,7 @@ export default function SearchResults() {
                         id: song.id, title: song.title, artist: song.artist, album: song.album,
                         albumId: song.albumId, artistId: song.artistId, duration: song.duration,
                         coverArt: song.coverArt, year: song.year, bitRate: song.bitRate,
-                        suffix: song.suffix, userRating: song.userRating,
+                        suffix: song.suffix, userRating: song.userRating, genre: song.genre,
                       };
                       e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'song', track }));
                     }}

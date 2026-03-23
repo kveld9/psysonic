@@ -1629,14 +1629,12 @@
   padding: 5px 8px;
   border-radius: 6px;
   line-height: 1.6;
-  transition: color 0.25s, font-size 0.2s, font-weight 0.2s;
+  transition: color 0.25s;
   cursor: default;
 }
 
 .lyrics-line.active {
-  color: var(--text-primary);
-  font-size: 15px;
-  font-weight: 600;
+  color: var(--accent);
 }
 
 .lyrics-plain {

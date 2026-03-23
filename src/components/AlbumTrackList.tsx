@@ -86,7 +86,7 @@ export default function AlbumTrackList({
     albumId: song.albumId, artistId: song.artistId, duration: song.duration,
     coverArt: song.coverArt, track: song.track, year: song.year,
     bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating,
-    starred: song.starred,
+    starred: song.starred, genre: song.genre,
   });
 
   return (

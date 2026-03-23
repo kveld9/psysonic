@@ -270,7 +270,7 @@ export default function QueuePanel() {
       const tracks: Track[] = albumData.songs.map(s => ({
         id: s.id, title: s.title, artist: s.artist, album: s.album,
         albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-        year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+        year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
       }));
       enqueue(tracks);
     }
@@ -318,36 +318,41 @@ export default function QueuePanel() {
       </div>
 
       {currentTrack && (
-        <div className="queue-current-track" style={{ position: 'relative' }}>
-          {(currentTrack.bitRate || currentTrack.suffix) && (
+        <div className="queue-current-track">
+          {(currentTrack.genre || currentTrack.suffix || currentTrack.bitRate) && (
             <div className="queue-current-tech">
-              {currentTrack.suffix?.toUpperCase() ?? ''}
-              {currentTrack.bitRate ? ` · ${currentTrack.bitRate}` : ''}
+              {[
+                currentTrack.genre,
+                currentTrack.suffix?.toUpperCase(),
+                currentTrack.bitRate ? `${currentTrack.bitRate} kbps` : undefined,
+              ].filter(Boolean).join(' · ')}
             </div>
           )}
-          <div className="queue-current-cover">
-            {currentTrack.coverArt ? (
-              <img src={buildCoverArtUrl(currentTrack.coverArt, 128)} alt="" loading="eager" />
-            ) : (
-              <div className="fallback"><Music size={32} /></div>
-            )}
-          </div>
-          <div className="queue-current-info">
-            <h3 className="truncate">{currentTrack.title}</h3>
-            <div
-              className="queue-current-sub truncate"
-              style={{ cursor: currentTrack.artistId ? 'pointer' : 'default' }}
-              onClick={() => currentTrack.artistId && navigate(`/artist/${currentTrack.artistId}`)}
-            >{currentTrack.artist}</div>
-            <div
-              className="queue-current-sub truncate"
-              style={{ cursor: currentTrack.albumId ? 'pointer' : 'default' }}
-              onClick={() => currentTrack.albumId && navigate(`/album/${currentTrack.albumId}`)}
-            >{currentTrack.album}</div>
-            {currentTrack.year && (
-              <div className="queue-current-sub">{currentTrack.year}</div>
-            )}
-            {renderStars(currentTrack.userRating)}
+          <div className="queue-current-track-body">
+            <div className="queue-current-cover">
+              {currentTrack.coverArt ? (
+                <img src={buildCoverArtUrl(currentTrack.coverArt, 128)} alt="" loading="eager" />
+              ) : (
+                <div className="fallback"><Music size={32} /></div>
+              )}
+            </div>
+            <div className="queue-current-info">
+              <h3 className="truncate">{currentTrack.title}</h3>
+              <div
+                className="queue-current-sub truncate"
+                style={{ cursor: currentTrack.artistId ? 'pointer' : 'default' }}
+                onClick={() => currentTrack.artistId && navigate(`/artist/${currentTrack.artistId}`)}
+              >{currentTrack.artist}</div>
+              <div
+                className="queue-current-sub truncate"
+                style={{ cursor: currentTrack.albumId ? 'pointer' : 'default' }}
+                onClick={() => currentTrack.albumId && navigate(`/album/${currentTrack.albumId}`)}
+              >{currentTrack.album}</div>
+              {currentTrack.year && (
+                <div className="queue-current-sub">{currentTrack.year}</div>
+              )}
+              {renderStars(currentTrack.userRating)}
+            </div>
           </div>
         </div>
       )}
@@ -524,7 +529,7 @@ export default function QueuePanel() {
               const tracks: Track[] = data.songs.map(s => ({
                 id: s.id, title: s.title, artist: s.artist, album: s.album,
                 albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-                year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+                year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
               }));
               if (tracks.length > 0) {
                 clearQueue();
