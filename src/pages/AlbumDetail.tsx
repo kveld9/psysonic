@@ -70,6 +70,7 @@ export default function AlbumDetail() {
       id: s.id, title: s.title, artist: s.artist, album: s.album,
       albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt,
       track: s.track, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+      starred: s.starred, genre: s.genre,
     }));
     if (tracks[0]) playTrack(tracks[0], tracks);
   };
@@ -80,6 +81,7 @@ export default function AlbumDetail() {
       id: s.id, title: s.title, artist: s.artist, album: s.album,
       albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt,
       track: s.track, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
+      starred: s.starred, genre: s.genre,
     }));
     enqueue(tracks);
   };
@@ -89,6 +91,7 @@ export default function AlbumDetail() {
       id: song.id, title: song.title, artist: song.artist, album: song.album,
       albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt,
       track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating,
+      starred: song.starred, genre: song.genre,
     };
     playTrack(track, [track]);
   };
