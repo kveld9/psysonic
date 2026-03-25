@@ -252,12 +252,18 @@ pub fn run() {
                 .build(app)?;
 
             // ── MPRIS2 / OS media controls via souvlaki ──────────────────
+            // Windows: souvlaki SMTC init requires a valid HWND and a running
+            // COM message loop, neither of which is available this early in
+            // setup(). Disabled on Windows until we can defer init post-window.
+            // mpris_set_metadata / mpris_set_playback no-op via the None branch.
+            #[cfg(target_os = "windows")]
+            app.manage(MprisControls::new(None));
+
+            #[cfg(not(target_os = "windows"))]
             {
                 use souvlaki::{MediaControlEvent, MediaControls, PlatformConfig};
 
-                // On Linux, souvlaki requires a live D-Bus session. If the env var
-                // is absent or empty (headless, test, or stripped environment),
-                // skip init entirely — commands will no-op via the None branch.
+                // On Linux, souvlaki requires a live D-Bus session.
                 #[cfg(target_os = "linux")]
                 let dbus_ok = std::env::var("DBUS_SESSION_BUS_ADDRESS")
                     .map(|v| !v.is_empty())

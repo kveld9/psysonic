@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.1] - 2026-03-25
+
+### Fixed
+
+- **Windows crash on startup**: souvlaki SMTC init in `setup()` requires a valid HWND and a running COM message loop, neither of which exists at that point. Media controls are disabled on Windows until init can be properly deferred post-window. All other functionality unaffected.
+
+---
+
 ## [1.17.0] - 2026-03-25
 
 ### Added
