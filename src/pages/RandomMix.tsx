@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getRandomSongs, getGenres, SubsonicSong, SubsonicGenre, star, unstar } from '../api/subsonic';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { useAuthStore } from '../store/authStore';
 import { Play, Star, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -101,13 +101,13 @@ export default function RandomMix() {
     return true;
   });
 
-  const handlePlayAll = () => {
-    if (selectedSuperGenre && genreMixSongs.length > 0) {
-      playTrack(genreMixSongs[0], genreMixSongs);
-    } else if (filteredSongs.length > 0) {
-      playTrack(filteredSongs[0], filteredSongs);
-    }
-  };
+const handlePlayAll = () => {
+     if (selectedSuperGenre && genreMixSongs.length > 0) {
+       playTrack(songToTrack(genreMixSongs[0]), genreMixSongs.map(songToTrack));
+     } else if (filteredSongs.length > 0) {
+       playTrack(songToTrack(filteredSongs[0]), filteredSongs.map(songToTrack));
+     }
+   };
 
   const toggleSongStar = async (song: SubsonicSong, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -343,40 +343,43 @@ export default function RandomMix() {
                 <span>{t('randomMix.trackGenre')}</span>
                 <span style={{ textAlign: 'right' }}>{t('randomMix.trackDuration')}</span>
               </div>
-              {genreMixSongs.map(song => (
-                <div key={song.id} className={`track-row${contextMenuSongId === song.id ? ' context-active' : ''}`} style={{ gridTemplateColumns: '36px 1fr 1fr 1fr 120px 80px' }}
-                  onDoubleClick={() => playTrack(song, genreMixSongs)} role="row"
-                  onContextMenu={e => { e.preventDefault(); setContextMenuSongId(song.id); openContextMenu(e.clientX, e.clientY, { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred, genre: song.genre }, 'song'); }}
-                  onMouseDown={e => {
-                    if (e.button !== 0) return;
-                    e.preventDefault();
-                    const sx = e.clientX, sy = e.clientY;
-                    const onMove = (me: MouseEvent) => {
-                      if (Math.abs(me.clientX - sx) > 5 || Math.abs(me.clientY - sy) > 5) {
-                        document.removeEventListener('mousemove', onMove);
-                        document.removeEventListener('mouseup', onUp);
-                        psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track: { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, genre: song.genre } }), label: song.title }, me.clientX, me.clientY);
-                      }
-                    };
-                    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-                    document.addEventListener('mousemove', onMove);
-                    document.addEventListener('mouseup', onUp);
-                  }}
-                >
-                  <button className="btn btn-ghost" style={{ padding: 4 }} onClick={e => { e.stopPropagation(); playTrack(song, genreMixSongs); }}>
+              {genreMixSongs.map(song => {
+                const track = songToTrack(song);
+                return (
+                  <div key={song.id} className={`track-row${contextMenuSongId === song.id ? ' context-active' : ''}`} style={{ gridTemplateColumns: '36px 1fr 1fr 1fr 120px 80px' }}
+                    onDoubleClick={() => playTrack(track, genreMixSongs.map(songToTrack))} role="row"
+                    onContextMenu={e => { e.preventDefault(); setContextMenuSongId(song.id); openContextMenu(e.clientX, e.clientY, track, 'song'); }}
+                    onMouseDown={e => {
+                      if (e.button !== 0) return;
+                      e.preventDefault();
+                      const sx = e.clientX, sy = e.clientY;
+                      const onMove = (me: MouseEvent) => {
+                        if (Math.abs(me.clientX - sx) > 5 || Math.abs(me.clientY - sy) > 5) {
+                          document.removeEventListener('mousemove', onMove);
+                          document.removeEventListener('mouseup', onUp);
+                          psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track }), label: song.title }, me.clientX, me.clientY);
+                        }
+                      };
+                      const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+                      document.addEventListener('mousemove', onMove);
+                      document.addEventListener('mouseup', onUp);
+                    }}
+                  >
+                  <button className="btn btn-ghost" style={{ padding: 4 }} onClick={e => { e.stopPropagation(); playTrack(track, genreMixSongs.map(songToTrack)); }}>
                     <Play size={14} fill="currentColor" />
                   </button>
                   <div className="track-info"><span className="track-title">{song.title}</span></div>
                   <div className="track-artist-cell"><span className="track-artist">{song.artist}</span></div>
                   <div className="track-info"><span className="track-title" style={{ fontSize: '0.85rem', color: 'var(--subtext0)' }}>{song.album}</span></div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.genre ?? '—'}</div>
-                  <span className="track-duration" style={{ textAlign: 'right' }}>{formatDuration(song.duration)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                 <span className="track-duration" style={{ textAlign: 'right' }}>{formatDuration(song.duration)}</span>
+                 </div>
+                 );
+               })}
+             </div>
+           )}
+         </div>
+       )}
 
       {!selectedSuperGenre && (loading && songs.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
@@ -396,40 +399,40 @@ export default function RandomMix() {
             <span style={{ textAlign: 'right' }}>{t('randomMix.trackDuration')}</span>
           </div>
 
-          {filteredSongs.map((song) => (
-            <div
-              key={song.id}
-              className={`track-row${contextMenuSongId === song.id ? ' context-active' : ''}`}
-              style={{ gridTemplateColumns: '36px 1fr 1fr 1fr 120px 60px 80px' }}
-              onDoubleClick={() => playTrack(song, filteredSongs)}
-              role="row"
-              onContextMenu={e => {
-                e.preventDefault();
-                const track = { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred, genre: song.genre };
-                setContextMenuSongId(song.id);
-                openContextMenu(e.clientX, e.clientY, track, 'song');
-              }}
-              onMouseDown={e => {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                const sx = e.clientX, sy = e.clientY;
-                const onMove = (me: MouseEvent) => {
-                  if (Math.abs(me.clientX - sx) > 5 || Math.abs(me.clientY - sy) > 5) {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
-                    const track = { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, genre: song.genre };
-                    psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track }), label: song.title }, me.clientX, me.clientY);
-                  }
-                };
-                const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
-              }}
-            >
+          {filteredSongs.map((song) => {
+            const track = songToTrack(song);
+            return (
+              <div
+                key={song.id}
+                className={`track-row${contextMenuSongId === song.id ? ' context-active' : ''}`}
+                style={{ gridTemplateColumns: '36px 1fr 1fr 1fr 120px 60px 80px' }}
+                onDoubleClick={() => playTrack(track, filteredSongs.map(songToTrack))}
+                role="row"
+                onContextMenu={e => {
+                  e.preventDefault();
+                  setContextMenuSongId(song.id);
+                  openContextMenu(e.clientX, e.clientY, track, 'song');
+                }}
+                onMouseDown={e => {
+                  if (e.button !== 0) return;
+                  e.preventDefault();
+                  const sx = e.clientX, sy = e.clientY;
+                  const onMove = (me: MouseEvent) => {
+                    if (Math.abs(me.clientX - sx) > 5 || Math.abs(me.clientY - sy) > 5) {
+                      document.removeEventListener('mousemove', onMove);
+                      document.removeEventListener('mouseup', onUp);
+                      psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track }), label: song.title }, me.clientX, me.clientY);
+                    }
+                  };
+                  const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+                  document.addEventListener('mousemove', onMove);
+                  document.addEventListener('mouseup', onUp);
+                }}
+              >
               <button
                 className="btn btn-ghost"
                 style={{ padding: 4 }}
-                onClick={(e) => { e.stopPropagation(); playTrack(song, filteredSongs); }}
+                onClick={(e) => { e.stopPropagation(); playTrack(songToTrack(song), filteredSongs.map(songToTrack)); }}
                 data-tooltip={t('randomMix.play')}
               >
                 <Play size={14} fill="currentColor" />
@@ -537,12 +540,13 @@ export default function RandomMix() {
               </div>
 
               <span className="track-duration" style={{ textAlign: 'right' }}>
-                {formatDuration(song.duration)}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
+               {formatDuration(song.duration)}
+               </span>
+             </div>
+             );
+           })}
+         </div>
+       ))}
 
     </div>
   );

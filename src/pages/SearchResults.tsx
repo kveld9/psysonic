@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Play, Search } from 'lucide-react';
 import { search, SearchResults as ISearchResults, SubsonicSong } from '../api/subsonic';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import AlbumRow from '../components/AlbumRow';
 import ArtistRow from '../components/ArtistRow';
 import { useTranslation } from 'react-i18next';
@@ -33,17 +33,7 @@ export default function SearchResults() {
   const hasResults = results && (results.artists.length || results.albums.length || results.songs.length);
 
   const playSong = (song: SubsonicSong, list: SubsonicSong[]) => {
-    playTrack({
-      id: song.id, title: song.title, artist: song.artist, album: song.album,
-      albumId: song.albumId, artistId: song.artistId, duration: song.duration,
-      coverArt: song.coverArt, year: song.year, bitRate: song.bitRate,
-      suffix: song.suffix, userRating: song.userRating, genre: song.genre,
-    }, list.map(s => ({
-      id: s.id, title: s.title, artist: s.artist, album: s.album,
-      albumId: s.albumId, artistId: s.artistId, duration: s.duration,
-      coverArt: s.coverArt, year: s.year, bitRate: s.bitRate,
-      suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-    })));
+    playTrack(songToTrack(song), list.map(songToTrack));
   };
 
   return (
@@ -94,16 +84,15 @@ export default function SearchResults() {
                     style={{ gridTemplateColumns: '36px minmax(100px, 2fr) minmax(80px, 1.2fr) minmax(80px, 1.2fr) 100px 60px' }}
                     onDoubleClick={() => playSong(song, results.songs)}
                     role="row"
-                    draggable={false}
                     onMouseDown={e => {
                       if (e.button !== 0) return;
                       e.preventDefault();
                       const sx = e.clientX, sy = e.clientY;
+                      const track = songToTrack(song);
                       const onMove = (me: MouseEvent) => {
                         if (Math.abs(me.clientX - sx) > 5 || Math.abs(me.clientY - sy) > 5) {
                           document.removeEventListener('mousemove', onMove);
                           document.removeEventListener('mouseup', onUp);
-                          const track = { id: song.id, title: song.title, artist: song.artist, album: song.album, albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, genre: song.genre };
                           psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track }), label: song.title }, me.clientX, me.clientY);
                         }
                       };

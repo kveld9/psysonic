@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AlbumRow from '../components/AlbumRow';
 import ArtistRow from '../components/ArtistRow';
 import { getStarred, SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../api/subsonic';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { ListPlus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -71,14 +71,10 @@ export default function Favorites() {
                 <h2 className="section-title" style={{ margin: 0 }}>{t('favorites.songs')}</h2>
                 <button
                   className="btn btn-surface"
-                  onClick={() => {
-                    const tracks = songs.map(s => ({
-                      id: s.id, title: s.title, artist: s.artist, album: s.album,
-                      albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt,
-                      track: s.track, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-                    }));
-                    enqueue(tracks);
-                  }}
+                onClick={() => {
+                     const tracks = songs.map(songToTrack);
+                     enqueue(tracks);
+                   }}
                 >
                   <ListPlus size={15} />
                   {t('favorites.enqueueAll')}
@@ -93,20 +89,15 @@ export default function Favorites() {
                   <div />
                 </div>
                 {songs.map((song, i) => {
-                  const track = {
-                    id: song.id, title: song.title, artist: song.artist, album: song.album,
-                    albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt,
-                    track: song.track, year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred, genre: song.genre,
-                  };
+                  const track = songToTrack(song);
                   return (
                     <div
                       key={song.id}
                       className="track-row track-row-va"
                       style={{ gridTemplateColumns: '40px 1fr 1fr 60px 32px' }}
-                      onDoubleClick={() => playTrack(song, songs)}
+                      onDoubleClick={() => playTrack(track, songs.map(songToTrack))}
                       onContextMenu={e => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, track, 'song'); }}
                       role="row"
-                      draggable={false}
                       onMouseDown={e => {
                         if (e.button !== 0) return;
                         e.preventDefault();
@@ -123,7 +114,7 @@ export default function Favorites() {
                         document.addEventListener('mouseup', onUp);
                       }}
                     >
-                      <div className="track-num col-center" onClick={() => playTrack(song, songs)} style={{ cursor: 'pointer' }}>
+                      <div className="track-num col-center" onClick={() => playTrack(track, songs.map(songToTrack))} style={{ cursor: 'pointer' }}>
                         {i + 1}
                       </div>
                       <div className="track-info">

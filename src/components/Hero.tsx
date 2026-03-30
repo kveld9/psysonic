@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, ListPlus } from 'lucide-react';
 import { getRandomAlbums, SubsonicAlbum, buildCoverArtUrl, coverArtCacheKey, getAlbum } from '../api/subsonic';
 import CachedImage, { useCachedUrl } from './CachedImage';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
 import { playAlbum } from '../utils/playAlbum';
 
@@ -151,18 +151,14 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
             </button>
             <button
               className="btn btn-surface"
-              onClick={async (e) => {
-                e.stopPropagation();
-                try {
-                  const albumData = await getAlbum(album.id);
-                  const tracks = albumData.songs.map(s => ({
-                    id: s.id, title: s.title, artist: s.artist, album: s.album,
-                    albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-                    year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-                  }));
-                  usePlayerStore.getState().enqueue(tracks);
-                } catch (_) { }
-              }}
+            onClick={async (e) => {
+                 e.stopPropagation();
+                 try {
+                   const albumData = await getAlbum(album.id);
+                   const tracks = albumData.songs.map(songToTrack);
+                   usePlayerStore.getState().enqueue(tracks);
+                 } catch (_) { }
+               }}
               style={{ padding: '0 1.5rem', fontWeight: 600, fontSize: '0.95rem' }}
               data-tooltip={t('hero.enqueueTooltip')}
             >

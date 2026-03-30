@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Track, usePlayerStore } from '../store/playerStore';
+import { Track, usePlayerStore, songToTrack } from '../store/playerStore';
 import { Play, Music, Star, X, Trash2, Save, FolderOpen, Shuffle, Infinity, Waves, MicVocal, ListMusic, Check } from 'lucide-react';
 import { buildCoverArtUrl, getAlbum, getPlaylists, getPlaylist, createPlaylist, updatePlaylist, deletePlaylist, SubsonicPlaylist } from '../api/subsonic';
 import { useEffect } from 'react';
@@ -151,10 +151,6 @@ function LoadPlaylistModal({ onClose, onLoad }: { onClose: () => void, onLoad: (
   );
 }
 
-// Module-level fallback for fromIdx — survives the dragend-before-drop race on
-// macOS WKWebView AND the dataTransfer.getData('') bug on Windows WebView2.
-let _dragFromIdx: number | null = null;
-
 export default function QueuePanel() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -201,18 +197,13 @@ export default function QueuePanel() {
     return () => document.removeEventListener('mousedown', handle);
   }, [showCrossfadePopover]);
 
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-  const isDraggingInternalRef = useRef(false);
-  // Refs mirror state so drop handler always reads fresh values even when
-  // macOS WKWebView fires dragend before drop (spec violation).
-  const draggedIdxRef = useRef<number | null>(null);
-  const dragOverIdxRef = useRef<number | null>(null);
+  // Tracks which queue index is being psy-dragged for opacity visual feedback
+  const psyDragFromIdxRef = useRef<number | null>(null);
 
   const queueListRef = useRef<HTMLDivElement>(null);
   const asideRef = useRef<HTMLElement>(null);
 
-  const { isDragging: isPsyDragging } = useDragDrop();
+  const { isDragging: isPsyDragging, startDrag } = useDragDrop();
 
   useEffect(() => {
     if (!isPsyDragging) {
@@ -221,8 +212,6 @@ export default function QueuePanel() {
     }
   }, [isPsyDragging]);
 
-  const [externalDragOver, setExternalDragOver] = useState(false);
-  const externalDragCounterRef = useRef(0);
   const [externalDropTarget, setExternalDropTarget] = useState<{ idx: number; before: boolean } | null>(null);
   const externalDropTargetRef = useRef<{ idx: number; before: boolean } | null>(null);
 
@@ -239,13 +228,18 @@ export default function QueuePanel() {
       try { parsedData = JSON.parse(detail.data); } catch { return; }
 
       const dropTarget = externalDropTargetRef.current;
-      const insertIdx = dropTarget
-        ? (dropTarget.before ? dropTarget.idx : dropTarget.idx + 1)
-        : usePlayerStore.getState().queue.length;
       externalDropTargetRef.current = null;
       setExternalDropTarget(null);
 
-      if (parsedData.type === 'song') {
+      const insertIdx = dropTarget
+        ? (dropTarget.before ? dropTarget.idx : dropTarget.idx + 1)
+        : usePlayerStore.getState().queue.length;
+
+      if (parsedData.type === 'queue_reorder') {
+        const fromIdx: number = parsedData.index;
+        psyDragFromIdxRef.current = null;
+        if (fromIdx !== insertIdx) reorderQueue(fromIdx, insertIdx);
+      } else if (parsedData.type === 'song') {
         enqueueAt([parsedData.track], insertIdx);
       } else if (parsedData.type === 'album') {
         const albumData = await getAlbum(parsedData.id);
@@ -293,128 +287,11 @@ export default function QueuePanel() {
     setActivePlaylist(null);
   };
 
-  const onDragStart = (e: React.DragEvent, index: number) => {
-    isDraggingInternalRef.current = true;
-    draggedIdxRef.current = index;
-    _dragFromIdx = index;
-    setDraggedIdx(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'queue_reorder', index }));
-  };
-
-  const onDragEnterItem = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = isDraggingInternalRef.current ? 'move' : 'copy';
-  };
-
-  const onDragOverItem = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = isDraggingInternalRef.current ? 'move' : 'copy';
-    dragOverIdxRef.current = index;
-    setDragOverIdx(index);
-    if (!isDraggingInternalRef.current) {
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const before = e.clientY < rect.top + rect.height / 2;
-      const target = { idx: index, before };
-      externalDropTargetRef.current = target;
-      setExternalDropTarget(target);
-    }
-  };
-
-  const onDragEnd = () => {
-    setDraggedIdx(null);
-    setDragOverIdx(null);
-    setExternalDropTarget(null);
-    externalDropTargetRef.current = null;
-    isDraggingInternalRef.current = false;
-    draggedIdxRef.current = null;
-    dragOverIdxRef.current = null;
-    // _dragFromIdx intentionally NOT cleared here — drop fires after dragend on
-    // macOS WKWebView, so we need the value to survive into onDropQueue.
-    // It is cleared in onDropQueue after use instead.
-  };
-
-  const onDropQueue = async (e: React.DragEvent) => {
-    e.preventDefault();
-
-    // Snapshot drop target before clearing visual state
-    const droppedTarget = externalDropTargetRef.current;
-
-    // Clear visual state immediately
-    isDraggingInternalRef.current = false;
-    draggedIdxRef.current = null;
-    dragOverIdxRef.current = null;
-    setDraggedIdx(null);
-    setDragOverIdx(null);
-    externalDragCounterRef.current = 0;
-    setExternalDragOver(false);
-    externalDropTargetRef.current = null;
-    setExternalDropTarget(null);
-
-    let parsedData: any = null;
-    try {
-      const raw = e.dataTransfer.getData('text/plain');
-      if (raw) parsedData = JSON.parse(raw);
-    } catch { /* ignore */ }
-
-    if (parsedData?.type === 'queue_reorder' || _dragFromIdx !== null) {
-      // fromIdx: prefer dataTransfer value; fall back to module-level var for
-      // Windows WebView2 where getData() can return '' in the drop handler.
-      const fromIdx: number = parsedData?.index ?? _dragFromIdx!;
-      _dragFromIdx = null;
-
-      // toIdx: calculate from drop coordinates — avoids all ref timing issues.
-      // Works even when dragend fires before drop (macOS WKWebView / Windows WebView2).
-      let toIdx = queue.length;
-      if (queueListRef.current) {
-        const items = queueListRef.current.querySelectorAll<HTMLElement>('[data-queue-idx]');
-        for (let i = 0; i < items.length; i++) {
-          const rect = items[i].getBoundingClientRect();
-          if (e.clientY < rect.top + rect.height / 2) {
-            toIdx = parseInt(items[i].dataset.queueIdx!);
-            break;
-          }
-        }
-      }
-
-      if (fromIdx !== toIdx) reorderQueue(fromIdx, toIdx);
-      return;
-    }
-
-    // External drop (song / album dragged from elsewhere in the app)
-    _dragFromIdx = null;
-    if (!parsedData) return;
-
-    const insertIdx = droppedTarget
-      ? (droppedTarget.before ? droppedTarget.idx : droppedTarget.idx + 1)
-      : usePlayerStore.getState().queue.length;
-
-    if (parsedData.type === 'song') {
-      enqueueAt([parsedData.track], insertIdx);
-    } else if (parsedData.type === 'album') {
-      const albumData = await getAlbum(parsedData.id);
-      const tracks: Track[] = albumData.songs.map(s => ({
-        id: s.id, title: s.title, artist: s.artist, album: s.album,
-        albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-        year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-      }));
-      enqueueAt(tracks, insertIdx);
-    }
-  };
 
   return (
     <aside
       ref={asideRef}
-      className={`queue-panel${(externalDragOver || isPsyDragging) ? ' queue-drop-active' : ''}`}
-      onDragEnter={e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = isDraggingInternalRef.current ? 'move' : 'copy';
-        if (!isDraggingInternalRef.current) {
-          externalDragCounterRef.current++;
-          setExternalDragOver(true);
-        }
-      }}
-      onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = isDraggingInternalRef.current ? 'move' : 'copy'; }}
+      className={`queue-panel${isPsyDragging ? ' queue-drop-active' : ''}`}
       onMouseMove={e => {
         if (!isPsyDragging || !queueListRef.current) return;
         const items = queueListRef.current.querySelectorAll<HTMLElement>('[data-queue-idx]');
@@ -436,18 +313,7 @@ export default function QueuePanel() {
           setExternalDropTarget(null);
         }
       }}
-      onDragLeave={e => {
-        if (!isDraggingInternalRef.current) {
-          externalDragCounterRef.current--;
-          if (externalDragCounterRef.current === 0) {
-            setExternalDragOver(false);
-            externalDropTargetRef.current = null;
-            setExternalDropTarget(null);
-          }
-        }
-      }}
-      onDrop={onDropQueue}
-      style={{ 
+      style={{
         borderLeftWidth: isQueueVisible ? 1 : 0
       }}
     >
@@ -615,22 +481,11 @@ export default function QueuePanel() {
         ) : (
           queue.map((track, idx) => {
             const isPlaying = idx === queueIndex;
-            const isDragging = draggedIdx === idx;
-            const isDragOver = dragOverIdx === idx;
-            
-            // Highlight above or below depending on index direction
+
             let dragStyle: React.CSSProperties = {};
-            if (isDragging) {
+            if (isPsyDragging && psyDragFromIdxRef.current === idx) {
               dragStyle = { opacity: 0.4, background: 'var(--bg-hover)' };
-            } else if (isDragOver && draggedIdx !== null) {
-              // Internal reorder indicator
-              if (draggedIdx > idx) {
-                dragStyle = { borderTop: '2px solid var(--accent)', paddingTop: '6px', marginTop: '-2px' };
-              } else {
-                dragStyle = { borderBottom: '2px solid var(--accent)', paddingBottom: '6px', marginBottom: '-2px' };
-              }
-            } else if (externalDropTarget?.idx === idx && draggedIdx === null) {
-              // External drop insertion indicator
+            } else if (isPsyDragging && externalDropTarget?.idx === idx) {
               if (externalDropTarget.before) {
                 dragStyle = { borderTop: '2px solid var(--accent)', paddingTop: '6px', marginTop: '-2px' };
               } else {
@@ -648,11 +503,26 @@ export default function QueuePanel() {
                   e.preventDefault();
                   usePlayerStore.getState().openContextMenu(e.clientX, e.clientY, track, 'queue-item', idx);
                 }}
-                draggable
-                onDragStart={(e) => onDragStart(e, idx)}
-                onDragEnter={(e) => onDragEnterItem(e)}
-                onDragOver={(e) => onDragOverItem(e, idx)}
-                onDragEnd={onDragEnd}
+                onMouseDown={(e) => {
+                  if (e.button !== 0) return;
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const onMove = (me: MouseEvent) => {
+                    if (Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5) {
+                      document.removeEventListener('mousemove', onMove);
+                      document.removeEventListener('mouseup', onUp);
+                      psyDragFromIdxRef.current = idx;
+                      startDrag({ data: JSON.stringify({ type: 'queue_reorder', index: idx }), label: track.title }, me.clientX, me.clientY);
+                    }
+                  };
+                  const onUp = () => {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                  };
+                  document.addEventListener('mousemove', onMove);
+                  document.addEventListener('mouseup', onUp);
+                }}
                 style={dragStyle}
               >
                 <div className="queue-item-info">
@@ -716,11 +586,7 @@ export default function QueuePanel() {
           onLoad={async (id, name) => {
             try {
               const data = await getPlaylist(id);
-              const tracks: Track[] = data.songs.map(s => ({
-                id: s.id, title: s.title, artist: s.artist, album: s.album,
-                albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-                year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-              }));
+              const tracks: Track[] = data.songs.map(songToTrack);
               if (tracks.length > 0) {
                 clearQueue();
                 playTrack(tracks[0], tracks);

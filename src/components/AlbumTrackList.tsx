@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Star } from 'lucide-react';
 import { SubsonicSong } from '../api/subsonic';
-import { Track, usePlayerStore } from '../store/playerStore';
+import { Track, usePlayerStore, songToTrack } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
 import { useDragDrop } from '../contexts/DragDropContext';
 
@@ -83,15 +83,7 @@ export default function AlbumTrackList({
     discs.get(disc)!.push(song);
   });
   const discNums = Array.from(discs.keys()).sort((a, b) => a - b);
-  const isMultiDisc = discNums.length > 1;
-
-  const makeTrack = (song: SubsonicSong): Track => ({
-    id: song.id, title: song.title, artist: song.artist, album: song.album,
-    albumId: song.albumId, artistId: song.artistId, duration: song.duration,
-    coverArt: song.coverArt, track: song.track, year: song.year,
-    bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating,
-    starred: song.starred, genre: song.genre,
-  });
+   const isMultiDisc = discNums.length > 1;
 
   return (
     <div className="tracklist">
@@ -123,7 +115,7 @@ export default function AlbumTrackList({
               onContextMenu={e => {
                 e.preventDefault();
                 setContextMenuSongId(song.id);
-                onContextMenu(e.clientX, e.clientY, makeTrack(song), 'album-song');
+                onContextMenu(e.clientX, e.clientY, songToTrack(song), 'album-song');
               }}
               role="row"
               onMouseDown={e => {
@@ -134,7 +126,7 @@ export default function AlbumTrackList({
                   if (Math.abs(me.clientX - sx) > 5 || Math.abs(me.clientY - sy) > 5) {
                     document.removeEventListener('mousemove', onMove);
                     document.removeEventListener('mouseup', onUp);
-                    psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track: makeTrack(song) }), label: song.title }, me.clientX, me.clientY);
+                    psyDrag.startDrag({ data: JSON.stringify({ type: 'song', track: songToTrack(song) }), label: song.title }, me.clientX, me.clientY);
                   }
                 };
                 const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };

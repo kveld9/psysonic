@@ -18,20 +18,23 @@ export default function OfflineLibrary() {
 
   const albums = Object.values(offlineAlbums).filter(a => a.serverId === serverId);
 
-  const buildTracks = (albumId: string) => {
-    const meta = offlineAlbums[`${serverId}:${albumId}`];
-    if (!meta) return [];
-    return meta.trackIds.flatMap(tid => {
-      const t = offlineTracks[`${serverId}:${tid}`];
-      if (!t) return [];
-      return [{
-        id: t.id, title: t.title, artist: t.artist, album: t.album,
-        albumId: t.albumId, artistId: t.artistId, duration: t.duration,
-        coverArt: t.coverArt, track: undefined, year: t.year,
-        bitRate: t.bitRate, suffix: t.suffix, genre: t.genre,
-      }];
-    });
-  };
+const buildTracks = (albumId: string) => {
+     const meta = offlineAlbums[`${serverId}:${albumId}`];
+     if (!meta) return [];
+     return meta.trackIds.flatMap(tid => {
+       const t = offlineTracks[`${serverId}:${tid}`];
+       if (!t) return [];
+       return [{
+         id: t.id, title: t.title, artist: t.artist, album: t.album,
+         albumId: t.albumId, artistId: t.artistId, duration: t.duration,
+         coverArt: t.coverArt, track: undefined, year: t.year,
+         bitRate: t.bitRate, suffix: t.suffix, genre: t.genre,
+         replayGainTrackDb: t.replayGainTrackDb,
+         replayGainAlbumDb: t.replayGainAlbumDb,
+         replayGainPeak: t.replayGainPeak,
+       }];
+     });
+   };
 
   const handlePlay = (albumId: string) => {
     const tracks = buildTracks(albumId);

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Play, ListPlus, Radio, Star, Download, ChevronRight, User, Disc3, Heart } from 'lucide-react';
 import { lastfmLoveTrack, lastfmUnloveTrack } from '../api/lastfm';
-import { usePlayerStore, Track } from '../store/playerStore';
+import { usePlayerStore, Track, songToTrack } from '../store/playerStore';
 import { SubsonicAlbum, SubsonicArtist, star, unstar, getSimilarSongs2, getTopSongs, buildDownloadUrl, getAlbum } from '../api/subsonic';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -64,15 +64,11 @@ export default function ContextMenu() {
   const startRadio = async (artistId: string, artistName: string) => {
     try {
       const similar = await getSimilarSongs2(artistId);
-      if (similar.length > 0) {
-        const top = await getTopSongs(artistName);
-        const radioTracks = [...top, ...similar].map(s => ({
-          id: s.id, title: s.title, artist: s.artist, album: s.album,
-          albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-          year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-        }));
-        playTrack(radioTracks[0], radioTracks);
-      }
+       if (similar.length > 0) {
+         const top = await getTopSongs(artistName);
+         const radioTracks = [...top, ...similar].map(songToTrack);
+         playTrack(radioTracks[0], radioTracks);
+       }
     } catch (e) {
       console.error('Failed to start radio', e);
     }
@@ -129,16 +125,12 @@ export default function ContextMenu() {
               <div className="context-menu-item" onClick={() => handleAction(() => enqueue([song]))}>
                 <ListPlus size={14} /> {t('contextMenu.addToQueue')}
               </div>
-              {type === 'album-song' && (
-                <div className="context-menu-item" onClick={() => handleAction(async () => {
-                  const albumData = await getAlbum(song.albumId);
-                  const tracks = albumData.songs.map(s => ({
-                    id: s.id, title: s.title, artist: s.artist, album: s.album,
-                    albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-                    year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-                  }));
-                  enqueue(tracks);
-                })}>
+             {type === 'album-song' && (
+                 <div className="context-menu-item" onClick={() => handleAction(async () => {
+                   const albumData = await getAlbum(song.albumId);
+                   const tracks = albumData.songs.map(songToTrack);
+                   enqueue(tracks);
+                 })}>
                   <ListPlus size={14} /> {t('contextMenu.enqueueAlbum')}
                 </div>
               )}
