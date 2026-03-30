@@ -72,7 +72,7 @@ Designed specifically for users hosting their own music via Navidrome or other S
 
 ## ● Known Limitations
 
-
+Some known bugs actively working on fixes
 
 
 ## 📥 Installation
