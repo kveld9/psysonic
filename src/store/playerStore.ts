@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { buildStreamUrl, buildCoverArtUrl, getPlayQueue, savePlayQueue, reportNowPlaying, scrobbleSong, SubsonicSong } from '../api/subsonic';
+import { buildStreamUrl, buildCoverArtUrl, getPlayQueue, savePlayQueue, reportNowPlaying, scrobbleSong, SubsonicSong, getSong } from '../api/subsonic';
 import { lastfmScrobble, lastfmUpdateNowPlaying, lastfmLoveTrack, lastfmUnloveTrack, lastfmGetTrackLoved, lastfmGetAllLovedTracks } from '../api/lastfm';
 import { useAuthStore } from './authStore';
 import { useOfflineStore } from './offlineStore';
@@ -75,7 +75,8 @@ interface PlayerState {
   previous: () => void;
   seek: (progress: number) => void;
   setVolume: (v: number) => void;
-  setProgress: (t: number, duration: number) => void;
+   updateReplayGainForCurrentTrack: () => void;
+   setProgress: (t: number, duration: number) => void;
   enqueue: (tracks: Track[]) => void;
   clearQueue: () => void;
 
@@ -588,33 +589,62 @@ export const usePlayerStore = create<PlayerState>()(
           isAudioPaused = false;
           set({ isPlaying: true });
         } else {
-          // Cold start (app relaunch) — audio is not loaded in Rust; re-download.
+          // Cold start (app relaunch) — fetch fresh track data for replay gain, then play.
           const gen = ++playGeneration;
           const vol = get().volume;
           set({ isPlaying: true });
-          const authStateCold = useAuthStore.getState();
-          const replayGainDbCold = authStateCold.replayGainEnabled
-            ? (authStateCold.replayGainMode === 'album' ? currentTrack.replayGainAlbumDb : currentTrack.replayGainTrackDb) ?? null
-            : null;
-          const replayGainPeakCold = authStateCold.replayGainEnabled ? (currentTrack.replayGainPeak ?? null) : null;
-          const coldServerId = useAuthStore.getState().activeServerId ?? '';
-          const coldUrl = useOfflineStore.getState().getLocalUrl(currentTrack.id, coldServerId) ?? buildStreamUrl(currentTrack.id);
-          invoke('audio_play', {
-            url: coldUrl,
-            volume: vol,
-            durationHint: currentTrack.duration,
-            replayGainDb: replayGainDbCold,
-            replayGainPeak: replayGainPeakCold,
-          }).then(() => {
-            if (playGeneration === gen && currentTime > 1) {
-              invoke('audio_seek', { seconds: currentTime }).catch(console.error);
-            }
-          }).catch((err: unknown) => {
-            if (playGeneration !== gen) return;
-            console.error('[psysonic] audio_play (cold resume) failed:', err);
-            set({ isPlaying: false });
-          });
-          syncQueueToServer(queue, currentTrack, currentTime);
+          
+          // Fetch fresh track data from server to get replay gain metadata
+          getSong(currentTrack.id).then(freshSong => {
+            const trackToPlay = freshSong ? songToTrack(freshSong) : currentTrack;
+            // Update store with fresh track data if available
+            if (freshSong) set({ currentTrack: trackToPlay });
+            const authStateCold = useAuthStore.getState();
+            const replayGainDbCold = authStateCold.replayGainEnabled
+              ? (authStateCold.replayGainMode === 'album' ? trackToPlay.replayGainAlbumDb : trackToPlay.replayGainTrackDb) ?? null
+              : null;
+            const replayGainPeakCold = authStateCold.replayGainEnabled ? (trackToPlay.replayGainPeak ?? null) : null;
+            const coldServerId = useAuthStore.getState().activeServerId ?? '';
+            const coldUrl = useOfflineStore.getState().getLocalUrl(trackToPlay.id, coldServerId) ?? buildStreamUrl(trackToPlay.id);
+            invoke('audio_play', {
+              url: coldUrl,
+              volume: vol,
+              durationHint: trackToPlay.duration,
+              replayGainDb: replayGainDbCold,
+              replayGainPeak: replayGainPeakCold,
+            }).then(() => {
+              if (playGeneration === gen && currentTime > 1) {
+                invoke('audio_seek', { seconds: currentTime }).catch(console.error);
+              }
+            }).catch((err: unknown) => {
+              if (playGeneration !== gen) return;
+              console.error('[psysonic] audio_play (cold resume) failed:', err);
+              set({ isPlaying: false });
+            });
+            syncQueueToServer(queue, trackToPlay, currentTime);
+          }).catch(() => {
+             if (playGeneration !== gen) return;
+             // Fallback to currentTrack if fetch fails
+             const authStateCold = useAuthStore.getState();
+             const replayGainDbCold = authStateCold.replayGainEnabled
+               ? (authStateCold.replayGainMode === 'album' ? currentTrack.replayGainAlbumDb : currentTrack.replayGainTrackDb) ?? null
+               : null;
+             const replayGainPeakCold = authStateCold.replayGainEnabled ? (currentTrack.replayGainPeak ?? null) : null;
+             const coldServerId = useAuthStore.getState().activeServerId ?? '';
+             const coldUrl = useOfflineStore.getState().getLocalUrl(currentTrack.id, coldServerId) ?? buildStreamUrl(currentTrack.id);
+             invoke('audio_play', {
+               url: coldUrl,
+               volume: vol,
+               durationHint: currentTrack.duration,
+               replayGainDb: replayGainDbCold,
+               replayGainPeak: replayGainPeakCold,
+             }).catch((err: unknown) => {
+               if (playGeneration !== gen) return;
+               console.error('[psysonic] audio_play (cold resume) failed:', err);
+               set({ isPlaying: false });
+             });
+             syncQueueToServer(queue, currentTrack, currentTime);
+           });
         }
       },
 
@@ -736,40 +766,55 @@ export const usePlayerStore = create<PlayerState>()(
 
       // ── server queue restore ─────────────────────────────────────────────────
       initializeFromServerQueue: async () => {
-        try {
-          const q = await getPlayQueue();
-          if (q.songs.length > 0) {
-            const mappedTracks: Track[] = q.songs.map((s: SubsonicSong) => ({
-              id: s.id, title: s.title, artist: s.artist, album: s.album,
-              albumId: s.albumId, artistId: s.artistId, duration: s.duration,
-              coverArt: s.coverArt, track: s.track, year: s.year,
-              bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating,
-            }));
+          try {
+            const q = await getPlayQueue();
+            if (q.songs.length > 0) {
+              const mappedTracks: Track[] = q.songs.map(songToTrack);
 
-            let currentTrack = mappedTracks[0];
-            let queueIndex = 0;
+              let currentTrack = mappedTracks[0];
+             let queueIndex = 0;
 
-            if (q.current) {
-              const idx = mappedTracks.findIndex(t => t.id === q.current);
-              if (idx >= 0) { currentTrack = mappedTracks[idx]; queueIndex = idx; }
-            }
+             if (q.current) {
+               const idx = mappedTracks.findIndex(t => t.id === q.current);
+               if (idx >= 0) { currentTrack = mappedTracks[idx]; queueIndex = idx; }
+             }
 
-            // Prefer the server position if available; otherwise keep the
-            // localStorage-persisted currentTime (more reliable than server
-            // queue position, which may not flush before app close).
-            const serverTime = q.position ? q.position / 1000 : 0;
-            const localTime = get().currentTime;
-            set({
-              queue: mappedTracks,
-              queueIndex,
-              currentTrack,
-              currentTime: serverTime > 0 ? serverTime : localTime,
-            });
-          }
-        } catch (e) {
-          console.error('Failed to initialize queue from server', e);
-        }
-      },
+             // Prefer the server position if available; otherwise keep the
+             // localStorage-persisted currentTime (more reliable than server
+             // queue position, which may not flush before app close).
+             const serverTime = q.position ? q.position / 1000 : 0;
+             const localTime = get().currentTime;
+             set({
+               queue: mappedTracks,
+               queueIndex,
+               currentTrack,
+               currentTime: serverTime > 0 ? serverTime : localTime,
+             });
+           }
+         } catch (e) {
+           console.error('Failed to initialize queue from server', e);
+         }
+       },
+
+       updateReplayGainForCurrentTrack: () => {
+         const { currentTrack, volume } = get();
+         if (!currentTrack || !currentTrack.id) return;
+         const authState = useAuthStore.getState();
+         const replayGainDb = authState.replayGainEnabled
+           ? (authState.replayGainMode === 'album' 
+               ? currentTrack.replayGainAlbumDb 
+               : currentTrack.replayGainTrackDb) ?? null
+           : null;
+         const replayGainPeak = authState.replayGainEnabled 
+           ? (currentTrack.replayGainPeak ?? null) 
+           : null;
+         
+         invoke('audio_update_replay_gain', { 
+           volume, 
+           replayGainDb, 
+           replayGainPeak 
+         }).catch(console.error);
+       },
     }),
     {
       name: 'psysonic-player',
@@ -782,7 +827,7 @@ export const usePlayerStore = create<PlayerState>()(
         queueIndex: state.queueIndex,
         currentTime: state.currentTime,
         lastfmLovedCache: state.lastfmLovedCache,
-      } as Partial<PlayerState>),
+      }),
     }
   )
 );

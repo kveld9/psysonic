@@ -405,6 +405,7 @@ pub fn run() {
             audio::audio_stop,
             audio::audio_seek,
             audio::audio_set_volume,
+            audio::audio_update_replay_gain,
             audio::audio_set_eq,
             audio::audio_preload,
             audio::audio_set_crossfade,

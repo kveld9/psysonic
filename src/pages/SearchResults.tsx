@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Play, Search } from 'lucide-react';
 import { search, SearchResults as ISearchResults, SubsonicSong } from '../api/subsonic';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import AlbumRow from '../components/AlbumRow';
 import ArtistRow from '../components/ArtistRow';
 import { useTranslation } from 'react-i18next';
@@ -31,17 +31,7 @@ export default function SearchResults() {
   const hasResults = results && (results.artists.length || results.albums.length || results.songs.length);
 
   const playSong = (song: SubsonicSong, list: SubsonicSong[]) => {
-    playTrack({
-      id: song.id, title: song.title, artist: song.artist, album: song.album,
-      albumId: song.albumId, artistId: song.artistId, duration: song.duration,
-      coverArt: song.coverArt, year: song.year, bitRate: song.bitRate,
-      suffix: song.suffix, userRating: song.userRating, genre: song.genre,
-    }, list.map(s => ({
-      id: s.id, title: s.title, artist: s.artist, album: s.album,
-      albumId: s.albumId, artistId: s.artistId, duration: s.duration,
-      coverArt: s.coverArt, year: s.year, bitRate: s.bitRate,
-      suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-    })));
+    playTrack(songToTrack(song), list.map(songToTrack));
   };
 
   return (
@@ -93,16 +83,11 @@ export default function SearchResults() {
                     onDoubleClick={() => playSong(song, results.songs)}
                     role="row"
                     draggable
-                    onDragStart={e => {
-                      e.dataTransfer.effectAllowed = 'copy';
-                      const track = {
-                        id: song.id, title: song.title, artist: song.artist, album: song.album,
-                        albumId: song.albumId, artistId: song.artistId, duration: song.duration,
-                        coverArt: song.coverArt, year: song.year, bitRate: song.bitRate,
-                        suffix: song.suffix, userRating: song.userRating, genre: song.genre,
-                      };
-                      e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'song', track }));
-                    }}
+                  onDragStart={e => {
+                       e.dataTransfer.effectAllowed = 'copy';
+                       const track = songToTrack(song);
+                       e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'song', track }));
+                     }}
                   >
                     <button
                       className="btn btn-ghost"

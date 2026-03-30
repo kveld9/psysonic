@@ -6,7 +6,7 @@ import CachedImage from '../components/CachedImage';
 import CoverLightbox from '../components/CoverLightbox';
 import { ArrowLeft, Users, ExternalLink, Star, Play, Shuffle, Radio } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
 import { lastfmGetSimilarArtists, lastfmIsConfigured } from '../api/lastfm';
 import LastfmIcon from '../components/LastfmIcon';
@@ -330,22 +330,19 @@ export default function ArtistDetail() {
               <div>{t('artistDetail.trackAlbum')}</div>
               <div style={{ textAlign: 'right' }}>{t('artistDetail.trackDuration')}</div>
             </div>
-            {topSongs.map((song, idx) => (
-              <div
-                key={song.id}
-                className="track-row"
-                style={{ gridTemplateColumns: '36px minmax(150px, 2fr) minmax(100px, 1fr) 60px' }}
-                onDoubleClick={() => playTrack(song, topSongs)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  const track = {
-                    id: song.id, title: song.title, artist: song.artist, album: song.album,
-                    albumId: song.albumId, artistId: song.artistId, duration: song.duration, coverArt: song.coverArt, track: song.track,
-                    year: song.year, bitRate: song.bitRate, suffix: song.suffix, userRating: song.userRating, starred: song.starred,
-                  };
-                  openContextMenu(e.clientX, e.clientY, track, 'song');
-                }}
-              >
+             {topSongs.map((song, idx) => {
+                   const track = songToTrack(song);
+                   return (
+                     <div
+                       key={song.id}
+                       className="track-row"
+                       style={{ gridTemplateColumns: '36px minmax(150px, 2fr) minmax(100px, 1fr) 60px' }}
+                       onDoubleClick={() => playTrack(track, topSongs.map(songToTrack))}
+                       onContextMenu={(e) => {
+                         e.preventDefault();
+                         openContextMenu(e.clientX, e.clientY, track, 'song');
+                       }}
+                     >
                 <div className="track-num" style={{ textAlign: 'center' }}>{idx + 1}</div>
                 <div className="track-info" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {song.coverArt && (
@@ -365,13 +362,14 @@ export default function ArtistDetail() {
                   {song.album}
                 </div>
                 <div className="track-duration" style={{ textAlign: 'right' }}>
-                  {formatDuration(song.duration)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+                {formatDuration(song.duration)}
+                 </div>
+               </div>
+               );
+             })}
+           </div>
+         </>
+       )}
 
       {/* Similar Artists (Last.fm) */}
       {lastfmIsConfigured() && (similarLoading || similarArtists.length > 0) && (

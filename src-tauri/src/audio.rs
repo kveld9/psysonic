@@ -1624,6 +1624,22 @@ pub fn audio_set_volume(volume: f32, state: State<'_, AudioEngine>) {
 }
 
 #[tauri::command]
+pub fn audio_update_replay_gain(
+    volume: f32,
+    replay_gain_db: Option<f32>,
+    replay_gain_peak: Option<f32>,
+    state: State<'_, AudioEngine>,
+) {
+    let (gain_linear, effective) = compute_gain(replay_gain_db, replay_gain_peak, volume);
+    let mut cur = state.current.lock().unwrap();
+    cur.replay_gain_linear = gain_linear;
+    cur.base_volume = volume.clamp(0.0, 1.0);
+    if let Some(sink) = &cur.sink {
+        sink.set_volume(effective);
+    }
+}
+
+#[tauri::command]
 pub fn audio_set_eq(gains: [f32; 10], enabled: bool, state: State<'_, AudioEngine>) {
     state.eq_enabled.store(enabled, Ordering::Relaxed);
     for (i, &gain) in gains.iter().enumerate() {

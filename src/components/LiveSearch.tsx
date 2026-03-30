@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Disc3, Users, Music } from 'lucide-react';
 import { search, SearchResults, buildCoverArtUrl } from '../api/subsonic';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
 
 function debounce(fn: (q: string) => void, ms: number): (q: string) => void {
@@ -57,10 +57,10 @@ export default function LiveSearch() {
   const flatItems = results ? [
     ...(results.artists.map(a => ({ id: a.id, action: () => { navigate(`/artist/${a.id}`); setOpen(false); setQuery(''); } }))),
     ...(results.albums.map(a => ({ id: a.id, action: () => { navigate(`/album/${a.id}`); setOpen(false); setQuery(''); } }))),
-    ...(results.songs.map(s => ({ id: s.id, action: () => {
-      playTrack({ id: s.id, title: s.title, artist: s.artist, album: s.album, albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre });
-      setOpen(false); setQuery('');
-    }}))),
+   ...(results.songs.map(s => ({ id: s.id, action: () => {
+       playTrack(songToTrack(s));
+       setOpen(false); setQuery('');
+     }}))),
   ] : [];
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -175,10 +175,10 @@ export default function LiveSearch() {
                     const i = idx++;
                     return (
                       <button key={s.id} className={`search-result-item${activeIndex === i ? ' active' : ''}`}
-                        onClick={() => {
-                          playTrack({ id: s.id, title: s.title, artist: s.artist, album: s.album, albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre });
-                          setOpen(false); setQuery('');
-                        }}
+                     onClick={() => {
+                           playTrack(songToTrack(s));
+                           setOpen(false); setQuery('');
+                         }}
                         role="option" aria-selected={activeIndex === i}>
                         <div className="search-result-icon"><Music size={14} /></div>
                         <div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Track, usePlayerStore } from '../store/playerStore';
+import { Track, usePlayerStore, songToTrack } from '../store/playerStore';
 import { Play, Music, Star, X, Trash2, Save, FolderOpen, Shuffle, Infinity, Waves, MicVocal, ListMusic } from 'lucide-react';
 import { buildCoverArtUrl, getAlbum, getPlaylists, getPlaylist, createPlaylist, deletePlaylist, SubsonicPlaylist } from '../api/subsonic';
 import { useEffect } from 'react';
@@ -265,15 +265,11 @@ export default function QueuePanel() {
     if (!parsedData) return;
     if (parsedData.type === 'song') {
       enqueue([parsedData.track]);
-    } else if (parsedData.type === 'album') {
-      const albumData = await getAlbum(parsedData.id);
-      const tracks: Track[] = albumData.songs.map(s => ({
-        id: s.id, title: s.title, artist: s.artist, album: s.album,
-        albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-        year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-      }));
-      enqueue(tracks);
-    }
+   } else if (parsedData.type === 'album') {
+       const albumData = await getAlbum(parsedData.id);
+       const tracks: Track[] = albumData.songs.map(songToTrack);
+       enqueue(tracks);
+     }
   };
 
   return (
@@ -523,20 +519,16 @@ export default function QueuePanel() {
       {loadModalOpen && (
         <LoadPlaylistModal 
           onClose={() => setLoadModalOpen(false)} 
-          onLoad={async (id) => { 
-            try {
-              const data = await getPlaylist(id);
-              const tracks: Track[] = data.songs.map(s => ({
-                id: s.id, title: s.title, artist: s.artist, album: s.album,
-                albumId: s.albumId, artistId: s.artistId, duration: s.duration, coverArt: s.coverArt, track: s.track,
-                year: s.year, bitRate: s.bitRate, suffix: s.suffix, userRating: s.userRating, genre: s.genre,
-              }));
-              if (tracks.length > 0) {
-                clearQueue();
-                playTrack(tracks[0], tracks);
-              }
-              setLoadModalOpen(false); 
-            } catch (e) {
+         onLoad={async (id) => { 
+             try {
+               const data = await getPlaylist(id);
+               const tracks: Track[] = data.songs.map(songToTrack);
+               if (tracks.length > 0) {
+                 clearQueue();
+                 playTrack(tracks[0], tracks);
+               }
+               setLoadModalOpen(false); 
+             } catch (e) {
               console.error('Failed to load playlist', e);
             }
           }} 

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { invoke } from '@tauri-apps/api/core';
+import { usePlayerStore } from './playerStore';
 
 export interface ServerProfile {
   id: string;
@@ -147,8 +149,14 @@ export const useAuthStore = create<AuthState>()(
       setDownloadFolder: (v) => set({ downloadFolder: v }),
       setExcludeAudiobooks: (v) => set({ excludeAudiobooks: v }),
       setCustomGenreBlacklist: (v) => set({ customGenreBlacklist: v }),
-      setReplayGainEnabled: (v) => set({ replayGainEnabled: v }),
-      setReplayGainMode: (v) => set({ replayGainMode: v }),
+      setReplayGainEnabled: (v) => {
+        set({ replayGainEnabled: v });
+        usePlayerStore.getState().updateReplayGainForCurrentTrack();
+      },
+      setReplayGainMode: (v) => {
+        set({ replayGainMode: v });
+        usePlayerStore.getState().updateReplayGainForCurrentTrack();
+      },
       setCrossfadeEnabled: (v) => set({ crossfadeEnabled: v }),
       setCrossfadeSecs: (v) => set({ crossfadeSecs: v }),
       setGaplessEnabled: (v) => set({ gaplessEnabled: v }),
