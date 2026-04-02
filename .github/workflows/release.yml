@@ -125,6 +125,20 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.settings.args }}
 
+      - name: sign and upload Windows NSIS updater bundle
+        if: matrix.settings.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.create-release.outputs.package_version }}
+        run: |
+          $dir = "src-tauri/target/release/bundle/nsis"
+          $exe = (Get-ChildItem $dir -Filter "*.exe")[0].FullName
+          $zip = $exe -replace '\.exe$', '.nsis.zip'
+          Compress-Archive -Path $exe -DestinationPath $zip -Force
+          npx tauri signer sign --private-key "$env:TAURI_SIGNING_PRIVATE_KEY" --password "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" $zip
+          gh release upload "app-v$env:VERSION" $zip "$zip.sig" --clobber
+
       - name: sign and upload macOS bundle signature
         if: matrix.settings.platform == 'macos-latest'
         shell: bash
