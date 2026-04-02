@@ -5,36 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.27.2] - 2026-04-02
-
-### Fixed
-
-- **Radio broken from context menu** *(reported by [@netherguy4](https://github.com/netherguy4))*: "Start Radio" in the track and queue-item context menus had no effect. The handler was passing the artist name as the artist ID to `getSimilarSongs2`, which returned an empty result — so no tracks were queued and no error was shown. Now correctly passes `song.artistId`.
-- **CI: Windows NSIS upload**: `tauri-action` was searching `bundle/msi/` (which doesn't exist in NSIS-only builds), causing the GitHub Release upload to fail with 404. Windows artifacts are now uploaded via an explicit step using `bundle/nsis/*.exe` + `*.nsis.zip` + `*.nsis.zip.sig`.
-- **Linux/AUR build: ring linker error**: Builds on Arch/CachyOS failed with `rust-lld: undefined symbol: ring_core_*` after the Tauri updater was added. Added `.cargo/config.toml` to use the GCC linker (`cc`) for `x86_64-unknown-linux-gnu` targets, and added `clang` to the AUR `makedepends` (required by ring's bindgen step).
-
----
-
-## [1.27.1] - 2026-04-02
-
-### Fixed
-
-- **CI: auto-update signing pipeline**: Signing keys were not being picked up by the bundler during the tauri-action build. Replaced with an explicit post-build signing step using `tauri signer sign`. Fixed `.sig` upload names to match platform conventions (`Psysonic_aarch64.app.tar.gz.sig`, `Psysonic_x64.app.tar.gz.sig`) so the manifest generator finds them correctly. First release where the in-app updater is fully functional on macOS and Windows.
-- **CI: npm + Cargo caching** *(requested by [@netherguy4](https://github.com/netherguy4))*: Added `actions/cache` for npm and `Swatinem/rust-cache` for Cargo across all build jobs. Warm-cache builds will be significantly faster on subsequent releases.
-
----
-
-## [1.27.0] - 2026-04-02
+## [1.27.3] - 2026-04-02
 
 ### Added
 
-- **In-App Auto-Update** *(requested by [@netherguy4](https://github.com/netherguy4))*: Psysonic now checks for new releases automatically on startup (3 s delay). On macOS and Windows a native install-and-relaunch flow is available directly in the app — no browser needed. On Linux, a download link to the GitHub release page is shown instead (AppImage is not built due to WebKitGTK incompatibility with Arch/Fedora). The updater uses Tauri's signed updater plugin with minisign signatures verified against a bundled public key. **Note: this release is the preparation — auto-update will be fully active for all subsequent releases once signed bundles are in place.**
+- **In-App Auto-Update** *(requested by [@netherguy4](https://github.com/netherguy4))*: Psysonic now checks for new releases automatically on startup (3 s delay). On macOS and Windows a native install-and-relaunch flow is available directly in the app — no browser needed. On Linux, a download link to the GitHub release page is shown instead (AppImage is not built due to WebKitGTK incompatibility with Arch/Fedora). The updater uses Tauri's signed updater plugin with minisign signatures verified against a bundled public key.
 - **Configurable Home Page**: Users can now choose which sections appear on the home page. A new "Home Page" block in Settings → Library lets you toggle each section individually (Featured, Recently Added, Discover, Discover Artists, Recently Played, Personal Favorites, Most Played) with a reset-to-default button. Hidden sections are skipped entirely.
 - **Consistent icon language** *(requested by [@netherguy4](https://github.com/netherguy4))*: Favorites (local star/heart) now use a filled Heart icon everywhere — Player Bar, Album Detail, Artist Detail, Tracklist, Context Menu. Last.fm love always uses the Last.fm logo. Previously the two were mixed up in several places.
 
 ### Fixed
 
+- **Radio broken from context menu** *(reported by [@netherguy4](https://github.com/netherguy4))*: "Start Radio" in the track and queue-item context menus had no effect. The handler was passing the artist name as the artist ID to `getSimilarSongs2`, which returned an empty result — so no tracks were queued and no error was shown. Now correctly passes `song.artistId`.
 - **Album Detail hero background not loading**: The blurred album art background in Album Detail only appeared after a track change, never on first visit. Root cause: `buildCoverArtUrl` was called without `useMemo`, generating a new salt on every re-render — causing `useCachedUrl` to cancel and restart its fetch endlessly. Fixed by memoising both the URL and cache key on `album.coverArt`. Same fix applied to Hero and Playlist Detail backgrounds.
+- **CI: auto-update signing pipeline**: Signing keys were not being passed correctly during the build, and macOS `.sig` files were uploaded with a generic name the manifest generator couldn't match. Fixed the post-build signing step to upload arch-specific names (`Psysonic_aarch64.app.tar.gz.sig`, `Psysonic_x64.app.tar.gz.sig`). First release where the in-app updater is fully functional on macOS and Windows.
+- **CI: Windows NSIS upload**: The release workflow was not correctly uploading Windows artifacts. Resolved by letting `tauri-action` handle NSIS bundle detection and upload directly — it only searches for what was actually built, so there is no MSI conflict with `--bundles nsis` builds.
+- **CI: npm + Cargo caching** *(contributed by [@netherguy4](https://github.com/netherguy4))*: Added `actions/cache` for npm and `Swatinem/rust-cache` for Cargo across all build jobs. Warm-cache builds will be significantly faster on subsequent releases.
+- **Linux/AUR build: ring linker error**: Builds on Arch/CachyOS failed with `rust-lld: undefined symbol: ring_core_*` after the Tauri updater was added. Arch's `rust` package bakes `-fuse-ld=lld` into the default rustflags; ring's C/asm objects are incompatible with lld. Fixed via `.cargo/config.toml` — forces `cc` as linker driver with `-fuse-ld=bfd` to override the hardcoded lld flag. Added `clang` to the AUR `makedepends` (required by ring's bindgen step).
 
 ---
 
