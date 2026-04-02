@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Star, ExternalLink, X, ChevronLeft, Download, ListPlus, HardDriveDownload, Loader2 } from 'lucide-react';
+import { Play, Heart, ExternalLink, X, ChevronLeft, Download, ListPlus, HardDriveDownload, Loader2 } from 'lucide-react';
 import { SubsonicSong, buildCoverArtUrl } from '../api/subsonic';
 import CachedImage from './CachedImage';
 import CoverLightbox from './CoverLightbox';
@@ -203,7 +203,7 @@ export default function AlbumHeader({
                   data-tooltip={isStarred ? t('albumDetail.favoriteRemove') : t('albumDetail.favoriteAdd')}
                   style={{ color: isStarred ? 'var(--color-star-active, var(--accent))' : 'inherit', border: isStarred ? '1px solid var(--color-star-active, var(--accent))' : undefined }}
                 >
-                  <Star size={16} fill={isStarred ? 'currentColor' : 'none'} />
+                  <Heart size={16} fill={isStarred ? 'currentColor' : 'none'} />
                   {t('albumDetail.favorite')}
                 </button>
 

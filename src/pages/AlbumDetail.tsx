@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { getAlbum, getArtist, getArtistInfo, setRating, buildCoverArtUrl, coverArtCacheKey, buildDownloadUrl, star, unstar, SubsonicSong, SubsonicAlbum } from '../api/subsonic';
@@ -231,10 +231,13 @@ const handleEnqueueAll = () => {
     deleteAlbum(album.album.id, serverId);
   };
 
-  // Hooks must be called unconditionally — derive from nullable album state
-  const coverUrl = album?.album.coverArt ? buildCoverArtUrl(album.album.coverArt, 400) : '';
-  const coverKey = album?.album.coverArt ? coverArtCacheKey(album.album.coverArt, 400) : '';
-  const resolvedCoverUrl = useCachedUrl(coverUrl, coverKey, false);
+  // Hooks must be called unconditionally — derive from nullable album state.
+  // useMemo is required: buildCoverArtUrl generates a new salt on every call, so without
+  // memoization every re-render (e.g. currentTrack change) produces a new fetchUrl,
+  // which cancels and restarts the useCachedUrl effect → background never resolves.
+  const coverUrl = useMemo(() => album?.album.coverArt ? buildCoverArtUrl(album.album.coverArt, 400) : '', [album?.album.coverArt]);
+  const coverKey = useMemo(() => album?.album.coverArt ? coverArtCacheKey(album.album.coverArt, 400) : '', [album?.album.coverArt]);
+  const resolvedCoverUrl = useCachedUrl(coverUrl, coverKey);
 
   if (loading) return <div className="loading-center"><div className="spinner" /></div>;
   if (!album) return <div className="empty-state">{t('albumDetail.notFound')}</div>;

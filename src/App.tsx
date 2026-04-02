@@ -44,6 +44,7 @@ import Genres from './pages/Genres';
 import GenreDetail from './pages/GenreDetail';
 import ExportPickerModal from './components/ExportPickerModal';
 import ChangelogModal from './components/ChangelogModal';
+import AppUpdater from './components/AppUpdater';
 import { version } from '../package.json';
 import { useConnectionStatus } from './hooks/useConnectionStatus';
 import { useAuthStore } from './store/authStore';
@@ -276,6 +277,7 @@ function AppShell() {
       <SongInfoModal />
       <DownloadFolderModal />
       <TooltipPortal />
+      <AppUpdater />
       {changelogModalOpen && <ChangelogModal onClose={() => setChangelogModalOpen(false)} />}
     </div>
   );

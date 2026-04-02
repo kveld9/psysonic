@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music,
-  Square, Repeat, Repeat1, Maximize2, SlidersHorizontal, X, Heart, Star, MicVocal
+  Square, Repeat, Repeat1, Maximize2, SlidersHorizontal, X, Heart, MicVocal
 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { useAuthStore } from '../store/authStore';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLyricsStore } from '../store/lyricsStore';
 import MarqueeText from './MarqueeText';
+import LastfmIcon from './LastfmIcon';
 
 function formatTime(seconds: number): string {
   if (!seconds || isNaN(seconds)) return '0:00';
@@ -115,9 +116,9 @@ export default function PlayerBar() {
             onClick={toggleStar}
             aria-label={isStarred ? t('contextMenu.unfavorite') : t('contextMenu.favorite')}
             data-tooltip={isStarred ? t('contextMenu.unfavorite') : t('contextMenu.favorite')}
-            style={{ color: isStarred ? 'var(--ctp-yellow)' : 'var(--text-muted)', flexShrink: 0 }}
+            style={{ color: isStarred ? 'var(--accent)' : 'var(--text-muted)', flexShrink: 0 }}
           >
-            <Star size={15} fill={isStarred ? 'var(--ctp-yellow)' : 'none'} />
+            <Heart size={15} fill={isStarred ? 'currentColor' : 'none'} />
           </button>
         )}
         {currentTrack && lastfmSessionKey && (
@@ -128,7 +129,7 @@ export default function PlayerBar() {
             data-tooltip={lastfmLoved ? t('contextMenu.lfmUnlove') : t('contextMenu.lfmLove')}
             style={{ color: lastfmLoved ? '#e31c23' : 'var(--text-muted)', flexShrink: 0 }}
           >
-            <Heart size={15} fill={lastfmLoved ? '#e31c23' : 'none'} />
+            <LastfmIcon size={15} />
           </button>
         )}
       </div>

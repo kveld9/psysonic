@@ -4,7 +4,7 @@ import { getArtist, getArtistInfo, getTopSongs, getSimilarSongs2, search, Subson
 import AlbumCard from '../components/AlbumCard';
 import CachedImage from '../components/CachedImage';
 import CoverLightbox from '../components/CoverLightbox';
-import { ArrowLeft, Users, ExternalLink, Star, Play, Shuffle, Radio } from 'lucide-react';
+import { ArrowLeft, Users, ExternalLink, Heart, Play, Shuffle, Radio } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
 import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
@@ -283,7 +283,7 @@ export default function ArtistDetail() {
               data-tooltip={isStarred ? t('artistDetail.favoriteRemove') : t('artistDetail.favoriteAdd')}
               style={{ color: isStarred ? 'var(--accent)' : 'inherit', border: isStarred ? '1px solid var(--accent)' : undefined }}
             >
-              <Star size={14} fill={isStarred ? "currentColor" : "none"} />
+              <Heart size={14} fill={isStarred ? "currentColor" : "none"} />
               {t('artistDetail.favorite')}
             </button>
           </div>

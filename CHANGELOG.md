@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.0] - 2026-04-02
+
+### Added
+
+- **In-App Auto-Update** *(requested by [@netherguy4](https://github.com/netherguy4))*: Psysonic now checks for new releases automatically on startup (3 s delay). On macOS and Windows a native install-and-relaunch flow is available directly in the app — no browser needed. On Linux, a download link to the GitHub release page is shown instead (AppImage is not built due to WebKitGTK incompatibility with Arch/Fedora). The updater uses Tauri's signed updater plugin with minisign signatures verified against a bundled public key. **Note: this release is the preparation — auto-update will be fully active for all subsequent releases once signed bundles are in place.**
+- **Configurable Home Page**: Users can now choose which sections appear on the home page. A new "Home Page" block in Settings → Library lets you toggle each section individually (Featured, Recently Added, Discover, Discover Artists, Recently Played, Personal Favorites, Most Played) with a reset-to-default button. Hidden sections are skipped entirely.
+- **Consistent icon language** *(requested by [@netherguy4](https://github.com/netherguy4))*: Favorites (local star/heart) now use a filled Heart icon everywhere — Player Bar, Album Detail, Artist Detail, Tracklist, Context Menu. Last.fm love always uses the Last.fm logo. Previously the two were mixed up in several places.
+
+### Fixed
+
+- **Album Detail hero background not loading**: The blurred album art background in Album Detail only appeared after a track change, never on first visit. Root cause: `buildCoverArtUrl` was called without `useMemo`, generating a new salt on every re-render — causing `useCachedUrl` to cancel and restart its fetch endlessly. Fixed by memoising both the URL and cache key on `album.coverArt`. Same fix applied to Hero and Playlist Detail backgrounds.
+
+---
+
 ## [1.26.1] - 2026-04-01
 
 ### Fixed

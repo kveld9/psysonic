@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Play, Star, ListPlus, X } from 'lucide-react';
+import { Play, Heart, ListPlus, X } from 'lucide-react';
 import { SubsonicSong } from '../api/subsonic';
 import { Track, usePlayerStore, songToTrack } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
@@ -256,7 +256,7 @@ export default function AlbumTrackList({
                     data-tooltip={starredSongs.has(song.id) ? t('albumDetail.favoriteRemove') : t('albumDetail.favoriteAdd')}
                     style={{ color: starredSongs.has(song.id) ? 'var(--color-star-active, var(--accent))' : 'var(--color-star-inactive, var(--text-muted))' }}
                   >
-                    <Star size={14} fill={starredSongs.has(song.id) ? 'currentColor' : 'none'} />
+                    <Heart size={14} fill={starredSongs.has(song.id) ? 'currentColor' : 'none'} />
                   </button>
                 </div>
                 <StarRating

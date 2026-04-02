@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Wifi, WifiOff, Globe, Music2, Sliders, LogOut, CheckCircle2, FolderOpen,
   Palette, Server, Plus, Trash2, Eye, EyeOff, Info, ExternalLink, Shuffle, X, Play, Type, Keyboard, ChevronDown,
-  GripVertical, PanelLeft, RotateCcw
+  GripVertical, PanelLeft, RotateCcw, LayoutGrid
 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
@@ -21,6 +21,7 @@ import { useFontStore, FontId } from '../store/fontStore';
 import { useKeybindingsStore, KeyAction, formatKeyCode, DEFAULT_BINDINGS } from '../store/keybindingsStore';
 import { useGlobalShortcutsStore, GlobalAction, buildGlobalShortcut, formatGlobalShortcut } from '../store/globalShortcutsStore';
 import { useSidebarStore, DEFAULT_SIDEBAR_ITEMS, SidebarItemConfig } from '../store/sidebarStore';
+import { useHomeStore, HomeSectionId } from '../store/homeStore';
 import { useDragDrop, useDragSource } from '../contexts/DragDropContext';
 import { ALL_NAV_ITEMS } from '../components/Sidebar';
 import { pingWithCredentials } from '../api/subsonic';
@@ -562,6 +563,8 @@ export default function Settings() {
               </div>
             </div>
           </section>
+
+          <HomeCustomizer />
         </>
       )}
 
@@ -1147,6 +1150,49 @@ function renderInline(text: string): React.ReactNode[] {
       return <code key={i} className="changelog-code">{part.slice(1, -1)}</code>;
     return part;
   });
+}
+
+function HomeCustomizer() {
+  const { t } = useTranslation();
+  const { sections, toggleSection, reset } = useHomeStore();
+
+  const SECTION_LABELS: Record<HomeSectionId, string> = {
+    hero:            t('home.hero'),
+    recent:          t('home.recent'),
+    discover:        t('home.discover'),
+    discoverArtists: t('home.discoverArtists'),
+    recentlyPlayed:  t('home.recentlyPlayed'),
+    starred:         t('home.starred'),
+    mostPlayed:      t('home.mostPlayed'),
+  };
+
+  return (
+    <section className="settings-section">
+      <div className="settings-section-header">
+        <LayoutGrid size={18} />
+        <h2>{t('settings.homeCustomizerTitle')}</h2>
+        <button
+          className="btn btn-ghost"
+          style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)' }}
+          onClick={reset}
+          data-tooltip={t('settings.sidebarReset')}
+        >
+          <RotateCcw size={14} />
+        </button>
+      </div>
+      <div className="settings-card" style={{ padding: '4px 0' }}>
+        {sections.map(sec => (
+          <div key={sec.id} className="settings-toggle-row" style={{ padding: '8px 16px' }}>
+            <span style={{ fontSize: 14 }}>{SECTION_LABELS[sec.id]}</span>
+            <label className="toggle-switch" aria-label={SECTION_LABELS[sec.id]}>
+              <input type="checkbox" checked={sec.visible} onChange={() => toggleSection(sec.id)} />
+              <span className="toggle-track" />
+            </label>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function SidebarGripHandle({ idx, section, label }: { idx: number; section: 'library' | 'system'; label: string }) {

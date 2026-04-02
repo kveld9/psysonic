@@ -136,7 +136,7 @@ export default function PlaylistDetail() {
 
   const bgFetchUrl = useMemo(() => buildCoverArtUrl(coverQuad[0] ?? '', 300), [coverQuad]);
   const bgCacheKey = useMemo(() => coverArtCacheKey(coverQuad[0] ?? '', 300), [coverQuad]);
-  const resolvedBgUrl = useCachedUrl(bgFetchUrl, bgCacheKey, false);
+  const resolvedBgUrl = useCachedUrl(bgFetchUrl, bgCacheKey);
 
   // Song search
   const [searchOpen, setSearchOpen] = useState(false);

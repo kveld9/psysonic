@@ -4,8 +4,12 @@ import AlbumRow from '../components/AlbumRow';
 import { getAlbumList, getArtists, SubsonicAlbum, SubsonicArtist } from '../api/subsonic';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useHomeStore } from '../store/homeStore';
 
 export default function Home() {
+  const homeSections = useHomeStore(s => s.sections);
+  const isVisible = (id: string) => homeSections.find(s => s.id === id)?.visible ?? true;
+
   const [starred, setStarred] = useState<SubsonicAlbum[]>([]);
   const [recent, setRecent] = useState<SubsonicAlbum[]>([]);
   const [random, setRandom] = useState<SubsonicAlbum[]>([]);
@@ -22,7 +26,7 @@ export default function Home() {
       getAlbumList('random', 20).catch(() => []),
       getAlbumList('frequent', 12).catch(() => []),
       getAlbumList('recent', 12).catch(() => []),
-      getArtists().catch(() => []),
+      isVisible('discoverArtists') ? getArtists().catch(() => []) : Promise.resolve<SubsonicArtist[]>([]),
     ]).then(([s, n, r, f, rp, artists]) => {
       setStarred(s);
       setRecent(n);
@@ -60,7 +64,7 @@ export default function Home() {
 
   return (
     <div className="animate-fade-in">
-      <Hero albums={heroAlbums} />
+      {isVisible('hero') && <Hero albums={heroAlbums} />}
 
       <div className="content-body" style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
         {loading ? (
@@ -69,19 +73,23 @@ export default function Home() {
           </div>
         ) : (
           <>
-            <AlbumRow
-              title={t('home.recent')}
-              albums={recent}
-              onLoadMore={() => loadMore('newest', recent, setRecent)}
-              moreText={t('home.loadMore')}
-            />
-            <AlbumRow
-              title={t('home.discover')}
-              albums={random}
-              onLoadMore={() => loadMore('random', random, setRandom)}
-              moreText={t('home.discoverMore')}
-            />
-            {randomArtists.length > 0 && (
+            {isVisible('recent') && (
+              <AlbumRow
+                title={t('home.recent')}
+                albums={recent}
+                onLoadMore={() => loadMore('newest', recent, setRecent)}
+                moreText={t('home.loadMore')}
+              />
+            )}
+            {isVisible('discover') && (
+              <AlbumRow
+                title={t('home.discover')}
+                albums={random}
+                onLoadMore={() => loadMore('random', random, setRandom)}
+                moreText={t('home.discoverMore')}
+              />
+            )}
+            {isVisible('discoverArtists') && randomArtists.length > 0 && (
               <section className="album-row-section">
                 <div className="album-row-header">
                   <h2 className="section-title" style={{ marginBottom: 0 }}>{t('home.discoverArtists')}</h2>
@@ -99,7 +107,7 @@ export default function Home() {
                 </div>
               </section>
             )}
-            {recentlyPlayed.length > 0 && (
+            {isVisible('recentlyPlayed') && recentlyPlayed.length > 0 && (
               <AlbumRow
                 title={t('home.recentlyPlayed')}
                 albums={recentlyPlayed}
@@ -107,7 +115,7 @@ export default function Home() {
                 moreText={t('home.loadMore')}
               />
             )}
-            {starred.length > 0 && (
+            {isVisible('starred') && starred.length > 0 && (
               <AlbumRow
                 title={t('home.starred')}
                 albums={starred}
@@ -115,12 +123,14 @@ export default function Home() {
                 moreText={t('home.loadMore')}
               />
             )}
-            <AlbumRow
-              title={t('home.mostPlayed')}
-              albums={mostPlayed}
-              onLoadMore={() => loadMore('frequent', mostPlayed, setMostPlayed)}
-              moreText={t('home.loadMore')}
-            />
+            {isVisible('mostPlayed') && (
+              <AlbumRow
+                title={t('home.mostPlayed')}
+                albums={mostPlayed}
+                onLoadMore={() => loadMore('frequent', mostPlayed, setMostPlayed)}
+                moreText={t('home.loadMore')}
+              />
+            )}
           </>
         )}
       </div>

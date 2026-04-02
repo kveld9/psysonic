@@ -95,7 +95,7 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
   // buildCoverArtUrl generates a new salt on every call — must be memoized.
   const bgRawUrl    = useMemo(() => album?.coverArt ? buildCoverArtUrl(album.coverArt, 800) : '', [album?.coverArt]);
   const bgCacheKey  = useMemo(() => album?.coverArt ? coverArtCacheKey(album.coverArt, 800) : '', [album?.coverArt]);
-  const resolvedBgUrl = useCachedUrl(bgRawUrl, bgCacheKey, false);
+  const resolvedBgUrl = useCachedUrl(bgRawUrl, bgCacheKey);
 
   // Keep the last known good URL so HeroBg never receives '' during a cache-miss
   // transition (which would cause the background to flash empty before fading in).

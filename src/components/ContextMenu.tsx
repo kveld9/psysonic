@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Play, ListPlus, Radio, Star, Download, ChevronRight, User, Disc3, Heart, ListMusic, Plus, Info } from 'lucide-react';
+import { Play, ListPlus, Radio, Heart, Download, ChevronRight, User, Disc3, ListMusic, Plus, Info } from 'lucide-react';
+import LastfmIcon from './LastfmIcon';
 import { lastfmLoveTrack, lastfmUnloveTrack } from '../api/lastfm';
 import { usePlayerStore, Track, songToTrack } from '../store/playerStore';
 import { SubsonicAlbum, SubsonicArtist, star, unstar, getSimilarSongs2, getTopSongs, buildDownloadUrl, getAlbum, getPlaylists, getPlaylist, createPlaylist, updatePlaylist, SubsonicPlaylist } from '../api/subsonic';
@@ -304,7 +305,7 @@ export default function ContextMenu() {
                 setStarredOverride(song.id, !starred);
                 return starred ? unstar(song.id, 'song') : star(song.id, 'song');
               })}>
-                <Star size={14} fill={isStarred(song.id, song.starred) ? 'currentColor' : 'none'} />
+                <Heart size={14} fill={isStarred(song.id, song.starred) ? 'currentColor' : 'none'} />
                 {isStarred(song.id, song.starred) ? t('contextMenu.unfavorite') : t('contextMenu.favorite')}
               </div>
               {auth.lastfmSessionKey && (() => {
@@ -317,7 +318,7 @@ export default function ContextMenu() {
                     if (newLoved) lastfmLoveTrack(song, auth.lastfmSessionKey);
                     else lastfmUnloveTrack(song, auth.lastfmSessionKey);
                   })}>
-                    <Heart size={14} fill={loved ? 'currentColor' : 'none'} style={{ color: loved ? '#e31c23' : undefined }} />
+                    <LastfmIcon size={14} />
                     {loved ? t('contextMenu.lfmUnlove') : t('contextMenu.lfmLove')}
                   </div>
                 );
@@ -346,7 +347,7 @@ export default function ContextMenu() {
                 setStarredOverride(album.id, !starred);
                 return starred ? unstar(album.id, 'album') : star(album.id, 'album');
               })}>
-                <Star size={14} fill={isStarred(album.id, album.starred) ? 'currentColor' : 'none'} />
+                <Heart size={14} fill={isStarred(album.id, album.starred) ? 'currentColor' : 'none'} />
                 {isStarred(album.id, album.starred) ? t('contextMenu.unfavoriteAlbum') : t('contextMenu.favoriteAlbum')}
               </div>
               <div className="context-menu-item" onClick={() => handleAction(() => downloadAlbum(album.name, album.id))}>
@@ -380,7 +381,7 @@ export default function ContextMenu() {
                 setStarredOverride(artist.id, !starred);
                 return starred ? unstar(artist.id, 'artist') : star(artist.id, 'artist');
               })}>
-                <Star size={14} fill={isStarred(artist.id, artist.starred) ? 'currentColor' : 'none'} />
+                <Heart size={14} fill={isStarred(artist.id, artist.starred) ? 'currentColor' : 'none'} />
                 {isStarred(artist.id, artist.starred) ? t('contextMenu.unfavoriteArtist') : t('contextMenu.favoriteArtist')}
               </div>
             </>
@@ -421,7 +422,7 @@ export default function ContextMenu() {
                 setStarredOverride(song.id, !starred);
                 return starred ? unstar(song.id, 'song') : star(song.id, 'song');
               })}>
-                <Star size={14} fill={isStarred(song.id, song.starred) ? 'currentColor' : 'none'} />
+                <Heart size={14} fill={isStarred(song.id, song.starred) ? 'currentColor' : 'none'} />
                 {isStarred(song.id, song.starred) ? t('contextMenu.unfavorite') : t('contextMenu.favorite')}
               </div>
               {auth.lastfmSessionKey && (() => {
@@ -434,7 +435,7 @@ export default function ContextMenu() {
                     if (newLoved) lastfmLoveTrack(song, auth.lastfmSessionKey);
                     else lastfmUnloveTrack(song, auth.lastfmSessionKey);
                   })}>
-                    <Heart size={14} fill={loved ? 'currentColor' : 'none'} style={{ color: loved ? '#e31c23' : undefined }} />
+                    <LastfmIcon size={14} />
                     {loved ? t('contextMenu.lfmUnlove') : t('contextMenu.lfmLove')}
                   </div>
                 );

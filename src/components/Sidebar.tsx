@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { usePlayerStore } from '../store/playerStore';
 import { useOfflineStore } from '../store/offlineStore';
 import { useAuthStore } from '../store/authStore';
 import { useSidebarStore } from '../store/sidebarStore';
-import { open } from '@tauri-apps/plugin-shell';
-import { version as appVersion } from '../../package.json';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Disc3, Users, Music4, Radio, Settings, Heart, BarChart3, Shuffle,
-  PanelLeftClose, PanelLeft, HelpCircle, Dices, ArrowUpCircle, AudioLines, HardDriveDownload, Tags, ListMusic
+  PanelLeftClose, PanelLeft, HelpCircle, Dices, AudioLines, HardDriveDownload, Tags, ListMusic
 } from 'lucide-react';
 import PsysonicLogo from './PsysonicLogo';
 import PSmallLogo from './PSmallLogo';
@@ -30,42 +28,6 @@ export const ALL_NAV_ITEMS: Record<string, { icon: React.ElementType; labelKey: 
   help:         { icon: HelpCircle, labelKey: 'sidebar.help',         to: '/help',          section: 'system'  },
 };
 
-function isNewer(latest: string, current: string): boolean {
-  const parse = (v: string) => v.replace(/^[^0-9]*/, '').split('.').map(Number);
-  const [lMaj, lMin, lPat] = parse(latest);
-  const [cMaj, cMin, cPat] = parse(current);
-  if (lMaj !== cMaj) return lMaj > cMaj;
-  if (lMin !== cMin) return lMin > cMin;
-  return lPat > cPat;
-}
-
-function UpdateToast({ isCollapsed, latestVersion }: { isCollapsed: boolean; latestVersion: string }) {
-  const { t } = useTranslation();
-
-  if (isCollapsed) {
-    return (
-      <div className="update-toast-icon" style={{ marginTop: 'auto' }} data-tooltip={`${t('sidebar.updateAvailable')}: ${latestVersion}`} data-tooltip-pos="bottom">
-        <ArrowUpCircle size={20} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="update-toast">
-      <div className="update-toast-header">
-        <ArrowUpCircle size={14} />
-        <span className="update-toast-label">{t('sidebar.updateAvailable')}</span>
-      </div>
-      <div className="update-toast-version">{t('sidebar.updateReady', { version: latestVersion })}</div>
-      <button
-        className="update-toast-link"
-        onClick={() => open('https://github.com/Psychotoxical/psysonic/releases')}
-      >
-        {t('sidebar.updateLink')}
-      </button>
-    </div>
-  );
-}
 
 export default function Sidebar({
   isCollapsed = false,
@@ -83,8 +45,6 @@ export default function Sidebar({
   const serverId = useAuthStore(s => s.activeServerId ?? '');
   const hasOfflineContent = Object.values(offlineAlbums).some(a => a.serverId === serverId);
   const sidebarItems = useSidebarStore(s => s.items);
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
-
   // Resolve ordered, visible items per section from store config
   const visibleLibrary = sidebarItems
     .filter(cfg => cfg.visible && ALL_NAV_ITEMS[cfg.id]?.section === 'library')
@@ -93,28 +53,6 @@ export default function Sidebar({
     .filter(cfg => cfg.visible && ALL_NAV_ITEMS[cfg.id]?.section === 'system')
     .map(cfg => ALL_NAV_ITEMS[cfg.id]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const check = async () => {
-      try {
-        const res = await fetch('https://api.github.com/repos/Psychotoxical/psysonic/releases/latest');
-        if (!res.ok) return;
-        const data = await res.json();
-        const tag: string = data.tag_name ?? '';
-        if (!cancelled && tag && isNewer(tag, appVersion)) {
-          setLatestVersion(tag.replace(/^v/i, ''));
-        }
-      } catch {
-        // network unavailable — silently skip
-      }
-    };
-
-    const initial = setTimeout(check, 1500);
-    const interval = setInterval(check, 10 * 60 * 1000); // every 10 minutes
-
-    return () => { cancelled = true; clearTimeout(initial); clearInterval(interval); };
-  }, []);
 
   return (
     <aside className={`sidebar animate-slide-in ${isCollapsed ? 'collapsed' : ''}`}>
@@ -178,8 +116,7 @@ export default function Sidebar({
         )}
 
         {visibleSystem.length > 0 && !isCollapsed && <span className="nav-section-label">{t('sidebar.system')}</span>}
-        {latestVersion && <UpdateToast isCollapsed={isCollapsed} latestVersion={latestVersion} />}
-        {visibleSystem.map(item => (
+{visibleSystem.map(item => (
           <NavLink
             key={item.to}
             to={item.to}
