@@ -46,6 +46,7 @@ const THEME_GROUPS: { group: string; themes: ThemeDef[] }[] = [
       { id: 'gruvbox-dark-hard',    label: 'Dark Hard',    bg: '#1d2021', card: '#3c3836', accent: '#fabd2f' },
       { id: 'gruvbox-dark-medium',  label: 'Dark Medium',  bg: '#282828', card: '#3c3836', accent: '#fabd2f' },
       { id: 'gruvbox-dark-soft',    label: 'Dark Soft',    bg: '#32302f', card: '#45403d', accent: '#fabd2f' },
+      { id: 'dracula',              label: 'Dracula',      bg: '#282a36', card: '#44475a', accent: '#bd93f9' },
       { id: 'dawnfox',              label: 'Dawnfox',      bg: '#faf4ed', card: '#ebe0df', accent: '#907aa9' },
       { id: 'dayfox',               label: 'Dayfox',       bg: '#f6f2ee', card: '#dbd1dd', accent: '#2848a9' },
       { id: 'duskfox',              label: 'Duskfox',      bg: '#232136', card: '#2d2a45', accent: '#c4a7e7' },
