@@ -58,6 +58,7 @@ export interface SubsonicAlbum {
   coverArt?: string;
   songCount: number;
   duration: number;
+  playCount?: number;
   year?: number;
   genre?: string;
   starred?: string;

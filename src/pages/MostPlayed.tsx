@@ -1,0 +1,189 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowUpDown, ArrowDown, ArrowUp, TrendingUp } from 'lucide-react';
+import { getAlbumList, SubsonicAlbum, buildCoverArtUrl, coverArtCacheKey } from '../api/subsonic';
+import { useAuthStore } from '../store/authStore';
+import CachedImage from '../components/CachedImage';
+import { playAlbum } from '../utils/playAlbum';
+import { useTranslation } from 'react-i18next';
+
+const PAGE_SIZE = 50;
+
+interface ArtistEntry {
+  id: string;
+  name: string;
+  coverArt?: string;
+  totalPlays: number;
+}
+
+function deriveTopArtists(albums: SubsonicAlbum[]): ArtistEntry[] {
+  const map = new Map<string, ArtistEntry>();
+  for (const a of albums) {
+    const plays = a.playCount ?? 0;
+    if (plays === 0) continue;
+    const entry = map.get(a.artistId);
+    if (entry) {
+      entry.totalPlays += plays;
+      if (!entry.coverArt && a.coverArt) entry.coverArt = a.coverArt;
+    } else {
+      map.set(a.artistId, { id: a.artistId, name: a.artist, coverArt: a.coverArt, totalPlays: plays });
+    }
+  }
+  return [...map.values()].sort((a, b) => b.totalPlays - a.totalPlays);
+}
+
+function formatPlays(n: number, t: ReturnType<typeof import('react-i18next').useTranslation>['t']): string {
+  return t('mostPlayed.plays', { n: n.toLocaleString() }) as string;
+}
+
+export default function MostPlayed() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const musicLibraryFilterVersion = useAuthStore(s => s.musicLibraryFilterVersion);
+
+  const [albums, setAlbums] = useState<SubsonicAlbum[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [sortAsc, setSortAsc] = useState(false); // false = most plays first
+
+  const topArtists = deriveTopArtists(albums).slice(0, 10);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setAlbums([]);
+    setHasMore(true);
+    try {
+      const result = await getAlbumList('frequent', PAGE_SIZE, 0);
+      setAlbums(result);
+      setHasMore(result.length === PAGE_SIZE);
+    } catch {}
+    setLoading(false);
+  }, [musicLibraryFilterVersion]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const result = await getAlbumList('frequent', PAGE_SIZE, albums.length);
+      setAlbums(prev => [...prev, ...result]);
+      setHasMore(result.length === PAGE_SIZE);
+    } catch {}
+    setLoadingMore(false);
+  };
+
+  const sorted = sortAsc ? [...albums].reverse() : albums;
+  const withPlays = sorted.filter(a => (a.playCount ?? 0) > 0);
+
+  return (
+    <div className="content-body animate-fade-in">
+      <div className="mp-header">
+        <div className="mp-header-left">
+          <TrendingUp size={22} className="mp-header-icon" />
+          <h1 className="mp-title">{t('mostPlayed.title')}</h1>
+        </div>
+        <button
+          className="btn btn-ghost mp-sort-btn"
+          onClick={() => setSortAsc(v => !v)}
+          data-tooltip={sortAsc ? t('mostPlayed.sortMost') : t('mostPlayed.sortLeast')}
+        >
+          {sortAsc ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+          {sortAsc ? t('mostPlayed.sortLeast') : t('mostPlayed.sortMost')}
+          <ArrowUpDown size={12} style={{ opacity: 0.45 }} />
+        </button>
+      </div>
+
+      {/* ── Top Artists ── */}
+      {!loading && topArtists.length > 0 && (
+        <section className="mp-section">
+          <h2 className="mp-section-title">{t('mostPlayed.topArtists')}</h2>
+          <div className="mp-artist-grid">
+            {topArtists.map((artist, i) => (
+              <button
+                key={artist.id}
+                className="mp-artist-card"
+                onClick={() => navigate(`/artist/${artist.id}`)}
+              >
+                <span className="mp-rank">{i + 1}</span>
+                {artist.coverArt ? (
+                  <CachedImage
+                    src={buildCoverArtUrl(artist.coverArt, 80)}
+                    cacheKey={coverArtCacheKey(artist.coverArt, 80)}
+                    alt=""
+                    className="mp-artist-avatar"
+                  />
+                ) : (
+                  <div className="mp-artist-avatar mp-artist-avatar--placeholder" />
+                )}
+                <div className="mp-artist-info">
+                  <span className="mp-artist-name truncate">{artist.name}</span>
+                  <span className="mp-artist-plays">{formatPlays(artist.totalPlays, t)}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Top Albums ── */}
+      <section className="mp-section">
+        <h2 className="mp-section-title">{t('mostPlayed.topAlbums')}</h2>
+
+        {loading ? (
+          <div className="mp-loading"><div className="spinner" /></div>
+        ) : withPlays.length === 0 ? (
+          <div className="empty-state">{t('mostPlayed.noData')}</div>
+        ) : (
+          <>
+            <div className="mp-album-list">
+              {withPlays.map((album, i) => (
+                <div
+                  key={album.id}
+                  className="mp-album-row"
+                  onClick={() => navigate(`/album/${album.id}`)}
+                  onContextMenu={e => { e.preventDefault(); playAlbum(album.id); }}
+                >
+                  <span className="mp-album-rank">{sortAsc ? withPlays.length - i : i + 1}</span>
+                  {album.coverArt ? (
+                    <CachedImage
+                      src={buildCoverArtUrl(album.coverArt, 80)}
+                      cacheKey={coverArtCacheKey(album.coverArt, 80)}
+                      alt=""
+                      className="mp-album-cover"
+                    />
+                  ) : (
+                    <div className="mp-album-cover mp-album-cover--placeholder" />
+                  )}
+                  <div className="mp-album-meta">
+                    <span className="mp-album-name truncate">{album.name}</span>
+                    <span
+                      className="mp-album-artist truncate track-artist-link"
+                      onClick={e => { e.stopPropagation(); navigate(`/artist/${album.artistId}`); }}
+                    >
+                      {album.artist}
+                    </span>
+                  </div>
+                  {album.year && <span className="mp-album-year">{album.year}</span>}
+                  <span className="mp-album-plays">{(album.playCount ?? 0).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+
+            {hasMore && (
+              <button
+                className="btn btn-ghost mp-load-more"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? <div className="spinner" style={{ width: 14, height: 14, borderTopColor: 'currentColor' }} /> : null}
+                {t('mostPlayed.loadMore')}
+              </button>
+            )}
+          </>
+        )}
+      </section>
+    </div>
+  );
+}

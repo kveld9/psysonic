@@ -26,6 +26,7 @@ import Login from './pages/Login';
 import AlbumDetail from './pages/AlbumDetail';
 import LabelAlbums from './pages/LabelAlbums';
 import Statistics from './pages/Statistics';
+import MostPlayed from './pages/MostPlayed';
 import Help from './pages/Help';
 import RandomAlbums from './pages/RandomAlbums';
 import SearchResults from './pages/SearchResults';
@@ -304,6 +305,7 @@ function AppShell() {
             <Route path="/search" element={<SearchResults />} />
             <Route path="/search/advanced" element={<AdvancedSearch />} />
             <Route path="/statistics" element={<Statistics />} />
+            <Route path="/most-played" element={<MostPlayed />} />
             <Route path="/now-playing" element={isMobile ? <MobilePlayerView /> : <NowPlayingPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<Help />} />

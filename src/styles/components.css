@@ -6377,3 +6377,204 @@
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
+
+/* ─── Most Played page ───────────────────────────────────────────────────────── */
+
+.mp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.mp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mp-header-icon {
+  color: var(--accent);
+}
+
+.mp-title {
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mp-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.mp-section {
+  margin-bottom: 2.5rem;
+}
+
+.mp-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 1rem;
+}
+
+.mp-loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+/* ── Top Artists grid ── */
+.mp-artist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+
+.mp-artist-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.mp-artist-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+
+.mp-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 18px;
+  text-align: right;
+}
+
+.mp-artist-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mp-artist-avatar--placeholder {
+  background: var(--bg-surface);
+}
+
+.mp-artist-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mp-artist-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.mp-artist-plays {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* ── Album list ── */
+.mp-album-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mp-album-row {
+  display: grid;
+  grid-template-columns: 28px 44px 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.mp-album-row:hover {
+  background: var(--bg-hover);
+}
+
+.mp-album-rank {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mp-album-cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mp-album-cover--placeholder {
+  background: var(--bg-surface);
+}
+
+.mp-album-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mp-album-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.mp-album-artist {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.mp-album-year {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mp-album-plays {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+}
+
+.mp-load-more {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

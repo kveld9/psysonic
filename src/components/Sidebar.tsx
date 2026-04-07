@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Disc3, Users, Music4, Radio, Settings, Heart, BarChart3, Shuffle,
   PanelLeftClose, PanelLeft, HelpCircle, Dices, AudioLines, HardDriveDownload, Tags, ListMusic, Cast,
-  ChevronDown, Check, Music2,
+  ChevronDown, Check, Music2, TrendingUp,
 } from 'lucide-react';
 import PsysonicLogo from './PsysonicLogo';
 import PSmallLogo from './PSmallLogo';
@@ -24,10 +24,11 @@ export const ALL_NAV_ITEMS: Record<string, { icon: React.ElementType; labelKey: 
   artists:      { icon: Users,      labelKey: 'sidebar.artists',      to: '/artists',       section: 'library' },
   genres:       { icon: Tags,       labelKey: 'sidebar.genres',       to: '/genres',        section: 'library' },
   randomMix:    { icon: Shuffle,    labelKey: 'sidebar.randomMix',    to: '/random-mix',    section: 'library' },
-  favorites:    { icon: Heart,      labelKey: 'sidebar.favorites',    to: '/favorites',     section: 'library' },
-  playlists:    { icon: ListMusic,  labelKey: 'sidebar.playlists',    to: '/playlists',     section: 'library' },
-  radio:        { icon: Cast,       labelKey: 'sidebar.radio',         to: '/radio',         section: 'library' },
-  statistics:   { icon: BarChart3,  labelKey: 'sidebar.statistics',   to: '/statistics',    section: 'system'  },
+  favorites:    { icon: Heart,       labelKey: 'sidebar.favorites',    to: '/favorites',      section: 'library' },
+  playlists:    { icon: ListMusic,   labelKey: 'sidebar.playlists',    to: '/playlists',      section: 'library' },
+  mostPlayed:   { icon: TrendingUp,  labelKey: 'sidebar.mostPlayed',   to: '/most-played',    section: 'library' },
+  radio:        { icon: Cast,        labelKey: 'sidebar.radio',        to: '/radio',          section: 'library' },
+  statistics:   { icon: BarChart3,   labelKey: 'sidebar.statistics',   to: '/statistics',     section: 'system'  },
   help:         { icon: HelpCircle, labelKey: 'sidebar.help',         to: '/help',          section: 'system'  },
 };
 

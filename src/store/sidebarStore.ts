@@ -18,6 +18,7 @@ export const DEFAULT_SIDEBAR_ITEMS: SidebarItemConfig[] = [
   { id: 'randomMix',     visible: true },
   { id: 'favorites',     visible: true },
   { id: 'playlists',     visible: true },
+  { id: 'mostPlayed',    visible: true },
   { id: 'radio',         visible: true },
   { id: 'statistics',    visible: true },
   { id: 'help',          visible: true },
