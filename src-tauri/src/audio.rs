@@ -1361,6 +1361,9 @@ pub struct AudioEngine {
     pub stream_handle: Arc<std::sync::Mutex<rodio::OutputStreamHandle>>,
     /// Sample rate the output stream was last opened at (updated on every re-open).
     pub stream_sample_rate: Arc<AtomicU32>,
+    /// The rate the device was opened at on cold start — used to restore the
+    /// stream when Hi-Res is toggled off while a hi-res rate is active.
+    pub device_default_rate: u32,
     /// Sends `(desired_rate, is_hi_res, reply_tx)` to the audio-stream thread to
     /// re-open the output device. `is_hi_res` controls thread-priority escalation.
     pub stream_reopen_tx: std::sync::mpsc::SyncSender<(u32, bool, std::sync::mpsc::SyncSender<rodio::OutputStreamHandle>)>,
@@ -1582,6 +1585,7 @@ pub fn create_engine() -> (AudioEngine, std::thread::JoinHandle<()>) {
     let engine = AudioEngine {
         stream_handle: Arc::new(std::sync::Mutex::new(initial_handle)),
         stream_sample_rate: Arc::new(AtomicU32::new(initial_rate)),
+        device_default_rate: initial_rate,
         stream_reopen_tx: reopen_tx,
         current: Arc::new(Mutex::new(AudioCurrent {
             sink: None,
@@ -1890,25 +1894,31 @@ pub async fn audio_play(
         return Ok(());
     }
 
-    // ── Native-rate stream switch (Hi-Res only) ───────────────────────────────
-    // Standard mode: skip entirely — zero atomic reads, zero IPC, rodio resamples
-    // transparently from the file's native rate to whatever the device runs at.
-    // Hi-Res mode: re-open the device at the file's native rate if it changed,
-    // keeping the signal bit-perfect (no rodio resampler in the path).
-    if hi_res_enabled {
+    // ── Stream rate management ────────────────────────────────────────────────
+    // Hi-Res ON:  open device at file's native rate (bit-perfect, no resampler).
+    // Hi-Res OFF: if the stream was previously opened at a hi-res rate (e.g. the
+    //             toggle was just turned off mid-session), restore the device
+    //             default rate so playback is no longer at 88.2/96 kHz etc.
+    //             If already at the device default — skip entirely (no IPC, no
+    //             PipeWire reconfigure, no scheduler cost).
+    {
         let current_stream_rate = state.stream_sample_rate.load(Ordering::Relaxed);
-        if output_rate != current_stream_rate && output_rate > 0 {
+        let target_rate = if hi_res_enabled {
+            output_rate   // native file rate
+        } else {
+            state.device_default_rate  // restore device default
+        };
+        let needs_switch = target_rate > 0 && target_rate != current_stream_rate;
+        if needs_switch {
             let (reply_tx, reply_rx) = std::sync::mpsc::sync_channel::<rodio::OutputStreamHandle>(0);
-            if state.stream_reopen_tx.send((output_rate, true, reply_tx)).is_ok() {
+            if state.stream_reopen_tx.send((target_rate, hi_res_enabled, reply_tx)).is_ok() {
                 match reply_rx.recv_timeout(std::time::Duration::from_secs(5)) {
                     Ok(new_handle) => {
                         *state.stream_handle.lock().unwrap() = new_handle;
-                        state.stream_sample_rate.store(output_rate, Ordering::Relaxed);
-                        // Give PipeWire time to reconfigure its processing graph at
-                        // the new sample rate before we open a Sink and start feeding
-                        // frames. Without this delay the first quantum is often stale
-                        // and triggers an snd_pcm_recover underrun.
-                        if output_rate > 48_000 {
+                        state.stream_sample_rate.store(target_rate, Ordering::Relaxed);
+                        // Give PipeWire time to reconfigure at the new rate before
+                        // we open a Sink — only needed for large hi-res quanta.
+                        if hi_res_enabled && target_rate > 48_000 {
                             tokio::time::sleep(Duration::from_millis(150)).await;
                         }
                     }
