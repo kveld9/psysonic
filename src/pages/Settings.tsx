@@ -89,6 +89,7 @@ const CONTRIBUTORS = [
     contributions: [
       'Russian translation & i18n locale split (PR #106)',
       'Gapless manual skip: honor user-initiated play over pre-chained track (PR #119)',
+      'Per-server music folder filter and sidebar library picker (PR #125)',
     ],
   },
   {
