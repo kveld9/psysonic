@@ -994,7 +994,6 @@ pub fn run() {
             audio::audio_play_radio,
             audio::audio_set_crossfade,
             audio::audio_set_gapless,
-            audio::compute_waveform,
             audio::audio_chain_preload,
             discord::discord_update_presence,
             discord::discord_clear_presence,
