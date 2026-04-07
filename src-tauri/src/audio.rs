@@ -902,19 +902,20 @@ struct SizedDecoder {
 }
 
 impl SizedDecoder {
-    fn new(data: Vec<u8>, format_hint: Option<&str>) -> Result<Self, String> {
+    fn new(data: Vec<u8>, format_hint: Option<&str>, hi_res: bool) -> Result<Self, String> {
         let data_len = data.len() as u64;
         let source = SizedCursorSource {
             inner: Cursor::new(data),
             len: data_len,
         };
-        // 4 MB read-ahead buffer for Symphonia. Since the source is an in-memory
-        // Cursor<Vec<u8>>, reads are free — the large buffer reduces the number of
-        // Read::read() calls Symphonia makes while demuxing, lowering decode-loop
-        // overhead for high-bitrate hi-res files (88.2kHz/24-bit FLAC ≈1800 kbps).
+        // Hi-Res: 4 MB read-ahead so Symphonia demuxes fewer Read calls for
+        // high-bitrate files (88.2 kHz/24-bit FLAC ≈ 1800 kbps).
+        // Standard: 512 KB is plenty for MP3/AAC — larger buffers waste allocation
+        // and compete with the playback thread at track start.
+        let buf_len = if hi_res { 4 * 1024 * 1024 } else { 512 * 1024 };
         let mss = MediaSourceStream::new(
             Box::new(source) as Box<dyn MediaSource>,
-            MediaSourceStreamOptions { buffer_len: 4 * 1024 * 1024 },
+            MediaSourceStreamOptions { buffer_len: buf_len },
         );
 
         let mut hint = Hint::new();
@@ -1260,10 +1261,11 @@ fn build_source(
     sample_counter: Arc<AtomicU64>,
     target_rate: u32,
     format_hint: Option<&str>,
+    hi_res: bool,
 ) -> Result<BuiltSource, String> {
     let gapless = parse_gapless_info(&data);
 
-    let decoder = SizedDecoder::new(data, format_hint)?;
+    let decoder = SizedDecoder::new(data, format_hint, hi_res)?;
     let sample_rate = decoder.sample_rate();
     let channels = decoder.channels();
 
@@ -1359,9 +1361,9 @@ pub struct AudioEngine {
     pub stream_handle: Arc<std::sync::Mutex<rodio::OutputStreamHandle>>,
     /// Sample rate the output stream was last opened at (updated on every re-open).
     pub stream_sample_rate: Arc<AtomicU32>,
-    /// Sends `(desired_rate, reply_tx)` to the audio-stream thread to re-open the
-    /// output device at a different native sample rate.
-    pub stream_reopen_tx: std::sync::mpsc::SyncSender<(u32, std::sync::mpsc::SyncSender<rodio::OutputStreamHandle>)>,
+    /// Sends `(desired_rate, is_hi_res, reply_tx)` to the audio-stream thread to
+    /// re-open the output device. `is_hi_res` controls thread-priority escalation.
+    pub stream_reopen_tx: std::sync::mpsc::SyncSender<(u32, bool, std::sync::mpsc::SyncSender<rodio::OutputStreamHandle>)>,
     pub current: Arc<Mutex<AudioCurrent>>,
     /// Monotonically incremented on each audio_play (non-chain) / audio_stop call.
     pub generation: Arc<AtomicU64>,
@@ -1519,7 +1521,7 @@ pub fn create_engine() -> (AudioEngine, std::thread::JoinHandle<()>) {
     let (init_tx, init_rx) =
         std::sync::mpsc::sync_channel::<(rodio::OutputStreamHandle, u32)>(0);
     let (reopen_tx, reopen_rx) =
-        std::sync::mpsc::sync_channel::<(u32, std::sync::mpsc::SyncSender<rodio::OutputStreamHandle>)>(4);
+        std::sync::mpsc::sync_channel::<(u32, bool, std::sync::mpsc::SyncSender<rodio::OutputStreamHandle>)>(4);
 
     let thread = std::thread::Builder::new()
         .name("psysonic-audio-stream".into())
@@ -1535,17 +1537,24 @@ pub fn create_engine() -> (AudioEngine, std::thread::JoinHandle<()>) {
                 }
             }
 
-            // Boost scheduler priority so the audio thread is not pre-empted
-            // during high-rate playback. Silently ignored without CAP_SYS_NICE.
-            thread_priority::set_current_thread_priority(
-                thread_priority::ThreadPriority::Max
-            ).ok();
-
+            // Thread priority is kept at default during standard-mode playback.
+            // It is escalated to Max only when a Hi-Res stream reopen is requested,
+            // to prevent PipeWire underruns at high quantum sizes (8192 frames).
             let (mut _stream, handle, rate) = open_stream_for_rate(0);
             init_tx.send((handle, rate)).ok();
 
             // Keep the stream alive and handle sample-rate switch requests.
-            while let Ok((desired_rate, reply_tx)) = reopen_rx.recv() {
+            while let Ok((desired_rate, is_hi_res, reply_tx)) = reopen_rx.recv() {
+                // Escalate to Max for Hi-Res reopens (large PipeWire quanta need
+                // real-time scheduling to avoid underruns). No escalation for
+                // standard mode — the thread blocks on recv() between reopens so
+                // elevated priority would only waste scheduler budget.
+                if is_hi_res {
+                    thread_priority::set_current_thread_priority(
+                        thread_priority::ThreadPriority::Max
+                    ).ok();
+                }
+
                 drop(_stream); // close old stream before opening new one
 
                 // Scale the PipeWire quantum with the sample rate so wall-clock
@@ -1866,6 +1875,7 @@ pub async fn audio_play(
         state.samples_played.clone(),
         target_rate,
         format_hint.as_deref(),
+        hi_res_enabled,
     ).map_err(|e| { app.emit("audio:error", &e).ok(); e })?;
     let source = built.source;
     let duration_secs = built.duration_secs;
@@ -1880,42 +1890,39 @@ pub async fn audio_play(
         return Ok(());
     }
 
-    // ── Native-rate stream switch ─────────────────────────────────────────────
-    // If the decoded track's sample rate differs from the current output stream,
-    // ask the audio-stream thread to re-open the device at the native rate.
-    // This keeps the signal bit-perfect (no rodio resampler in the path).
-    // Falls back silently if the switch times out (rodio will resample instead).
-    // Safe mode (default): lock to 44.1 kHz — rodio resamples internally.
-    // Hi-Res mode (alpha): request the file's native rate from the audio thread.
-    let effective_rate = if hi_res_enabled { output_rate } else { 44_100 };
-
-    let current_stream_rate = state.stream_sample_rate.load(Ordering::Relaxed);
-    let stream_was_switched = effective_rate != current_stream_rate && effective_rate > 0;
-    if stream_was_switched {
-        let (reply_tx, reply_rx) = std::sync::mpsc::sync_channel::<rodio::OutputStreamHandle>(0);
-        if state.stream_reopen_tx.send((effective_rate, reply_tx)).is_ok() {
-            match reply_rx.recv_timeout(std::time::Duration::from_secs(5)) {
-                Ok(new_handle) => {
-                    *state.stream_handle.lock().unwrap() = new_handle;
-                    state.stream_sample_rate.store(effective_rate, Ordering::Relaxed);
-                    // Give PipeWire time to reconfigure its processing graph at
-                    // the new sample rate before we open a Sink and start feeding
-                    // frames. Without this delay the first quantum is often stale
-                    // and triggers an snd_pcm_recover underrun.
-                    if effective_rate > 48_000 {
-                        tokio::time::sleep(Duration::from_millis(150)).await;
+    // ── Native-rate stream switch (Hi-Res only) ───────────────────────────────
+    // Standard mode: skip entirely — zero atomic reads, zero IPC, rodio resamples
+    // transparently from the file's native rate to whatever the device runs at.
+    // Hi-Res mode: re-open the device at the file's native rate if it changed,
+    // keeping the signal bit-perfect (no rodio resampler in the path).
+    if hi_res_enabled {
+        let current_stream_rate = state.stream_sample_rate.load(Ordering::Relaxed);
+        if output_rate != current_stream_rate && output_rate > 0 {
+            let (reply_tx, reply_rx) = std::sync::mpsc::sync_channel::<rodio::OutputStreamHandle>(0);
+            if state.stream_reopen_tx.send((output_rate, true, reply_tx)).is_ok() {
+                match reply_rx.recv_timeout(std::time::Duration::from_secs(5)) {
+                    Ok(new_handle) => {
+                        *state.stream_handle.lock().unwrap() = new_handle;
+                        state.stream_sample_rate.store(output_rate, Ordering::Relaxed);
+                        // Give PipeWire time to reconfigure its processing graph at
+                        // the new sample rate before we open a Sink and start feeding
+                        // frames. Without this delay the first quantum is often stale
+                        // and triggers an snd_pcm_recover underrun.
+                        if output_rate > 48_000 {
+                            tokio::time::sleep(Duration::from_millis(150)).await;
+                        }
                     }
-                }
-                Err(_) => {
-                    eprintln!("[psysonic] stream rate switch timed out, keeping {current_stream_rate} Hz");
+                    Err(_) => {
+                        eprintln!("[psysonic] stream rate switch timed out, keeping {current_stream_rate} Hz");
+                    }
                 }
             }
         }
-    }
 
-    // Re-check gen: a rapid skip during the settle sleep would have bumped it.
-    if state.generation.load(Ordering::SeqCst) != gen {
-        return Ok(());
+        // Re-check gen: a rapid skip during the settle sleep would have bumped it.
+        if state.generation.load(Ordering::SeqCst) != gen {
+            return Ok(());
+        }
     }
 
     let sink = Sink::try_new(&*state.stream_handle.lock().unwrap()).map_err(|e| e.to_string())?;
@@ -1928,7 +1935,8 @@ pub async fn audio_play(
     // decodes into its ring buffer ahead of the hardware. After a short delay
     // we resume — the buffer is already full and the hardware gets its frames
     // without an underrun on the very first period.
-    let needs_prefill = effective_rate > 48_000;
+    // Standard mode: no pre-fill needed — default 44.1/48 kHz quantum is small.
+    let needs_prefill = hi_res_enabled && output_rate > 48_000;
     if needs_prefill {
         sink.pause();
     }
@@ -2137,6 +2145,7 @@ pub async fn audio_chain_preload(
         chain_counter.clone(),
         target_rate,
         format_hint.as_deref(),
+        hi_res_enabled,
     ).map_err(|e| e.to_string())?;
     let source = built.source;
     let duration_secs = built.duration_secs;
@@ -2571,6 +2580,14 @@ pub async fn audio_preload(
         if preloaded.as_ref().is_some_and(|p| same_playback_target(&p.url, &url)) {
             return Ok(());
         }
+    }
+    // Throttle: wait 8 s before starting the background download so it does not
+    // compete with the decode + sink-feed work of the just-started current track.
+    // If the user skips during the wait the generation counter changes and we abort.
+    let gen_snapshot = state.generation.load(Ordering::Relaxed);
+    tokio::time::sleep(Duration::from_secs(8)).await;
+    if state.generation.load(Ordering::Relaxed) != gen_snapshot {
+        return Ok(());
     }
     let data: Vec<u8> = if let Some(path) = url.strip_prefix("psysonic-local://") {
         tokio::fs::read(path).await.map_err(|e| e.to_string())?
