@@ -511,6 +511,20 @@ export const ruTranslation = {
     tabServer: 'Сервер',
     tabSystem: 'Система',
     tabGeneral: 'Общие',
+    ratingsSectionTitle: 'Рейтинги',
+    ratingsSkipStarTitle: 'Скипнуть для 1 звезды',
+    ratingsSkipStarDesc:
+      'N ручных скипов трека — 1 звезда рейтинга, если трек ещё без оценки.',
+    ratingsSkipStarThresholdLabel: 'Скипов',
+    ratingsSkipStarThresholdHint:
+      'Считаются только переходы «Далее» / медиаклавиша «следующий», не окончание трека само по себе. Не меняет оценку, если у трека уже не ниже 1★.',
+    ratingsMixFilterTitle: 'Фильтрация по рейтингу',
+    ratingsMixFilterDesc:
+      'Фильтровать с низким рейтингом в Случайных миксах и Случайных альбомах. Повторный клик по выбранной звезде отключает порог.',
+    ratingsMixMinSong: 'Песни',
+    ratingsMixMinAlbum: 'Альбомы',
+    ratingsMixMinArtist: 'Исполнители',
+    ratingsMixMinThresholdAria: 'Минимум звёзд: {{label}}',
     backupTitle: 'Резервная копия',
     backupExport: 'Экспорт настроек',
     backupExportDesc:

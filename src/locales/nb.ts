@@ -489,6 +489,20 @@ export const nbTranslation = {
     tabServer: 'Tjener',
     tabSystem: 'System',
     tabGeneral: 'Generelt',
+    ratingsSectionTitle: 'Vurderinger',
+    ratingsSkipStarTitle: 'Hopp for 1 stjerne',
+    ratingsSkipStarDesc:
+      'Etter N manuelle hopp på samme spor: servervurdering 1 stjerne hvis fortsatt uvurdert.',
+    ratingsSkipStarThresholdLabel: 'Hopp før 1★',
+    ratingsSkipStarThresholdHint:
+      'Bare når du forlater sporet med Neste / medietast «neste», ikke når det slutter av seg selv. Ingenting skjer hvis sporet allerede har minst 1 stjerne.',
+    ratingsMixFilterTitle: 'Filtrering etter vurdering',
+    ratingsMixFilterDesc:
+      'Filtrer innhold med lav vurdering i tilfeldige mikser og tilfeldige album. Klikk samme stjerne igjen for å slå av terskelen.',
+    ratingsMixMinSong: 'Spor (sporvurdering)',
+    ratingsMixMinAlbum: 'Album',
+    ratingsMixMinArtist: 'Artister',
+    ratingsMixMinThresholdAria: 'Minimum stjerner ({{label}})',
     backupTitle: 'Sikkerhetskopiering og gjenoppretting',
     backupExport: 'Eksporter innstillinger',
     backupExportDesc: 'Lagrer alle innstillinger, tjenerprofiler, Last.fm-konfigurasjon, tema, jevnstiller og tastebindinger til en .psybkp-fil. Passordet lagres i klartekst – hold filen sikker.',

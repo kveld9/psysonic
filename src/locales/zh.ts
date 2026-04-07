@@ -486,6 +486,20 @@ export const zhTranslation = {
     tabServer: '服务器',
     tabSystem: '系统',
     tabGeneral: '通用',
+    ratingsSectionTitle: '评分',
+    ratingsSkipStarTitle: '跳过以评 1 星',
+    ratingsSkipStarDesc:
+      '同一曲目手动跳过 N 次后，若尚未评分则在服务器上设为 1 星。',
+    ratingsSkipStarThresholdLabel: '跳过次数（至 1★）',
+    ratingsSkipStarThresholdHint:
+      '仅统计用“下一曲”或媒体键离开该曲的情况；自然播放结束不计入。曲目已有 1 星或以上时不改变。',
+    ratingsMixFilterTitle: '按评分筛选',
+    ratingsMixFilterDesc:
+      '在随机混合与随机专辑中筛选低评分内容。再次点击同一颗星可关闭该列阈值。',
+    ratingsMixMinSong: '歌曲（曲目评分）',
+    ratingsMixMinAlbum: '专辑',
+    ratingsMixMinArtist: '艺人',
+    ratingsMixMinThresholdAria: '最低星数（{{label}}）',
     backupTitle: '备份与恢复',
     backupExport: '导出设置',
     backupExportDesc: '将所有设置、服务器配置、Last.fm 配置、主题、均衡器和快捷键保存到 .psybkp 文件。密码以明文存储——请妥善保管该文件。',

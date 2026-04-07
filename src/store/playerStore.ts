@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { showToast } from '../utils/toast';
-import { buildCoverArtUrl, getPlayQueue, savePlayQueue, reportNowPlaying, scrobbleSong, SubsonicSong, getSong, getRandomSongs, getSimilarSongs2, getTopSongs, InternetRadioStation } from '../api/subsonic';
+import { buildCoverArtUrl, getPlayQueue, savePlayQueue, reportNowPlaying, scrobbleSong, SubsonicSong, getSong, getRandomSongs, getSimilarSongs2, getTopSongs, InternetRadioStation, setRating } from '../api/subsonic';
 import { resolvePlaybackUrl } from '../utils/resolvePlaybackUrl';
 import { setDeferHotCachePrefetch } from '../utils/hotCacheGate';
 import { lastfmScrobble, lastfmUpdateNowPlaying, lastfmLoveTrack, lastfmUnloveTrack, lastfmGetTrackLoved, lastfmGetAllLovedTracks } from '../api/lastfm';
@@ -160,6 +160,32 @@ let seekTarget: number | null = null;
 // Guard against rapid double-click play/pause sending two state transitions
 // to the Rust backend before it has finished the previous one.
 let togglePlayLock = false;
+
+/** Manual skip counts per track id toward optional “skip → rating 1” (in-memory). */
+const manualSkipStarCounts = new Map<string, number>();
+
+function applySkipStarOnManualNext(skippedTrack: Track | null, manual: boolean): void {
+  if (!manual || !skippedTrack) return;
+  const { skipStarOnManualSkipsEnabled, skipStarManualSkipThreshold } = useAuthStore.getState();
+  if (!skipStarOnManualSkipsEnabled || skipStarManualSkipThreshold < 1) return;
+  const id = skippedTrack.id;
+  const n = (manualSkipStarCounts.get(id) ?? 0) + 1;
+  if (n >= skipStarManualSkipThreshold) {
+    manualSkipStarCounts.delete(id);
+    const cur = skippedTrack.userRating ?? 0;
+    if (cur >= 1) return;
+    setRating(id, 1)
+      .then(() => {
+        usePlayerStore.setState(s => ({
+          queue: s.queue.map(t => (t.id === id ? { ...t, userRating: 1 } : t)),
+          currentTrack: s.currentTrack?.id === id ? { ...s.currentTrack, userRating: 1 } : s.currentTrack,
+        }));
+      })
+      .catch(() => {});
+  } else {
+    manualSkipStarCounts.set(id, n);
+  }
+}
 
 // ── HTML5 Radio Player ────────────────────────────────────────────────────────
 // Internet radio streams are played via a native <audio> element instead of
@@ -335,6 +361,7 @@ function handleAudioEnded() {
   }
 
   const { repeatMode, currentTrack, queue } = usePlayerStore.getState();
+  if (currentTrack?.id) manualSkipStarCounts.delete(currentTrack.id);
   isAudioPaused = false;
   usePlayerStore.setState({ isPlaying: false, progress: 0, currentTime: 0, buffered: 0 });
   setTimeout(() => {
@@ -887,6 +914,7 @@ export const usePlayerStore = create<PlayerState>()(
       // ── next / previous ──────────────────────────────────────────────────────
       next: (manual = true) => {
         const { queue, queueIndex, repeatMode, currentTrack } = get();
+        applySkipStarOnManualNext(currentTrack, manual);
         const nextIdx = queueIndex + 1;
         if (nextIdx < queue.length) {
           get().playTrack(queue[nextIdx], queue, manual);

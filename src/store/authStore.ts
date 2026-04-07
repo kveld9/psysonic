@@ -60,6 +60,19 @@ interface AuthState {
   /** Parent directory; actual cache is `<dir>/psysonic-hot-cache/`. Empty = app data. */
   hotCacheDownloadDir: string;
 
+  /** After this many manual skips of the same track, set track rating to 1 if still unrated (below 1 star). */
+  skipStarOnManualSkipsEnabled: boolean;
+  /** Manual skips per track before applying rating 1 (when enabled). */
+  skipStarManualSkipThreshold: number;
+
+  /** Planned / active filter: random mixes (and later album flows) by min stars per axis. */
+  mixMinRatingFilterEnabled: boolean;
+  /** 0 = off; 1–3 = require at least that many stars on the song (UI capped at 3). */
+  mixMinRatingSong: number;
+  /** 0–3; uses `albumUserRating` on song payload when present (OpenSubsonic). */
+  mixMinRatingAlbum: number;
+  mixMinRatingArtist: number;
+
   /** Subsonic music folders for the active server (not persisted; refetched on login / server change). */
   musicFolders: Array<{ id: string; name: string }>;
   /**
@@ -125,6 +138,12 @@ interface AuthState {
   setHotCacheMaxMb: (v: number) => void;
   setHotCacheDebounceSec: (v: number) => void;
   setHotCacheDownloadDir: (v: string) => void;
+  setSkipStarOnManualSkipsEnabled: (v: boolean) => void;
+  setSkipStarManualSkipThreshold: (v: number) => void;
+  setMixMinRatingFilterEnabled: (v: boolean) => void;
+  setMixMinRatingSong: (v: number) => void;
+  setMixMinRatingAlbum: (v: number) => void;
+  setMixMinRatingArtist: (v: number) => void;
   setMusicFolders: (folders: Array<{ id: string; name: string }>) => void;
   setMusicLibraryFilter: (folderId: 'all' | string) => void;
   logout: () => void;
@@ -136,6 +155,19 @@ interface AuthState {
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+/** Upper bound for mix min-rating thresholds (UI shows five stars, only 1…this many are selectable). */
+export const MIX_MIN_RATING_FILTER_MAX_STARS = 3;
+
+function clampMixFilterMinStars(v: number): number {
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(MIX_MIN_RATING_FILTER_MAX_STARS, Math.round(v)));
+}
+
+function clampSkipStarThreshold(v: number): number {
+  if (!Number.isFinite(v)) return 3;
+  return Math.max(1, Math.min(99, Math.round(v)));
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -177,6 +209,12 @@ export const useAuthStore = create<AuthState>()(
       hotCacheMaxMb: 256,
       hotCacheDebounceSec: 30,
       hotCacheDownloadDir: '',
+      skipStarOnManualSkipsEnabled: false,
+      skipStarManualSkipThreshold: 3,
+      mixMinRatingFilterEnabled: false,
+      mixMinRatingSong: 0,
+      mixMinRatingAlbum: 0,
+      mixMinRatingArtist: 0,
       musicFolders: [],
       musicLibraryFilterByServer: {},
       musicLibraryFilterVersion: 0,
@@ -267,6 +305,13 @@ export const useAuthStore = create<AuthState>()(
       setHotCacheDebounceSec: (v) => set({ hotCacheDebounceSec: v }),
       setHotCacheDownloadDir: (v) => set({ hotCacheDownloadDir: v }),
 
+      setSkipStarOnManualSkipsEnabled: (v) => set({ skipStarOnManualSkipsEnabled: v }),
+      setSkipStarManualSkipThreshold: (v) => set({ skipStarManualSkipThreshold: clampSkipStarThreshold(v) }),
+      setMixMinRatingFilterEnabled: (v) => set({ mixMinRatingFilterEnabled: v }),
+      setMixMinRatingSong: (v) => set({ mixMinRatingSong: clampMixFilterMinStars(v) }),
+      setMixMinRatingAlbum: (v) => set({ mixMinRatingAlbum: clampMixFilterMinStars(v) }),
+      setMixMinRatingArtist: (v) => set({ mixMinRatingArtist: clampMixFilterMinStars(v) }),
+
       setMusicFolders: (folders) => {
         const sid = get().activeServerId;
         set(s => {
@@ -315,6 +360,14 @@ export const useAuthStore = create<AuthState>()(
       partialize: state => {
         const { musicFolders: _mf, musicLibraryFilterVersion: _fv, ...rest } = state;
         return rest;
+      },
+      onRehydrateStorage: () => (state, error) => {
+        if (error || !state) return;
+        useAuthStore.setState({
+          mixMinRatingSong: clampMixFilterMinStars(state.mixMinRatingSong as number),
+          mixMinRatingAlbum: clampMixFilterMinStars(state.mixMinRatingAlbum as number),
+          mixMinRatingArtist: clampMixFilterMinStars(state.mixMinRatingArtist as number),
+        });
       },
     }
   )

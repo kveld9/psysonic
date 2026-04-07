@@ -508,6 +508,20 @@ export const deTranslation = {
     shortcutNativeFullscreen: 'Nativer Vollbildmodus',
     tabSystem: 'System',
     tabGeneral: 'Allgemein',
+    ratingsSectionTitle: 'Bewertungen',
+    ratingsSkipStarTitle: 'Überspringen für 1 Stern',
+    ratingsSkipStarDesc:
+      'Nach N manuellen Überspringen desselben Titels: Server-Bewertung 1 Stern, sofern noch unbewertet.',
+    ratingsSkipStarThresholdLabel: 'Überspringer bis 1★',
+    ratingsSkipStarThresholdHint:
+      'Nur wenn Sie den Titel mit Weiter / Medientaste verlassen — nicht wenn er von selbst endet. Keine Änderung, wenn der Titel schon mindestens 1 Stern hat.',
+    ratingsMixFilterTitle: 'Filter nach Bewertung',
+    ratingsMixFilterDesc:
+      'Inhalte mit niedriger Bewertung in Zufallsmixen und zufälligen Alben filtern. Gleichen Stern erneut klicken, um die Schwelle auszuschalten.',
+    ratingsMixMinSong: 'Titel (Titelbewertung)',
+    ratingsMixMinAlbum: 'Alben',
+    ratingsMixMinArtist: 'Interpreten',
+    ratingsMixMinThresholdAria: 'Mindest-Sterne ({{label}})',
     backupTitle: 'Backup & Wiederherstellung',
     backupExport: 'Einstellungen exportieren',
     backupExportDesc: 'Speichert alle Einstellungen, Serverprofile, Last.fm-Konfiguration, Theme, EQ und Tastenkürzel in eine .psybkp-Datei. Passwörter werden im Klartext gespeichert — Datei sicher aufbewahren.',

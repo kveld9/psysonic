@@ -81,6 +81,9 @@ export interface SubsonicSong {
   coverArt?: string;
   year?: number;
   userRating?: number;
+  /** Some OpenSubsonic responses attach parent ratings on child songs. */
+  albumUserRating?: number;
+  artistUserRating?: number;
   // Audio technical info
   bitRate?: number;
   suffix?: string;

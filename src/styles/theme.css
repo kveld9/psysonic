@@ -3818,6 +3818,16 @@ select.input.input:focus {
   transform-origin: center center;
 }
 
+.star-rating .star.star--locked {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.star-rating .star.star--locked:hover {
+  color: var(--ctp-overlay1);
+  cursor: default;
+}
+
 @keyframes star-rating-star-pulse {
   0% {
     transform: scale(1);
