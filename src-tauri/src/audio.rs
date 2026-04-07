@@ -2822,3 +2822,161 @@ pub fn audio_set_crossfade(enabled: bool, secs: f32, state: State<'_, AudioEngin
 pub fn audio_set_gapless(enabled: bool, state: State<'_, AudioEngine>) {
     state.gapless_enabled.store(enabled, Ordering::Relaxed);
 }
+
+// ─── Waveform analysis ────────────────────────────────────────────────────────
+
+/// Download `url`, decode with Symphonia and return `bars` normalised peak
+/// amplitudes in [0, 1].  Runs the CPU-bound decode on the blocking thread
+/// pool so the async runtime is not starved.
+#[tauri::command]
+pub async fn compute_waveform(
+    url: String,
+    state: State<'_, AudioEngine>,
+) -> Result<Vec<f32>, String> {
+    const BARS: usize = 500;
+
+    // Fetch bytes — prefer local offline file, fall back to HTTP.
+    let data: Vec<u8> = if let Some(path) = url.strip_prefix("psysonic-local://") {
+        tokio::fs::read(path).await.map_err(|e| e.to_string())?
+    } else {
+        let resp = state
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+        if !resp.status().is_success() {
+            return Err(format!("HTTP {}", resp.status().as_u16()));
+        }
+        resp.bytes().await.map_err(|e| e.to_string())?.to_vec()
+    };
+
+    tokio::task::spawn_blocking(move || decode_peaks(data, BARS))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn decode_peaks(data: Vec<u8>, bars: usize) -> Result<Vec<f32>, String> {
+    use symphonia::core::audio::SampleBuffer as SB;
+
+    let data_len = data.len() as u64;
+    let source = SizedCursorSource { inner: Cursor::new(data), len: data_len };
+    let mss = MediaSourceStream::new(
+        Box::new(source) as Box<dyn MediaSource>,
+        MediaSourceStreamOptions { buffer_len: 512 * 1024 },
+    );
+
+    let format_opts = FormatOptions { enable_gapless: false, ..Default::default() };
+    let meta_opts = symphonia::core::meta::MetadataOptions {
+        limit_visual_bytes: symphonia::core::meta::Limit::Maximum(8 * 1024 * 1024),
+        ..Default::default()
+    };
+
+    let mut format = symphonia::default::get_probe()
+        .format(&Hint::new(), mss, &format_opts, &meta_opts)
+        .map_err(|e| e.to_string())?
+        .format;
+
+    let track = format
+        .tracks()
+        .iter()
+        .find(|t| t.codec_params.codec != CODEC_TYPE_NULL && t.codec_params.sample_rate.is_some())
+        .ok_or("no audio track")?;
+
+    let track_id = track.id;
+    let mut decoder = symphonia::default::get_codecs()
+        .make(&track.codec_params, &DecoderOptions::default())
+        .map_err(|e| e.to_string())?;
+
+    // Determine total duration so we can seek to evenly-spaced positions
+    // instead of decoding every frame sequentially.
+    let duration_secs: Option<f64> = track.codec_params.time_base
+        .zip(track.codec_params.n_frames)
+        .map(|(tb, nf)| {
+            let t = tb.calc_time(nf);
+            t.seconds as f64 + t.frac
+        });
+
+    let mut pooled: Vec<f32> = Vec::with_capacity(bars);
+    let mut sbuf: Option<SB<f32>> = None;
+
+    if let Some(dur) = duration_secs.filter(|&d| d > 0.1) {
+        // ── Fast path: seek to each bar's timestamp, decode one frame ─────────
+        // Reduces decode work from ~thousands of frames to exactly `bars` frames.
+        for bar in 0..bars {
+            let target = (bar as f64 / bars as f64) * dur;
+            let seek_time = symphonia::core::units::Time {
+                seconds: target as u64,
+                frac: target.fract(),
+            };
+            let _ = format.seek(
+                SeekMode::Coarse,
+                SeekTo::Time { time: seek_time, track_id: Some(track_id) },
+            );
+            decoder.reset();
+
+            // Try up to 16 packets to find a decodable audio packet near the
+            // seek position (some packets may be non-audio or malformed).
+            let peak = 'packet: {
+                for _ in 0..16 {
+                    match format.next_packet() {
+                        Ok(pkt) if pkt.track_id() == track_id => {
+                            if let Ok(decoded) = decoder.decode(&pkt) {
+                                let buf = sbuf.get_or_insert_with(|| {
+                                    SB::<f32>::new(decoded.capacity() as u64, *decoded.spec())
+                                });
+                                buf.copy_interleaved_ref(decoded);
+                                break 'packet buf.samples().iter().map(|s| s.abs()).fold(0.0f32, f32::max);
+                            }
+                        }
+                        Ok(_) => continue,
+                        Err(_) => break 'packet 0.0,
+                    }
+                }
+                0.0
+            };
+            pooled.push(peak);
+        }
+    } else {
+        // ── Slow path: sequential decode, then downsample ─────────────────────
+        // Used when the format doesn't report n_frames (rare edge case).
+        let mut frame_peaks: Vec<f32> = Vec::with_capacity(8192);
+        loop {
+            let packet = match format.next_packet() {
+                Ok(p) => p,
+                Err(symphonia::core::errors::Error::ResetRequired) => { let _ = decoder.reset(); continue; }
+                Err(_) => break,
+            };
+            if packet.track_id() != track_id { continue; }
+            let decoded = match decoder.decode(&packet) { Ok(d) => d, Err(_) => continue };
+            let buf = sbuf.get_or_insert_with(|| {
+                SB::<f32>::new(decoded.capacity() as u64, *decoded.spec())
+            });
+            buf.copy_interleaved_ref(decoded);
+            frame_peaks.push(buf.samples().iter().map(|s| s.abs()).fold(0.0f32, f32::max));
+        }
+        if frame_peaks.is_empty() {
+            return Ok(vec![0.5f32; bars]);
+        }
+        let n = frame_peaks.len();
+        pooled = (0..bars).map(|i| {
+            let start = (i * n) / bars;
+            let end = (((i + 1) * n) / bars).max(start + 1).min(n);
+            frame_peaks[start..end].iter().cloned().fold(0.0f32, f32::max)
+        }).collect();
+    }
+
+    // Percentile-based normalisation: always spreads the full value range
+    // across the visual height, which preserves relative dynamics even for
+    // heavily compressed ("loudness war") music where all peaks cluster near 1.0.
+    let mut sorted = pooled.clone();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let nb = sorted.len();
+    let p5  = sorted[(nb * 5  / 100).max(0)];
+    let p95 = sorted[(nb * 95 / 100).min(nb - 1)];
+    let range = (p95 - p5).max(1e-6);
+
+    Ok(pooled.iter()
+        .map(|&v| 0.12 + 0.88 * ((v - p5) / range).clamp(0.0, 1.0))
+        .collect())
+}

@@ -1161,7 +1161,7 @@ export default function Settings() {
           </div>
           <div className="settings-card">
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
-              <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { kb.resetToDefaults(); setListeningFor(null); }}>
+              <button className="btn btn-danger" style={{ fontSize: 12 }} onClick={() => { kb.resetToDefaults(); setListeningFor(null); }}>
                 {t('settings.shortcutsReset')}
               </button>
             </div>
@@ -1247,7 +1247,7 @@ export default function Settings() {
           </p>
           <div className="settings-card">
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
-              <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { gs.resetAll(); setListeningForGlobal(null); }}>
+              <button className="btn btn-danger" style={{ fontSize: 12 }} onClick={() => { gs.resetAll(); setListeningForGlobal(null); }}>
                 {t('settings.shortcutsReset')}
               </button>
             </div>

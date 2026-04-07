@@ -7,6 +7,7 @@ import {
 import { usePlayerStore } from '../store/playerStore';
 import { useAuthStore } from '../store/authStore';
 import { buildCoverArtUrl, coverArtCacheKey, star, unstar } from '../api/subsonic';
+import { resolvePlaybackUrl } from '../utils/resolvePlaybackUrl';
 import CachedImage from './CachedImage';
 import WaveformSeek from './WaveformSeek';
 import Equalizer from './Equalizer';
@@ -39,6 +40,7 @@ export default function PlayerBar() {
     starredOverrides, setStarredOverride,
   } = usePlayerStore();
   const { lastfmSessionKey } = useAuthStore();
+  const serverId = useAuthStore(s => s.activeServerId ?? '');
 
   const isRadio = !!currentRadio;
 
@@ -207,7 +209,10 @@ export default function PlayerBar() {
           <>
             <span className="player-time">{formatTime(currentTime)}</span>
             <div className="player-waveform-wrap">
-              <WaveformSeek trackId={currentTrack?.id} />
+              <WaveformSeek
+                trackId={currentTrack?.id}
+                url={currentTrack ? resolvePlaybackUrl(currentTrack.id, serverId) : undefined}
+              />
             </div>
             <span className="player-time">{formatTime(duration)}</span>
           </>

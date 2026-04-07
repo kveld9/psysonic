@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { usePlayerStore } from '../store/playerStore';
 
 function fmt(s: number): string {
@@ -7,6 +8,8 @@ function fmt(s: number): string {
 }
 
 const BAR_COUNT = 500;
+
+// ── Pseudo-random fallback (shown while real waveform loads) ──────────────────
 
 function hashStr(str: string): number {
   let h = 0x811c9dc5;
@@ -17,20 +20,18 @@ function hashStr(str: string): number {
   return h;
 }
 
-function makeHeights(trackId: string): Float32Array {
+function makeFallbackHeights(trackId: string): Float32Array {
   let s = hashStr(trackId);
   const h = new Float32Array(BAR_COUNT);
   for (let i = 0; i < BAR_COUNT; i++) {
     s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
     h[i] = s / 0xffffffff;
   }
-  // Smooth for an organic look
   for (let pass = 0; pass < 5; pass++) {
     for (let i = 1; i < BAR_COUNT - 1; i++) {
       h[i] = h[i - 1] * 0.25 + h[i] * 0.5 + h[i + 1] * 0.25;
     }
   }
-  // Normalize to [0.12, 1.0]
   let max = 0;
   for (let i = 0; i < BAR_COUNT; i++) if (h[i] > max) max = h[i];
   if (max > 0) {
@@ -38,6 +39,11 @@ function makeHeights(trackId: string): Float32Array {
   }
   return h;
 }
+
+// ── Real waveform cache (module-level, persists across re-renders) ────────────
+const waveformCache = new Map<string, Float32Array>();
+
+// ── Canvas drawing ────────────────────────────────────────────────────────────
 
 function drawWaveform(
   canvas: HTMLCanvasElement,
@@ -76,11 +82,10 @@ function drawWaveform(
     return;
   }
 
-  // Use fractional x positions so adjacent bars share exact pixel boundaries — no gaps.
   const x1Of = (i: number) => (i / BAR_COUNT) * w;
   const x2Of = (i: number) => ((i + 1) / BAR_COUNT) * w;
 
-  // Pass 1 — unplayed (dim)
+  // Pass 1 — unplayed
   ctx.globalAlpha = 0.28;
   ctx.fillStyle = colorUnplayed;
   for (let i = 0; i < BAR_COUNT; i++) {
@@ -90,7 +95,7 @@ function drawWaveform(
     ctx.fillRect(x, (h - barH) / 2, x2Of(i) - x, barH);
   }
 
-  // Pass 2 — buffered (slightly brighter)
+  // Pass 2 — buffered
   ctx.globalAlpha = 0.45;
   ctx.fillStyle = colorBuffered;
   for (let i = 0; i < BAR_COUNT; i++) {
@@ -101,7 +106,7 @@ function drawWaveform(
     ctx.fillRect(x, (h - barH) / 2, x2Of(i) - x, barH);
   }
 
-  // Pass 3 — played (accent color + glow)
+  // Pass 3 — played
   if (progress > 0) {
     ctx.globalAlpha = 1;
     ctx.fillStyle = colorAccent;
@@ -119,16 +124,27 @@ function drawWaveform(
   ctx.globalAlpha = 1;
 }
 
-interface Props {
-  trackId: string | undefined;
+const CROSSFADE_MS = 400;
+
+function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 }
 
-export default function WaveformSeek({ trackId }: Props) {
-  const canvasRef   = useRef<HTMLCanvasElement>(null);
-  const heightsRef  = useRef<Float32Array | null>(null);
-  const progressRef = useRef(0);
-  const bufferedRef = useRef(0);
-  const isDragging  = useRef(false);
+// ── Component ─────────────────────────────────────────────────────────────────
+
+interface Props {
+  trackId: string | undefined;
+  url: string | undefined;
+}
+
+export default function WaveformSeek({ trackId, url }: Props) {
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const heightsRef   = useRef<Float32Array | null>(null);
+  const progressRef  = useRef(0);
+  const bufferedRef  = useRef(0);
+  const isDragging   = useRef(false);
+  const computingId  = useRef<string | null>(null);
+  const rafRef       = useRef<number | null>(null);
 
   const [hoverPct, setHoverPct] = useState<number | null>(null);
 
@@ -140,9 +156,64 @@ export default function WaveformSeek({ trackId }: Props) {
   progressRef.current = progress;
   bufferedRef.current = buffered;
 
+  const startCrossfade = (from: Float32Array, to: Float32Array) => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    const start = performance.now();
+    const blended = new Float32Array(BAR_COUNT);
+
+    const step = (now: number) => {
+      const t = easeInOut(Math.min((now - start) / CROSSFADE_MS, 1));
+      for (let i = 0; i < BAR_COUNT; i++) blended[i] = from[i] * (1 - t) + to[i] * t;
+      heightsRef.current = blended;
+      if (canvasRef.current) drawWaveform(canvasRef.current, blended, progressRef.current, bufferedRef.current);
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        heightsRef.current = to;
+        rafRef.current = null;
+      }
+    };
+    rafRef.current = requestAnimationFrame(step);
+  };
+
+  // When track changes: show fallback immediately, then compute real waveform
   useEffect(() => {
-    heightsRef.current = trackId ? makeHeights(trackId) : null;
-  }, [trackId]);
+    if (rafRef.current !== null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+
+    if (!trackId || !url) {
+      heightsRef.current = null;
+      computingId.current = null;
+      return;
+    }
+
+    // Check cache first — no transition needed, just draw immediately
+    const cached = waveformCache.get(trackId);
+    if (cached) {
+      heightsRef.current = cached;
+      if (canvasRef.current) drawWaveform(canvasRef.current, cached, progressRef.current, bufferedRef.current);
+      return;
+    }
+
+    // Show pseudo-random while loading
+    const fallback = makeFallbackHeights(trackId);
+    heightsRef.current = fallback;
+    if (canvasRef.current) drawWaveform(canvasRef.current, fallback, progressRef.current, bufferedRef.current);
+
+    // Kick off background computation
+    const id = trackId;
+    computingId.current = id;
+
+    invoke<number[]>('compute_waveform', { url })
+      .then(values => {
+        if (computingId.current !== id) return; // track changed while computing
+        const real = new Float32Array(values);
+        waveformCache.set(id, real);
+        // Crossfade from whatever is currently showing to the real waveform
+        const current = heightsRef.current ?? fallback;
+        startCrossfade(current, real);
+      })
+      .catch(() => { /* keep pseudo-random on error */ });
+  }, [trackId, url]);
 
   useEffect(() => {
     if (canvasRef.current) {
