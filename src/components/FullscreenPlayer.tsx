@@ -291,18 +291,18 @@ export default function FullscreenPlayer({ onClose }: FullscreenPlayerProps) {
   // Reset to null on track change so the previous color doesn't linger while
   // the new one is being extracted.
   const [dynamicAccent, setDynamicAccent] = useState<string | null>(null);
+  // Reset immediately on track change so the previous color doesn't linger.
+  useEffect(() => { setDynamicAccent(null); }, [artKey]);
+  // Extract as soon as the display blob is ready — reuses resolvedCoverUrl so
+  // no redundant network request for a separate cover size.
   useEffect(() => {
-    setDynamicAccent(null);
-    if (!artUrl || !artKey) return;
+    if (!resolvedCoverUrl) return;
     let cancelled = false;
-    getCachedUrl(artUrl, artKey).then(blobUrl => {
-      if (cancelled || !blobUrl) return;
-      extractCoverColors(blobUrl).then(colors => {
-        if (!cancelled && colors.accent) setDynamicAccent(colors.accent);
-      });
+    extractCoverColors(resolvedCoverUrl).then(colors => {
+      if (!cancelled && colors.accent) setDynamicAccent(colors.accent);
     });
     return () => { cancelled = true; };
-  }, [artKey]); // artKey is stable per track — artUrl would also work
+  }, [resolvedCoverUrl]);
 
   // Artist image → portrait on right. Falls back to cover art.
   const [artistBgUrl, setArtistBgUrl] = useState<string>('');
