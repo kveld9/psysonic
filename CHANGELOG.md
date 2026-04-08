@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.5] - 2026-04-08
+
+### 🚨 Critical Fix
+
+- **Massive API request flood fixed** *(closes [#133](https://github.com/Psychotoxical/psysonic/issues/133))*: Psysonic was generating 15,000+ background requests per day, filling reverse-proxy access logs (Traefik, nginx) and in some cases crashing the proxy entirely. Four root causes identified and resolved:
+  - **Now Playing polling**: Was firing every 10 seconds unconditionally — even when minimized or the dropdown was closed. Now only polls while the dropdown is open, and respects the Page Visibility API to pause immediately when the window is hidden.
+  - **Connection check interval**: Reduced from every 30 seconds to every **120 seconds** (4× reduction).
+  - **Queue sync debounce**: Increased from 1.5 s to **5 s**, preventing request bursts when skipping rapidly through tracks.
+  - **Rating prefetch cache**: Artist and album ratings are now cached in memory for **7 minutes**. Repeated page loads (Random Albums, Random Mix) no longer re-fetch ratings that were just retrieved.
+
+### Added
+
+- **Theme Scheduler** *(Settings → Appearance)*: Automatically switches the active theme at configurable times of day. Two time slots (e.g. a light theme during the day, a dark one at night). English locale displays hours in 12-hour AM/PM format; all other languages use 24-hour format.
+
+- **Theme Scheduler hint**: When the scheduler is active, a notice appears at the top of the Theme Picker explaining why manually selecting a theme has no immediate effect.
+
+- **UI Scale** *(Settings → Appearance)*: Adjust the global interface scale (80 % – 125 %) without changing the system font size.
+
+- **Folder Browser**: New sidebar section with Miller-columns directory navigation. Browse the server's music folder tree and play or queue folders directly.
+
+- **Seekbar — Waveform fade edges**: The Waveform seekbar style now fades out at both ends, giving it a cleaner, less abrupt look.
+
+- **Cover art fallback logo**: When a cover art image fails to load (broken URL, server error), the Psysonic logo is shown as a placeholder instead of a broken image icon.
+
+- **Tiling WM support** *(PR [#134](https://github.com/Psychotoxical/psysonic/pull/134))*: On tiling window managers (Hyprland, Sway, i3, bspwm, AwesomeWM, etc.) the custom title bar is automatically hidden — the WM manages window decorations. The title bar toggle in Settings is also hidden on tiling WMs. Detection is based on environment variables (`HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`, `I3SOCK`, `XDG_CURRENT_DESKTOP`).
+
+### Changed
+
+- **Custom title bar disabled by default**: New installations start with the native OS title bar. Existing users keep their saved preference.
+
+### Fixed
+
+- **Custom title bar (Linux) — drag & resize**: Window dragging via the title bar now works correctly (missing Tauri `core:window:allow-start-dragging` capability was silently blocking it). CSS resize grips are now shown at the bottom corners to compensate for the removed native GTK grips. The title bar no longer misplaces itself when the window is resized to a small width (mobile-grid layout now includes the title bar row).
+
+- **Fullscreen Player — accent color delay**: The dynamic accent color extracted from album artwork now appears in ~200–300 ms instead of up to 18 seconds. The previous implementation queued the cover fetch behind up to 5 concurrent image loads via the app-wide image cache. It now fetches the cover directly and independently. The extracted color is also cached per cover ID, so switching between tracks on the same album is instant.
+
+- **Artist Detail page — slow initial render** *(closes [#132](https://github.com/Psychotoxical/psysonic/issues/132))*: Artist info and biography are now fetched independently of the main artist data, so the page renders immediately and the bio fades in once available. Previously, a slow `getArtistInfo` response blocked the entire page from rendering.
+
+- **Seekbar — Pulse Wave & Retro Tape styles**: Pulse Wave no longer leaves a stray connecting line at the playhead position. Retro Tape's rolling wheel is now anchored at the playhead instead of the center of the bar.
+
+- **Statistics — Top Rated Songs/Artists sections removed**: These sections were incorrectly added in v1.34.4 and have been removed. All other rating features from that release remain fully intact.
+
+---
+
 ## [1.34.4] - 2026-04-08
 
 ### Added
