@@ -361,6 +361,8 @@ export const nbTranslation = {
     updaterAurHint: 'Installer oppdateringen via AUR:',
     updaterErrorMsg: 'Nedlasting mislyktes',
     updaterRetryBtn: 'Prøv igjen',
+    durationHoursMinutes: '{{hours}} t {{minutes}} min',
+    durationMinutesOnly: '{{minutes}} min',
     updaterOpenGitHub: 'Åpne på GitHub',
   },
   settings: {

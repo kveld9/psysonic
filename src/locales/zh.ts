@@ -357,6 +357,8 @@ export const zhTranslation = {
     updaterAurHint: '通过 AUR 安装更新：',
     updaterErrorMsg: '下载失败',
     updaterRetryBtn: '重试',
+    durationHoursMinutes: '{{hours}}小时{{minutes}}分钟',
+    durationMinutesOnly: '{{minutes}}分钟',
     updaterOpenGitHub: '在 GitHub 上打开',
   },
   settings: {
@@ -739,7 +741,7 @@ export const zhTranslation = {
     statAlbums: '专辑',
     statSongs: '歌曲',
     statGenres: '流派',
-    statPlaytime: '总播放时长',
+    statPlaytime: '音频总时长',
     genreInsights: '流派洞察',
     formatDistribution: '格式分布',
     formatSample: '{{n}} 首曲目的样本',

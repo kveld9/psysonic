@@ -362,6 +362,8 @@ export const enTranslation = {
     updaterAurHint: 'Install the update via AUR:',
     updaterErrorMsg: 'Download failed',
     updaterRetryBtn: 'Retry',
+    durationHoursMinutes: '{{hours}}h {{minutes}}m',
+    durationMinutesOnly: '{{minutes}}m',
     updaterOpenGitHub: 'Open on GitHub',
   },
   settings: {

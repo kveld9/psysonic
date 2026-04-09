@@ -23,6 +23,7 @@ import CachedImage, { useCachedUrl } from '../components/CachedImage';
 import { coverArtCacheKey, buildCoverArtUrl } from '../api/subsonic';
 import { useTranslation } from 'react-i18next';
 import { showToast } from '../utils/toast';
+import { formatHumanHoursMinutes } from '../utils/formatHumanDuration';
 import StarRating from '../components/StarRating';
 
 function sanitizeFilename(name: string): string {
@@ -41,9 +42,7 @@ function formatDuration(seconds: number): string {
 
 function totalDurationLabel(songs: SubsonicSong[]): string {
   const total = songs.reduce((acc, s) => acc + (s.duration ?? 0), 0);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  return formatHumanHoursMinutes(total);
 }
 
 function codecLabel(song: SubsonicSong): string {

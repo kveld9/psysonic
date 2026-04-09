@@ -361,6 +361,8 @@ export const frTranslation = {
     updaterAurHint: 'Installer la mise à jour via AUR :',
     updaterErrorMsg: 'Échec du téléchargement',
     updaterRetryBtn: 'Réessayer',
+    durationHoursMinutes: '{{hours}} h {{minutes}} min',
+    durationMinutesOnly: '{{minutes}} min',
     updaterOpenGitHub: 'Ouvrir sur GitHub',
   },
   settings: {

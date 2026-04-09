@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getAlbumList, getArtists, getGenres, getRandomSongs, SubsonicAlbum, SubsonicGenre } from '../api/subsonic';
+import {
+  fetchStatisticsFormatSample,
+  fetchStatisticsLibraryAggregates,
+  fetchStatisticsOverview,
+  getAlbumList,
+  SubsonicAlbum,
+  SubsonicGenre,
+} from '../api/subsonic';
+import { formatHumanHoursMinutes } from '../utils/formatHumanDuration';
 import AlbumRow from '../components/AlbumRow';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
@@ -13,13 +21,6 @@ function relativeTime(timestamp: number, t: (key: string, opts?: any) => string)
   if (diff < 3600) return t('statistics.lfmMinutesAgo', { n: Math.floor(diff / 60) });
   if (diff < 86400) return t('statistics.lfmHoursAgo', { n: Math.floor(diff / 3600) });
   return t('statistics.lfmDaysAgo', { n: Math.floor(diff / 86400) });
-}
-
-function formatPlaytime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h.toLocaleString()}h ${m}m`;
-  return `${m}m`;
 }
 
 const PERIODS: { key: LastfmPeriod; label: string }[] = [
@@ -59,81 +60,59 @@ export default function Statistics() {
   const [lfmRecentLoading, setLfmRecentLoading] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      getAlbumList('recent', 20).catch(() => []),
-      getAlbumList('frequent', 12).catch(() => []),
-      getAlbumList('highest', 12).catch(() => []),
-      getArtists().catch(() => []),
-      getGenres().catch(() => []),
-    ]).then(([rc, fr, hi, a, g]) => {
-      setRecent(rc);
-      setFrequent(fr);
-      setHighest(hi);
-      setArtistCount(a.length);
-      // Album/song totals come from paginated getAlbumList (see playtime effect) — getGenres is not musicFolder-scoped.
-      const sorted = [...g].sort((a, b) => b.songCount - a.songCount);
-      setGenres(sorted);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    fetchStatisticsOverview()
+      .then(d => {
+        setRecent(d.recent);
+        setFrequent(d.frequent);
+        setHighest(d.highest);
+        setArtistCount(d.artistCount);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [musicLibraryFilterVersion]);
 
-  // Background: playtime + album/song counts (same paginated list as library filter; caps at 5000 albums)
+  // Background: playtime, album/song counts, genre insights (cached per server+library like rating prefetch)
   useEffect(() => {
     let cancelled = false;
     setTotalPlaytime(null);
     setTotalAlbums(null);
     setTotalSongs(null);
     setPlaytimeCapped(false);
+    setGenres([]);
     (async () => {
-      let playtimeSec = 0;
-      let albumsCounted = 0;
-      let songsCounted = 0;
-      let offset = 0;
-      const pageSize = 500;
-      const maxPages = 10;
-      let capped = false;
-      for (let page = 0; page < maxPages; page++) {
-        try {
-          const albums = await getAlbumList('newest', pageSize, offset);
-          if (cancelled) return;
-          for (const a of albums) {
-            playtimeSec += a.duration ?? 0;
-            albumsCounted += 1;
-            songsCounted += a.songCount ?? 0;
-          }
-          if (albums.length < pageSize) break;
-          if (page === maxPages - 1) capped = true;
-          offset += pageSize;
-        } catch {
-          break;
+      try {
+        const agg = await fetchStatisticsLibraryAggregates();
+        if (cancelled) return;
+        setTotalPlaytime(agg.playtimeSec);
+        setTotalAlbums(agg.albumsCounted);
+        setTotalSongs(agg.songsCounted);
+        setPlaytimeCapped(agg.capped);
+        setGenres(agg.genres);
+      } catch {
+        if (!cancelled) {
+          setTotalPlaytime(0);
+          setTotalAlbums(0);
+          setTotalSongs(0);
+          setPlaytimeCapped(false);
+          setGenres([]);
         }
-      }
-      if (!cancelled) {
-        setTotalPlaytime(playtimeSec);
-        setTotalAlbums(albumsCounted);
-        setTotalSongs(songsCounted);
-        setPlaytimeCapped(capped);
       }
     })();
     return () => { cancelled = true; };
   }, [musicLibraryFilterVersion]);
 
-  // Background fetch: format distribution (sample of 500 random songs)
+  // Background: format distribution (cached random sample, same TTL as other Statistics fetches)
   useEffect(() => {
     let cancelled = false;
-    getRandomSongs(500).then(songs => {
-      if (cancelled) return;
-      const counts: Record<string, number> = {};
-      for (const song of songs) {
-        const fmt = song.suffix?.toUpperCase() ?? 'Unknown';
-        counts[fmt] = (counts[fmt] ?? 0) + 1;
-      }
-      const sorted = Object.entries(counts)
-        .map(([format, count]) => ({ format, count }))
-        .sort((a, b) => b.count - a.count);
-      setFormatData(sorted);
-      setFormatSampleSize(songs.length);
-    }).catch(() => {});
+    setFormatData(null);
+    setFormatSampleSize(0);
+    fetchStatisticsFormatSample()
+      .then(s => {
+        if (cancelled) return;
+        setFormatData(s.rows);
+        setFormatSampleSize(s.sampleSize);
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, [musicLibraryFilterVersion]);
 
@@ -176,7 +155,7 @@ export default function Statistics() {
 
   const playtimeDisplay = totalPlaytime === null
     ? t('statistics.computing')
-    : (playtimeCapped ? '≥ ' : '') + formatPlaytime(totalPlaytime);
+    : (playtimeCapped ? '≥ ' : '') + formatHumanHoursMinutes(totalPlaytime);
 
   const countDisplay = (n: number | null) =>
     n === null ? t('statistics.computing') : (playtimeCapped ? '≥ ' : '') + n.toLocaleString();
@@ -220,10 +199,10 @@ export default function Statistics() {
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {topGenres.map(g => (
-                      <div key={g.value}>
+                      <div key={g.value || '__genre_unknown__'}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem' }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
-                            {g.value}
+                            {g.value.trim() ? g.value : t('statistics.decadeUnknown')}
                           </span>
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '0.5rem' }}>
                             {g.songCount.toLocaleString()}

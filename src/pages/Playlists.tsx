@@ -6,12 +6,10 @@ import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { usePlaylistStore } from '../store/playlistStore';
 import CachedImage from '../components/CachedImage';
 import { useTranslation } from 'react-i18next';
+import { formatHumanHoursMinutes } from '../utils/formatHumanDuration';
 
 function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  return formatHumanHoursMinutes(seconds);
 }
 
 export default function Playlists() {

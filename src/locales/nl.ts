@@ -361,6 +361,8 @@ export const nlTranslation = {
     updaterAurHint: 'Update installeren via AUR:',
     updaterErrorMsg: 'Downloaden mislukt',
     updaterRetryBtn: 'Opnieuw proberen',
+    durationHoursMinutes: '{{hours}} u {{minutes}} min',
+    durationMinutesOnly: '{{minutes}} min',
     updaterOpenGitHub: 'Openen op GitHub',
   },
   settings: {

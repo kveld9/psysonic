@@ -361,6 +361,8 @@ export const deTranslation = {
     updaterAurHint: 'Update über AUR installieren:',
     updaterErrorMsg: 'Download fehlgeschlagen',
     updaterRetryBtn: 'Erneut versuchen',
+    durationHoursMinutes: '{{hours}} Std. {{minutes}} Min.',
+    durationMinutesOnly: '{{minutes}} Min.',
     updaterOpenGitHub: 'Auf GitHub öffnen',
   },
   settings: {
