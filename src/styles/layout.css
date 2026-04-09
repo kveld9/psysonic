@@ -154,6 +154,10 @@
 
 .resizer-queue { right: calc(var(--queue-width) - 3px); }
 
+/* In native fullscreen the resizer sits flush against the screen edge and
+   would interfere with OS edge-swipe gestures — hide it entirely. */
+.app-shell[data-fullscreen] .resizer { display: none; }
+
 /* ─── Sidebar ─── */
 .sidebar {
   grid-area: sidebar;
@@ -650,6 +654,157 @@
   padding-left: 19px;
   font-style: italic;
 }
+
+/* ── Update Modal ────────────────────────────────────────────────────────── */
+.update-modal {
+  width: min(520px, 94vw);
+  gap: 0;
+  padding: 0;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+.update-modal-header {
+  padding: 14px 16px 14px 18px;
+}
+.update-modal-versions {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+/* Scrollable middle section (changelog + download area combined) */
+.update-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+/* Changelog accordion */
+.update-modal-changelog {
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.update-modal-changelog-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  letter-spacing: 0.03em;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+.update-modal-changelog-toggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-glass);
+}
+.update-modal-changelog-body {
+  padding: 4px 18px 12px;
+}
+/* Download area */
+.update-modal-download-area {
+  padding: 14px 18px;
+}
+.update-modal-asset {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+}
+.update-modal-asset-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+  word-break: break-all;
+}
+.update-modal-asset-size {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.update-modal-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.update-modal-progress .app-updater-progress-bar { flex: 1; height: 4px; }
+.update-modal-dl-bytes {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.update-modal-done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.update-modal-done-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.update-modal-done-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.update-modal-folder-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+}
+/* AUR hint */
+.update-modal-aur {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.update-modal-aur-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.update-modal-aur-cmd {
+  display: block;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--accent);
+  font-family: monospace;
+  user-select: all;
+}
+.update-modal-aur-alt {
+  color: var(--text-muted);
+}
+.update-modal-asset-none {
+  padding: 4px 0;
+}
+/* Footer */
+.update-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.update-modal-skip {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: var(--space-1) var(--space-2);
+}
+.update-modal-skip:hover { color: var(--text-secondary); }
 
 .update-toast {
   margin: 0 var(--space-1) var(--space-2);

@@ -611,6 +611,108 @@ fn resolve_hot_cache_root(
     }
 }
 
+/// Returns true if the current Linux system is Arch-based
+/// (checks /etc/arch-release and /etc/os-release).
+#[tauri::command]
+fn check_arch_linux() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        if std::path::Path::new("/etc/arch-release").exists() {
+            return true;
+        }
+        if let Ok(content) = std::fs::read_to_string("/etc/os-release") {
+            for line in content.lines() {
+                let lower = line.to_lowercase();
+                if lower.starts_with("id=arch") { return true; }
+                if lower.starts_with("id_like=") && lower.contains("arch") { return true; }
+            }
+        }
+        false
+    }
+    #[cfg(not(target_os = "linux"))]
+    { false }
+}
+
+/// Progress payload emitted during an update binary download.
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateDownloadProgress {
+    bytes: u64,
+    total: Option<u64>,
+}
+
+/// Downloads an update installer/package to the user's Downloads folder.
+/// Emits `update:download:progress` events with `{ bytes, total }` every 250 ms.
+/// Returns the final absolute file path on success.
+#[tauri::command]
+async fn download_update(url: String, filename: String, app: tauri::AppHandle) -> Result<String, String> {
+    use futures_util::StreamExt;
+    use std::time::{Duration, Instant};
+    use tokio::io::AsyncWriteExt;
+
+    const EMIT_INTERVAL: Duration = Duration::from_millis(250);
+
+    let dest_dir = app.path().download_dir().map_err(|e| e.to_string())?;
+    let dest_path = dest_dir.join(&filename);
+    let part_path = dest_dir.join(format!("{}.part", filename));
+
+    let client = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(30))
+        .timeout(Duration::from_secs(3600))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
+    if !response.status().is_success() {
+        return Err(format!("HTTP {}", response.status().as_u16()));
+    }
+
+    let total = response.content_length();
+
+    let result: Result<u64, String> = async {
+        let mut file = tokio::fs::File::create(&part_path)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut bytes_done: u64 = 0;
+        let mut stream = response.bytes_stream();
+        let mut last_emit = Instant::now();
+
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|e| e.to_string())?;
+            file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+            bytes_done += chunk.len() as u64;
+
+            if last_emit.elapsed() >= EMIT_INTERVAL {
+                let _ = app.emit("update:download:progress", UpdateDownloadProgress {
+                    bytes: bytes_done,
+                    total,
+                });
+                last_emit = Instant::now();
+            }
+        }
+        file.flush().await.map_err(|e| e.to_string())?;
+        Ok(bytes_done)
+    }.await;
+
+    match result {
+        Err(e) => {
+            let _ = tokio::fs::remove_file(&part_path).await;
+            Err(e)
+        }
+        Ok(bytes_done) => {
+            let _ = app.emit("update:download:progress", UpdateDownloadProgress {
+                bytes: bytes_done,
+                total: Some(bytes_done),
+            });
+            tokio::fs::rename(&part_path, &dest_path)
+                .await
+                .map_err(|e| e.to_string())?;
+            Ok(dest_path.to_string_lossy().into_owned())
+        }
+    }
+}
+
 /// Progress payload emitted to the frontend during a ZIP download.
 /// `total` is `None` when the server doesn't send a `Content-Length` header
 /// (Navidrome on-the-fly ZIPs).
@@ -1206,6 +1308,8 @@ pub fn run() {
             toggle_tray_icon,
             check_dir_accessible,
             download_zip,
+            check_arch_linux,
+            download_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Psysonic");

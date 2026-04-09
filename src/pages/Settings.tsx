@@ -96,6 +96,7 @@ const CONTRIBUTORS = [
       'Hot playback cache — queue prefetch (PR #123)',
       'Per-server music folder filter and sidebar library picker (PR #124, PR #125)',
       'Richer star ratings, skip threshold, and library filtering (PR #130)',
+      'Statistics: scope album and song totals to selected music library (PR #138)',
     ],
   },
   {
@@ -1861,14 +1862,23 @@ export default function Settings() {
                 </div>
               </div>
 
-              <button
-                className="btn btn-ghost"
-                style={{ marginTop: '1.25rem', alignSelf: 'flex-start' }}
-                onClick={() => openUrl('https://github.com/Psychotoxical/psysonic')}
-              >
-                <ExternalLink size={14} />
-                {t('settings.aboutRepo')}
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-ghost"
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() => openUrl('https://github.com/Psychotoxical/psysonic')}
+                >
+                  <ExternalLink size={14} />
+                  {t('settings.aboutRepo')}
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() => window.dispatchEvent(new CustomEvent('psysonic:preview-update'))}
+                >
+                  {t('settings.aboutPreviewUpdate')}
+                </button>
+              </div>
             </div>
           </section>
 
