@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.7] - 2026-04-09
+
+### Added
+
+- **Windows — Taskbar Thumbnail Toolbar**: Prev / Play-Pause / Next media buttons now appear in the Windows taskbar thumbnail preview (the popup that appears when hovering over the taskbar icon). Buttons emit the same `media:*` events as the tray menu and souvlaki. The Play/Pause icon swaps in real-time as playback state changes.
+
+- **Windows — High-quality taskbar icons**: The taskbar thumbnail toolbar icons are now loaded from embedded `.ico` assets (`play.ico`, `pause.ico`, `prev.ico`, `next.ico`) via `CreateIconFromResourceEx`, replacing the previous monochrome GDI drawing code. All four icons are properly cleaned up on window destruction.
+
+- **Professional update modal**: The in-app updater now shows a polished modal with the full release changelog, a **Skip this version** option, and an OS-aware direct download button (`.dmg` on macOS, `.exe` on Windows, `.deb`/`.rpm` on Linux) as a fallback if the auto-update fails. The modal is fully localised in all 7 supported languages.
+
+- **Self-hosted fonts — no internet required**: All 10 UI fonts are now shipped as WOFF2 files bundled into the app via `@fontsource-variable` npm packages. The previous Google Fonts CDN dependency has been removed entirely — Psysonic now renders correctly with no internet connection and without any external requests on startup.
+
+- **Help — 11 new FAQ entries**: The Help page covers previously undocumented features across Ratings (how to rate songs/albums/artists, removing a rating, Skip-to-1★, rating filter for mixes), Folder Browser, Theme Scheduler, UI Scale, Seekbar styles, AutoEQ, Replay Gain, Hot Cache, and offline playlist caching. All 7 locales updated.
+
+### Fixed
+
+- **Embedded lyrics (MP3 & FLAC)**: A new `get_embedded_lyrics` Tauri command reads lyrics tags directly from local files — `SYLT`/`USLT` frames for MP3 (via the `id3` crate) and `SYNCEDLYRICS`/`LYRICS` tags for FLAC (via `lofty`). Additionally: the LRC parser now correctly handles timestamps without fractional seconds (e.g. `[01:23]`), and the Subsonic structured-lyrics parser now accepts both `synced` and `issynced` field names for compatibility with different server versions.
+
+- **Linux — player bar disappearing at high zoom / small window sizes**: All `grid-template-rows` definitions now use `minmax(0, 1fr)` instead of bare `1fr`, and the `min-height: 720px` constraint on the app shell has been removed. The player bar no longer gets pushed off-screen when the window is small or the UI scale is above 100 %.
+
+- **Windows — "Open folder" in Settings crashing**: The Settings page uses a Rust `open_folder` command instead of the Tauri `shell:open` API, which was blocked by the capability scope on Windows for local paths.
+
+- **macOS — Artist Radio crashing WKWebView after ~10 minutes**: Storing `currentTime` in the persisted Zustand state caused up to ~1,200 synchronous `localStorage.setItem` calls per radio session, eventually crashing the WKWebView SQLite backend. `currentTime` has been removed from the persist partializer. Old played radio tracks are also now trimmed from the queue (keeping the last 5) to cap the localStorage payload during queue top-up.
+
+- **Artist Radio — predictable track order**: The initial Artist Radio queue is now shuffled via Fisher-Yates, so positions 2+ draw from similar-artist tracks in a random order rather than always playing the server's top-5 tracks in sequence.
+
+- **Internet Radio — stall / buffering recovery**: Stall events on the HTML5 `<audio>` element now trigger automatic reconnection (up to 5 retries), recovering from transient network interruptions without requiring a manual restart.
+
+- **Corrupt MP3s — VLC-style frame tolerance**: The audio decoder now tolerates up to 100 consecutive bad frames before giving up (previously 3), matching VLC's behavior for files with invalid `main_data` offset frames. Frame-drop log messages are suppressed in release builds.
+
+- **Statistics — album/song totals respect selected music library**: Album and track counts on the Statistics page were previously derived from `getGenres()`, which is not scoped to the active music folder. Both counts are now derived from the same paginated `getAlbumList` pass used for playtime, with the same 5,000-album cap and a `≥` prefix when capped. *(PR [#138](https://github.com/Psychotoxical/psysonic/pull/138) by [@cucadmuh](https://github.com/cucadmuh))*
+
+- **Fullscreen — resize grips visible in native fullscreen**: Resize grips are now hidden whenever the window enters native fullscreen on all platforms (previously only tracked on Linux). An initial check on mount also catches windows that start in a maximized or fullscreen state.
+
+- **Albums page — year filter input height**: The "From year" / "To year" inputs in the Albums filter bar now match the height and font size of adjacent buttons, fixing the mixed-height row introduced in v1.34.4.
+
+- **Russian locale — missing lyrics-source strings**: The `lyricsServerFirst` and related settings strings were not translated in the Russian locale. *(PR [#140](https://github.com/Psychotoxical/psysonic/pull/140) by [@kilyabin](https://github.com/kilyabin))*
+
+### Contributors
+
+Thank you to everyone who contributed to this release:
+
+- [@cucadmuh](https://github.com/cucadmuh) — Statistics music-folder scope fix (PR [#138](https://github.com/Psychotoxical/psysonic/pull/138))
+- [@kilyabin](https://github.com/kilyabin) — Russian locale lyrics strings (PR [#140](https://github.com/Psychotoxical/psysonic/pull/140))
+
+---
+
 ## [1.34.6] - 2026-04-08
 
 > I'm sorry this is already the third release today — every time we shipped a critical fix, another critical issue surfaced. Hopefully this one holds. 🤞
