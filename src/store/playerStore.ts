@@ -203,6 +203,11 @@ radioAudio.preload = 'none';
 let radioStopping = false;
 // Pending reconnect timer for stalled streams — null when no reconnect is scheduled.
 let radioReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+// Counts how many stalled-reconnects have been attempted for the current station.
+// Reset to 0 on successful playback.  Hard-stop after MAX_RADIO_RECONNECTS so a
+// dead stream doesn't loop forever and leak resources in the background.
+let radioReconnectCount = 0;
+const MAX_RADIO_RECONNECTS = 5;
 
 function clearRadioReconnectTimer() {
   if (radioReconnectTimer) { clearTimeout(radioReconnectTimer); radioReconnectTimer = null; }
@@ -211,23 +216,40 @@ function clearRadioReconnectTimer() {
 radioAudio.addEventListener('ended', () => {
   // Stream disconnected unexpectedly — clear radio state.
   clearRadioReconnectTimer();
+  radioReconnectCount = 0;
   usePlayerStore.setState({ isPlaying: false, currentRadio: null, progress: 0, currentTime: 0 });
 });
 radioAudio.addEventListener('error', () => {
   clearRadioReconnectTimer();
-  if (radioStopping) { radioStopping = false; return; }
+  if (radioStopping) { radioStopping = false; radioReconnectCount = 0; return; }
+  radioReconnectCount = 0;
   usePlayerStore.setState({ isPlaying: false, currentRadio: null });
   showToast('Radio stream error', 3000, 'error');
 });
+// Playing: stream is delivering audio — reset the reconnect counter.
+radioAudio.addEventListener('playing', () => {
+  radioReconnectCount = 0;
+});
 // Stalled: stream stopped delivering data — try to reconnect after 4 s.
+// On macOS/WKWebView, reassigning src during a stall can itself trigger
+// another stall event before the new connection is established.  The
+// radioReconnectTimer guard prevents stacking, and MAX_RADIO_RECONNECTS
+// ensures we don't loop forever on a dead stream.
 radioAudio.addEventListener('stalled', () => {
   if (radioReconnectTimer) return; // already scheduled
+  if (radioReconnectCount >= MAX_RADIO_RECONNECTS) {
+    radioReconnectCount = 0;
+    usePlayerStore.setState({ isPlaying: false, currentRadio: null });
+    showToast('Radio stream disconnected', 4000, 'error');
+    return;
+  }
   radioReconnectTimer = setTimeout(() => {
     radioReconnectTimer = null;
     if (!usePlayerStore.getState().currentRadio) return;
-    // Re-assign src to force a fresh connection, then resume playback.
-    const src = radioAudio.src;
-    radioAudio.src = src;
+    radioReconnectCount++;
+    // Use load() + play() instead of src reassignment — more reliable on
+    // macOS WKWebView where setting src can fire a premature error event.
+    radioAudio.load();
     radioAudio.play().catch(console.error);
   }, 4000);
 });
@@ -719,6 +741,7 @@ export const usePlayerStore = create<PlayerState>()(
         ++playGeneration;
         isAudioPaused = false;
         clearRadioReconnectTimer();
+        radioReconnectCount = 0;
         gaplessPreloadingId = null;
         if (seekDebounce) { clearTimeout(seekDebounce); seekDebounce = null; } seekTarget = null;
         // Stop Rust engine in case a regular track was playing.
@@ -973,7 +996,19 @@ export const usePlayerStore = create<PlayerState>()(
                       .slice(0, 10)
                       .map(t => ({ ...t, radioAdded: true as const }));
                     if (fresh.length > 0) {
-                      set(state => ({ queue: [...state.queue, ...fresh] }));
+                      // Trim played tracks from the front to keep the queue bounded.
+                      // Without trimming the queue grows unboundedly, making every
+                      // Zustand persist write larger and causing UI freezes over time.
+                      // Keep the last HISTORY_KEEP played tracks so the user can still
+                      // navigate backwards a few songs.
+                      const HISTORY_KEEP = 5;
+                      set(state => {
+                        const trimStart = Math.max(0, state.queueIndex - HISTORY_KEEP);
+                        return {
+                          queue: [...state.queue.slice(trimStart), ...fresh],
+                          queueIndex: state.queueIndex - trimStart,
+                        };
+                      });
                     }
                   })
                   .catch(() => {})
@@ -1254,7 +1289,13 @@ export const usePlayerStore = create<PlayerState>()(
         currentTrack: state.currentTrack,
         queue: state.queue,
         queueIndex: state.queueIndex,
-        currentTime: state.currentTime,
+        // currentTime is intentionally NOT persisted here.
+        // handleAudioProgress fires every 100ms and each setState with a
+        // persisted field triggers a full JSON serialisation of the queue to
+        // localStorage.  After ~10 minutes of Artist Radio the queue grows to
+        // 50+ tracks; 6 000+ synchronous SQLite writes cause WKWebView's
+        // storage process to crash on macOS → black screen + audio stop.
+        // Resume position is recovered from Subsonic savePlayQueue (5s debounce).
         lastfmLovedCache: state.lastfmLovedCache,
       }),
     }

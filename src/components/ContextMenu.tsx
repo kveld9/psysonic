@@ -23,6 +23,16 @@ function sanitizeFilename(name: string): string {
     .substring(0, 200) || 'download';
 }
 
+/** Fisher-Yates in-place shuffle — returns a new array, does not mutate the input. */
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 // ── Add-to-Playlist submenu ───────────────────────────────────────
 export function AddToPlaylistSubmenu({ songIds, onDone, dropDown }: { songIds: string[]; onDone: () => void; dropDown?: boolean }) {
   const { t } = useTranslation();
@@ -221,12 +231,16 @@ export default function ContextMenu() {
       }
       // Load radio queue in background — enqueueRadio replaces any pending radio
       // tracks so clicking "Start Radio" again never stacks duplicate batches.
+      // Shuffle so the follow-up tracks feel fresh instead of always being the
+      // same "Top 5" in the same order every time.
       try {
         const [similar, top] = await Promise.all([getSimilarSongs2(artistId), getTopSongs(artistName)]);
-        const radioTracks = [...top, ...similar]
-          .map(songToTrack)
-          .filter(t => t.id !== seedTrack.id)
-          .map(t => ({ ...t, radioAdded: true as const }));
+        const radioTracks = shuffleArray(
+          [...top, ...similar]
+            .map(songToTrack)
+            .filter(t => t.id !== seedTrack.id)
+            .map(t => ({ ...t, radioAdded: true as const }))
+        );
         if (radioTracks.length > 0) usePlayerStore.getState().enqueueRadio(radioTracks, artistId);
       } catch (e) {
         console.error('Failed to load radio queue', e);
@@ -238,11 +252,17 @@ export default function ContextMenu() {
       const similarPromise = getSimilarSongs2(artistId).catch(() => [] as Awaited<ReturnType<typeof getSimilarSongs2>>);
       try {
         const top = await getTopSongs(artistName);
-        const topTracks = top.map(t => ({ ...songToTrack(t), radioAdded: true as const }));
+        // Shuffle so each Radio session starts from a different track rather
+        // than always kicking off with the #1 most-played song.
+        const topTracks = shuffleArray(
+          top.map(t => ({ ...songToTrack(t), radioAdded: true as const }))
+        );
         if (topTracks.length === 0) {
           // No local top songs — fall back to waiting for similar tracks
           const similar = await similarPromise;
-          const fallback = similar.map(t => ({ ...songToTrack(t), radioAdded: true as const }));
+          const fallback = shuffleArray(
+            similar.map(t => ({ ...songToTrack(t), radioAdded: true as const }))
+          );
           if (fallback.length === 0) return;
           const state = usePlayerStore.getState();
           if (state.currentTrack) {
@@ -253,22 +273,29 @@ export default function ContextMenu() {
           }
           return;
         }
-        // Start playback immediately from top songs
+        // Start playback from the first shuffled top track only.
+        // No other tracks are queued yet — positions 2+ will be filled
+        // exclusively by the similar-songs result below.
         const state = usePlayerStore.getState();
         if (state.currentTrack) {
-          state.enqueueRadio(topTracks, artistId);
+          state.enqueueRadio([topTracks[0]], artistId);
         } else {
           state.setRadioArtistId(artistId);
-          playTrack(topTracks[0], topTracks);
+          playTrack(topTracks[0], [topTracks[0]]);
         }
-        // Enrich with similar tracks in the background
+        // Populate positions 2+ from similar songs only — never from the
+        // remaining top tracks.  Mixing in topTracks.slice(1) meant that when
+        // getSimilarSongs2 returned nothing (no Last.fm, small library, etc.)
+        // the queue fell back to the same top-4 the user just heard.
+        // If similarTracks is also empty, the proactive top-up in next()
+        // will refill the queue when the first track nears its end.
         similarPromise.then(similar => {
-          const similarTracks = similar
-            .map(t => ({ ...songToTrack(t), radioAdded: true as const }))
-            .filter(t => !topTracks.some(top => top.id === t.id));
+          const similarTracks = shuffleArray(
+            similar
+              .map(t => ({ ...songToTrack(t), radioAdded: true as const }))
+              .filter(t => t.id !== topTracks[0].id)
+          );
           if (similarTracks.length === 0) return;
-          // Collect pending (upcoming) radio tracks so enqueueRadio re-inserts them
-          // together with the new similar tracks rather than losing them.
           const { queue, queueIndex } = usePlayerStore.getState();
           const pendingRadio = queue.slice(queueIndex + 1).filter(t => t.radioAdded);
           usePlayerStore.getState().enqueueRadio([...pendingRadio, ...similarTracks], artistId);
