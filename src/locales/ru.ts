@@ -496,6 +496,8 @@ export const ruTranslation = {
     nowPlayingEnabled: 'Показывать в «Сейчас играет»',
     nowPlayingEnabledDesc:
       'Отправлять на сервер, что вы сейчас слушаете. Отключите, чтобы не делиться этим.',
+    lyricsServerFirst: 'Предпочитать серверные тексты',
+    lyricsServerFirstDesc: 'Проверять тексты песен, предоставленные сервером (встроенные теги, sidecar-файлы) перед запросом LRCLIB. Отключите, чтобы использовать LRCLIB сначала.',
     downloadsTitle: 'Экспорт ZIP и архивы',
     downloadsFolderDesc: 'Куда сохранять альбомы в ZIP архиве на диск.',
     downloadsDefault: 'Папка «Загрузки» по умолчанию',
