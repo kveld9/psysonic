@@ -4,6 +4,7 @@ import LastfmIcon from './LastfmIcon';
 import StarRating from './StarRating';
 import { lastfmLoveTrack, lastfmUnloveTrack } from '../api/lastfm';
 import { usePlayerStore, Track, songToTrack } from '../store/playerStore';
+import { useShallow } from 'zustand/react/shallow';
 import { SubsonicAlbum, SubsonicArtist, star, unstar, getSimilarSongs2, getTopSongs, buildDownloadUrl, getAlbum, getPlaylists, getPlaylist, createPlaylist, updatePlaylist, SubsonicPlaylist, setRating } from '../api/subsonic';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -175,7 +176,24 @@ function AlbumToPlaylistSubmenu({ albumId, onDone }: { albumId: string; onDone: 
 
 export default function ContextMenu() {
   const { t } = useTranslation();
-  const { contextMenu, closeContextMenu, playTrack, enqueue, queue, currentTrack, removeTrack, lastfmLovedCache, setLastfmLovedForSong, starredOverrides, setStarredOverride, openSongInfo, userRatingOverrides, setUserRatingOverride } = usePlayerStore();
+  const { contextMenu, closeContextMenu, playTrack, enqueue, queue, currentTrack, removeTrack, lastfmLovedCache, setLastfmLovedForSong, starredOverrides, setStarredOverride, openSongInfo, userRatingOverrides, setUserRatingOverride } = usePlayerStore(
+    useShallow(s => ({
+      contextMenu: s.contextMenu,
+      closeContextMenu: s.closeContextMenu,
+      playTrack: s.playTrack,
+      enqueue: s.enqueue,
+      queue: s.queue,
+      currentTrack: s.currentTrack,
+      removeTrack: s.removeTrack,
+      lastfmLovedCache: s.lastfmLovedCache,
+      setLastfmLovedForSong: s.setLastfmLovedForSong,
+      starredOverrides: s.starredOverrides,
+      setStarredOverride: s.setStarredOverride,
+      openSongInfo: s.openSongInfo,
+      userRatingOverrides: s.userRatingOverrides,
+      setUserRatingOverride: s.setUserRatingOverride,
+    }))
+  );
   const auth = useAuthStore();
   const requestDownloadFolder = useDownloadModalStore(s => s.requestFolder);
   const navigate = useNavigate();

@@ -784,6 +784,15 @@ export function SeekbarPreview({
 }
 
 // ── main component ────────────────────────────────────────────────────────────
+//
+// Architecture:
+//   Static styles  (waveform, bar, …): drawn directly in the Zustand subscription
+//     callback — no React re-renders, no rAF loop.  2 draws/s at the 500 ms
+//     Rust interval.  shadowBlur + 500 canvas bars on a software-rendered
+//     WebKitGTK context is too expensive for a continuous 60 fps loop.
+//   Animated styles (pulsewave, particletrail, …): rAF loop at 60 fps, reads
+//     refs that the subscription keeps up-to-date.
+//   Drag: draws synchronously in seekToFraction for 1:1 responsiveness.
 
 interface Props {
   trackId: string | undefined;
@@ -792,35 +801,48 @@ interface Props {
 export default function WaveformSeek({ trackId }: Props) {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const heightsRef   = useRef<Float32Array | null>(null);
-  const progressRef  = useRef(0);
-  const bufferedRef  = useRef(0);
+  const progressRef  = useRef(usePlayerStore.getState().progress);
+  const bufferedRef  = useRef(usePlayerStore.getState().buffered);
   const isDragging   = useRef(false);
   const animStateRef = useRef<AnimState>(makeAnimState());
 
   const [hoverPct, setHoverPct] = useState<number | null>(null);
 
-  const progress     = usePlayerStore(s => s.progress);
-  const buffered     = usePlayerStore(s => s.buffered);
   const seek         = usePlayerStore(s => s.seek);
   const duration     = usePlayerStore(s => s.currentTrack?.duration ?? 0);
   const seekbarStyle = useAuthStore(s => s.seekbarStyle);
 
-  progressRef.current = progress;
-  bufferedRef.current = buffered;
+  // Ref so the subscription callback (closed over at mount) can read the
+  // current style without stale-closure issues.
+  const styleRef = useRef(seekbarStyle);
+  styleRef.current = seekbarStyle;
 
   useEffect(() => {
     heightsRef.current = trackId ? makeHeights(trackId) : null;
   }, [trackId]);
 
-  // Static styles: redraw on progress / buffered / track changes
+  // Imperative subscription — no React re-renders from progress changes.
+  // Static styles draw here; animated styles only update refs.
+  useEffect(() => {
+    return usePlayerStore.subscribe((state, prev) => {
+      if (state.progress === prev.progress && state.buffered === prev.buffered) return;
+      progressRef.current = state.progress;
+      bufferedRef.current = state.buffered;
+      if (!ANIMATED_STYLES.has(styleRef.current)) {
+        const canvas = canvasRef.current;
+        if (canvas) drawSeekbar(canvas, styleRef.current, heightsRef.current, state.progress, state.buffered);
+      }
+    });
+  }, []);
+
+  // Initial draw for static styles when style or track changes.
   useEffect(() => {
     if (ANIMATED_STYLES.has(seekbarStyle)) return;
-    if (canvasRef.current) {
-      drawSeekbar(canvasRef.current, seekbarStyle, heightsRef.current, progress, buffered);
-    }
-  }, [progress, buffered, trackId, seekbarStyle]);
+    const canvas = canvasRef.current;
+    if (canvas) drawSeekbar(canvas, seekbarStyle, heightsRef.current, progressRef.current, bufferedRef.current);
+  }, [seekbarStyle, trackId]);
 
-  // Animated styles: rAF loop
+  // rAF loop — animated styles only.
   useEffect(() => {
     if (!ANIMATED_STYLES.has(seekbarStyle)) return;
     const canvas = canvasRef.current;
@@ -829,21 +851,14 @@ export default function WaveformSeek({ trackId }: Props) {
     let rafId: number;
     const tick = () => {
       animStateRef.current.time += 0.016;
-      drawSeekbar(
-        canvas,
-        seekbarStyle,
-        heightsRef.current,
-        progressRef.current,
-        bufferedRef.current,
-        animStateRef.current,
-      );
+      drawSeekbar(canvas, seekbarStyle, heightsRef.current, progressRef.current, bufferedRef.current, animStateRef.current);
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [seekbarStyle]);
 
-  // Resize observer
+  // Resize observer.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -859,12 +874,23 @@ export default function WaveformSeek({ trackId }: Props) {
   const seekRef = useRef(seek);
   seekRef.current = seek;
 
+  // Seek to a 0–1 fraction: draw immediately for 1:1 responsiveness, then
+  // let the store + Rust catch up asynchronously.
+  const seekToFraction = (fraction: number) => {
+    progressRef.current = fraction;
+    const canvas = canvasRef.current;
+    if (canvas && !ANIMATED_STYLES.has(styleRef.current)) {
+      drawSeekbar(canvas, styleRef.current, heightsRef.current, fraction, bufferedRef.current);
+    }
+    seekRef.current(fraction);
+  };
+
   useEffect(() => {
     const seekFromX = (clientX: number) => {
       const canvas = canvasRef.current;
       if (!canvas || !trackIdRef.current) return;
       const rect = canvas.getBoundingClientRect();
-      seekRef.current(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)));
+      seekToFraction(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)));
     };
     const onMove = (e: MouseEvent) => { if (isDragging.current) seekFromX(e.clientX); };
     const onUp   = () => { isDragging.current = false; };
@@ -892,7 +918,7 @@ export default function WaveformSeek({ trackId }: Props) {
         onMouseDown={e => {
           isDragging.current = true;
           const rect = e.currentTarget.getBoundingClientRect();
-          seekRef.current(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)));
+          seekToFraction(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)));
         }}
         onMouseMove={e => {
           if (!trackId) return;

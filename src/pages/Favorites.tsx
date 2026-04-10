@@ -43,7 +43,10 @@ export default function Favorites() {
 
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
-  const { playTrack, enqueue, playRadio, stop } = usePlayerStore();
+  const playTrack = usePlayerStore(s => s.playTrack);
+  const enqueue = usePlayerStore(s => s.enqueue);
+  const playRadio = usePlayerStore(s => s.playRadio);
+  const stop = usePlayerStore(s => s.stop);
   const currentTrack = usePlayerStore(s => s.currentTrack);
   const currentRadio = usePlayerStore(s => s.currentRadio);
   const isPlaying = usePlayerStore(s => s.isPlaying);

@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music,
   Square, Repeat, Repeat1, Maximize2, SlidersVertical, X, Heart, MicVocal, Cast
 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '../store/authStore';
 import { buildCoverArtUrl, coverArtCacheKey, star, unstar, setRating } from '../api/subsonic';
 import CachedImage from './CachedImage';
@@ -25,6 +26,21 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+// Renders the playback clock without ever causing PlayerBar to re-render.
+// Updates the DOM directly via an imperative store subscription.
+const PlaybackTime = memo(function PlaybackTime({ className }: { className?: string }) {
+  const spanRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (spanRef.current) {
+      spanRef.current.textContent = formatTime(usePlayerStore.getState().currentTime);
+    }
+    return usePlayerStore.subscribe(state => {
+      if (spanRef.current) spanRef.current.textContent = formatTime(state.currentTime);
+    });
+  }, []);
+  return <span className={className} ref={spanRef} />;
+});
+
 export default function PlayerBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,15 +48,37 @@ export default function PlayerBar() {
   const [showVolPct, setShowVolPct] = useState(false);
   const showLyrics   = useLyricsStore(s => s.showLyrics);
   const activeTab    = useLyricsStore(s => s.activeTab);
+  // currentTime is intentionally excluded — PlaybackTime handles it via direct DOM update.
   const {
-    currentTrack, currentRadio, isPlaying, currentTime, volume,
+    currentTrack, currentRadio, isPlaying, volume,
     togglePlay, next, previous, setVolume,
     stop, toggleRepeat, repeatMode, toggleFullscreen,
     lastfmLoved, toggleLastfmLove,
     isQueueVisible, toggleQueue,
     starredOverrides, setStarredOverride,
     userRatingOverrides, setUserRatingOverride,
-  } = usePlayerStore();
+  } = usePlayerStore(useShallow(s => ({
+    currentTrack: s.currentTrack,
+    currentRadio: s.currentRadio,
+    isPlaying: s.isPlaying,
+    volume: s.volume,
+    togglePlay: s.togglePlay,
+    next: s.next,
+    previous: s.previous,
+    setVolume: s.setVolume,
+    stop: s.stop,
+    toggleRepeat: s.toggleRepeat,
+    repeatMode: s.repeatMode,
+    toggleFullscreen: s.toggleFullscreen,
+    lastfmLoved: s.lastfmLoved,
+    toggleLastfmLove: s.toggleLastfmLove,
+    isQueueVisible: s.isQueueVisible,
+    toggleQueue: s.toggleQueue,
+    starredOverrides: s.starredOverrides,
+    setStarredOverride: s.setStarredOverride,
+    userRatingOverrides: s.userRatingOverrides,
+    setUserRatingOverride: s.setUserRatingOverride,
+  })));
   const { lastfmSessionKey } = useAuthStore();
 
   const isRadio = !!currentRadio;
@@ -241,7 +279,7 @@ export default function PlayerBar() {
               </>
             ) : (
               <>
-                <span className="player-time">{formatTime(currentTime)}</span>
+                <PlaybackTime className="player-time" />
                 <div className="player-waveform-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span className="radio-live-badge">{t('radio.live')}</span>
                 </div>
@@ -251,7 +289,7 @@ export default function PlayerBar() {
           </>
         ) : (
           <>
-            <span className="player-time">{formatTime(currentTime)}</span>
+            <PlaybackTime className="player-time" />
             <div className="player-waveform-wrap">
               <WaveformSeek trackId={currentTrack?.id} />
             </div>

@@ -21,17 +21,7 @@
   inset: 0;
   background-size: cover;
   background-position: center;
-  transition: transform 8s ease, opacity 0.8s ease, filter 0.8s ease;
-  transform: scale(1.05);
-  filter: blur(12px);
-}
-
-.hero:hover .hero-bg {
-  filter: blur(8px);
-}
-
-.hero:hover .hero-bg {
-  transform: scale(1);
+  transition: opacity 0.8s ease;
 }
 
 .hero-dots {
@@ -909,11 +899,8 @@
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: blur(20px) brightness(0.6);
-  transform: scale(1.1);
-  /* Hide blur edges */
   z-index: 0;
-  opacity: 0.8;
+  opacity: 0.35;
   transition: opacity var(--transition-slow);
 }
 
@@ -3014,23 +3001,22 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ── Animated dark mesh — GPU-only: only transform3d, no scale, real divs for will-change ── */
 @keyframes mesh-aura-a {
-  0%   { transform: translate3d(0,    0,   0); }
-  33%  { transform: translate3d(5%,  -6%,  0); }
-  66%  { transform: translate3d(-3%,  2%,  0); }
-  100% { transform: translate3d(0,    0,   0); }
+  0%   { transform: translate(0,    0  ); }
+  33%  { transform: translate(5%,  -6% ); }
+  66%  { transform: translate(-3%,  2% ); }
+  100% { transform: translate(0,    0  ); }
 }
 
 @keyframes mesh-aura-b {
-  0%   { transform: translate3d(0,    0,  0); }
-  50%  { transform: translate3d(-6%,  5%, 0); }
-  100% { transform: translate3d(0,    0,  0); }
+  0%   { transform: translate(0,   0  ); }
+  50%  { transform: translate(-6%, 5% ); }
+  100% { transform: translate(0,   0  ); }
 }
 
 @keyframes portrait-drift {
-  0%, 100% { transform: translate3d(0,     0, 0); }
-  50%       { transform: translate3d(0, -10px, 0); }
+  0%, 100% { transform: translateY(0    ); }
+  50%       { transform: translateY(-10px); }
 }
 
 .fs-mesh-bg {
@@ -3042,12 +3028,11 @@
   pointer-events: none;
 }
 
-/* Blobs are real divs so will-change: transform applies (pseudo-elements can't have it) */
+/* Blobs are real divs — no will-change/filter to avoid software compositing layers */
 .fs-mesh-blob {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  will-change: transform;
 }
 
 .fs-mesh-blob-a {
@@ -3058,8 +3043,8 @@
   bottom: -35%;
   background: radial-gradient(ellipse,
     color-mix(in srgb, var(--dynamic-fs-accent, var(--accent)), transparent 86%) 0%,
-    transparent 65%);
-  filter: blur(55px);
+    color-mix(in srgb, var(--dynamic-fs-accent, var(--accent)), transparent 96%) 45%,
+    transparent 70%);
   animation: mesh-aura-a 26s ease-in-out infinite;
   animation-delay: 350ms;
   transition: background 400ms ease-in-out;
@@ -3072,8 +3057,8 @@
   top: -25%;
   background: radial-gradient(ellipse,
     color-mix(in srgb, var(--dynamic-fs-accent, var(--accent)), transparent 92%) 0%,
-    transparent 65%);
-  filter: blur(65px);
+    color-mix(in srgb, var(--dynamic-fs-accent, var(--accent)), transparent 98%) 45%,
+    transparent 70%);
   animation: mesh-aura-b 20s ease-in-out infinite;
   animation-delay: 350ms;
   transition: background 400ms ease-in-out;

@@ -15,7 +15,7 @@ function formatDuration(seconds: number): string {
 export default function Playlists() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { playTrack } = usePlayerStore();
+  const playTrack = usePlayerStore(s => s.playTrack);
   const touchPlaylist = usePlaylistStore((s) => s.touchPlaylist);
   const removeId = usePlaylistStore((s) => s.removeId);
 

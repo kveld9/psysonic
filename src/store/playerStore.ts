@@ -331,11 +331,13 @@ function handleAudioProgress(current_time: number, duration: number) {
   // Pre-buffer / pre-chain next track based on preload mode.
   const { gaplessEnabled, preloadMode, preloadCustomSeconds } = useAuthStore.getState();
   const remaining = dur - current_time;
-  const shouldPreload = preloadMode === 'early'
-    ? current_time >= 5
-    : preloadMode === 'custom'
-      ? remaining < preloadCustomSeconds && remaining > 0
-      : remaining < 30 && remaining > 0; // balanced (default)
+  const shouldPreload = preloadMode !== 'off' && (
+    preloadMode === 'early'
+      ? current_time >= 5
+      : preloadMode === 'custom'
+        ? remaining < preloadCustomSeconds && remaining > 0
+        : remaining < 30 && remaining > 0 // balanced (default)
+  );
   if (shouldPreload) {
     const { queue, queueIndex, repeatMode } = store;
     const nextIdx = queueIndex + 1;
@@ -483,11 +485,28 @@ function handleAudioError(message: string) {
  * set of listeners before creating the second, avoiding duplicate handlers.
  */
 export function initAudioListeners(): () => void {
+  // Dev-only: warn when audio:progress events arrive faster than 10/s.
+  // This would indicate the Rust emit interval was accidentally lowered.
+  let _devEventCount = 0;
+  let _devWindowStart = 0;
+
   const pending = [
     listen<number>('audio:playing', ({ payload }) => handleAudioPlaying(payload)),
-    listen<{ current_time: number; duration: number }>('audio:progress', ({ payload }) =>
-      handleAudioProgress(payload.current_time, payload.duration)
-    ),
+    listen<{ current_time: number; duration: number }>('audio:progress', ({ payload }) => {
+      if (import.meta.env.DEV) {
+        _devEventCount++;
+        const now = Date.now();
+        if (_devWindowStart === 0) _devWindowStart = now;
+        if (now - _devWindowStart >= 1000) {
+          if (_devEventCount > 10) {
+            console.warn(`[psysonic] audio:progress: ${_devEventCount} events/s (threshold: 10) — check Rust emit interval`);
+          }
+          _devEventCount = 0;
+          _devWindowStart = now;
+        }
+      }
+      handleAudioProgress(payload.current_time, payload.duration);
+    }),
     listen<void>('audio:ended', () => handleAudioEnded()),
     listen<string>('audio:error', ({ payload }) => handleAudioError(payload)),
     listen<number>('audio:track_switched', ({ payload }) => handleAudioTrackSwitched(payload)),

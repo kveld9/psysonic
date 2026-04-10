@@ -249,6 +249,10 @@ export default function Settings() {
   }, [auth.lastfmSessionKey, auth.lastfmUsername]);
 
   useEffect(() => {
+    if (activeTab === 'audio') {
+      invoke<number>('get_hot_cache_size', { customDir: auth.hotCacheDownloadDir || null }).then(setHotCacheBytes).catch(() => setHotCacheBytes(0));
+      return;
+    }
     if (activeTab !== 'storage') return;
     getImageCacheSize().then(setImageCacheBytes);
     invoke<number>('get_offline_cache_size', { customDir: auth.offlineDownloadDir || null }).then(setOfflineCacheBytes).catch(() => setOfflineCacheBytes(0));
@@ -524,8 +528,19 @@ export default function Settings() {
                   <span className="toggle-track" />
                 </label>
               </div>
+            </div>
+          </section>
 
-              <div className="divider" />
+          {/* Next Track Buffering */}
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <Download size={18} />
+              <h2>{t('settings.nextTrackBufferingTitle')}</h2>
+            </div>
+            <div className="settings-card">
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '0.75rem' }}>
+                {t('settings.preloadHotCacheMutualExclusive')}
+              </div>
 
               {/* Preload mode */}
               <div className="settings-toggle-row">
@@ -533,31 +548,170 @@ export default function Settings() {
                   <div style={{ fontWeight: 500 }}>{t('settings.preloadMode')}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.preloadModeDesc')}</div>
                 </div>
-              </div>
-              <div style={{ paddingLeft: '1rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {(['balanced', 'early', 'custom'] as const).map(mode => (
-                  <button
-                    key={mode}
-                    className={`btn ${auth.preloadMode === mode ? 'btn-primary' : 'btn-surface'}`}
-                    style={{ fontSize: 12, padding: '3px 12px' }}
-                    onClick={() => auth.setPreloadMode(mode)}
-                  >
-                    {t(`settings.preload${mode.charAt(0).toUpperCase() + mode.slice(1)}` as any)}
-                  </button>
-                ))}
-              </div>
-              {auth.preloadMode === 'custom' && (
-                <div style={{ paddingLeft: '1rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <label className="toggle-switch" aria-label={t('settings.preloadMode')}>
                   <input
-                    type="range"
-                    min={5} max={120} step={5}
-                    value={auth.preloadCustomSeconds}
-                    onChange={e => auth.setPreloadCustomSeconds(parseInt(e.target.value))}
-                    style={{ width: 120 }}
+                    type="checkbox"
+                    checked={auth.preloadMode !== 'off'}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        auth.setPreloadMode('balanced');
+                        if (auth.hotCacheEnabled) auth.setHotCacheEnabled(false);
+                      } else {
+                        auth.setPreloadMode('off');
+                      }
+                    }}
                   />
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', minWidth: 36 }}>
-                    {t('settings.preloadCustomSeconds', { n: auth.preloadCustomSeconds })}
-                  </span>
+                  <span className="toggle-track" />
+                </label>
+              </div>
+              {auth.preloadMode !== 'off' && (
+                <>
+                  <div style={{ paddingLeft: '1rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {(['balanced', 'early', 'custom'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        className={`btn ${auth.preloadMode === mode ? 'btn-primary' : 'btn-surface'}`}
+                        style={{ fontSize: 12, padding: '3px 12px' }}
+                        onClick={() => auth.setPreloadMode(mode)}
+                      >
+                        {t(`settings.preload${mode.charAt(0).toUpperCase() + mode.slice(1)}` as any)}
+                      </button>
+                    ))}
+                  </div>
+                  {auth.preloadMode === 'custom' && (
+                    <div style={{ paddingLeft: '1rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <input
+                        type="range"
+                        min={5} max={120} step={5}
+                        value={auth.preloadCustomSeconds}
+                        onChange={e => auth.setPreloadCustomSeconds(parseInt(e.target.value))}
+                        style={{ width: 120 }}
+                      />
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', minWidth: 36 }}>
+                        {t('settings.preloadCustomSeconds', { n: auth.preloadCustomSeconds })}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div className="divider" />
+
+              {/* Hot Cache */}
+              <div className="settings-toggle-row">
+                <div>
+                  <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {t('settings.hotCacheTitle')}
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '2px 6px', borderRadius: 4, background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 22%, transparent)', color: 'var(--text-primary)' }}>
+                      {t('settings.hotCacheAlphaBadge')}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.hotCacheDisclaimer')}</div>
+                </div>
+                <label className="toggle-switch" aria-label={t('settings.hotCacheEnabled')}>
+                  <input
+                    type="checkbox"
+                    checked={auth.hotCacheEnabled}
+                    onChange={async e => {
+                      const enabled = e.target.checked;
+                      if (!enabled) {
+                        await clearHotCacheDisk(auth.hotCacheDownloadDir || null);
+                        setHotCacheBytes(0);
+                        auth.setHotCacheEnabled(false);
+                      } else {
+                        auth.setHotCacheEnabled(true);
+                        if (auth.preloadMode !== 'off') auth.setPreloadMode('off');
+                        invoke<number>('get_hot_cache_size', { customDir: auth.hotCacheDownloadDir || null })
+                          .then(setHotCacheBytes)
+                          .catch(() => setHotCacheBytes(0));
+                      }
+                    }}
+                    id="hot-cache-enabled-toggle"
+                  />
+                  <span className="toggle-track" />
+                </label>
+              </div>
+
+              {auth.hotCacheEnabled && (
+                <div style={{ marginTop: '1.25rem' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      className="input"
+                      type="text"
+                      readOnly
+                      value={auth.hotCacheDownloadDir || t('settings.hotCacheDirDefault')}
+                      style={{ flex: 1, fontSize: 13, color: auth.hotCacheDownloadDir ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'default' }}
+                    />
+                    {auth.hotCacheDownloadDir && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          auth.setHotCacheDownloadDir('');
+                          useHotCacheStore.setState({ entries: {} });
+                          invoke<number>('get_hot_cache_size', { customDir: null }).then(setHotCacheBytes).catch(() => setHotCacheBytes(0));
+                        }}
+                        data-tooltip={t('settings.hotCacheDirClear')}
+                        style={{ color: 'var(--text-muted)', flexShrink: 0 }}
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-surface" onClick={pickHotCacheDir} style={{ flexShrink: 0 }}>
+                      <FolderOpen size={16} /> {t('settings.hotCacheDirChange')}
+                    </button>
+                  </div>
+                  {auth.hotCacheDownloadDir && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.4 }}>
+                      {t('settings.hotCacheDirHint')}
+                    </div>
+                  )}
+
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+
+                  <div style={{ fontSize: 12, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      <span style={{ color: 'var(--text-muted)', marginRight: 4 }}>{t('settings.cacheUsedHot')}</span>
+                      {hotCacheBytes !== null ? formatBytes(hotCacheBytes) : '…'}
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      <span style={{ color: 'var(--text-muted)', marginRight: 4 }}>{t('settings.hotCacheTrackCount')}</span>
+                      {hotCacheTrackCount}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontWeight: 500, marginBottom: 6 }}>{t('settings.hotCacheMaxMb')}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <input type="range" min={32} max={20000} step={32} value={snapHotCacheMb(auth.hotCacheMaxMb)} onChange={e => auth.setHotCacheMaxMb(parseInt(e.target.value, 10))} style={{ width: 140 }} id="hot-cache-max-mb-slider" />
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', minWidth: 72 }}>{snapHotCacheMb(auth.hotCacheMaxMb)} MB</span>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <div style={{ fontWeight: 500, marginBottom: 6 }}>{t('settings.hotCacheDebounce')}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <input type="range" min={0} max={600} step={1} value={Math.min(600, Math.max(0, auth.hotCacheDebounceSec))} onChange={e => auth.setHotCacheDebounceSec(parseInt(e.target.value, 10))} style={{ width: 140 }} id="hot-cache-debounce-slider" />
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', minWidth: 100 }}>
+                        {Math.min(600, Math.max(0, auth.hotCacheDebounceSec)) === 0
+                          ? t('settings.hotCacheDebounceImmediate')
+                          : t('settings.hotCacheDebounceSeconds', { n: Math.min(600, Math.max(0, auth.hotCacheDebounceSec)) })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    style={{ fontSize: 13 }}
+                    onClick={async () => {
+                      await clearHotCacheDisk(auth.hotCacheDownloadDir || null);
+                      const b = await invoke<number>('get_hot_cache_size', { customDir: auth.hotCacheDownloadDir || null }).catch(() => 0);
+                      setHotCacheBytes(b);
+                    }}
+                  >
+                    <Trash2 size={14} /> {t('settings.hotCacheClearBtn')}
+                  </button>
                 </div>
               )}
 
@@ -998,164 +1152,6 @@ export default function Settings() {
                 <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => setShowClearConfirm(true)}>
                   <Trash2 size={14} /> {t('settings.cacheClearBtn')}
                 </button>
-              )}
-            </div>
-          </section>
-
-          <section className="settings-section">
-            <div className="settings-section-header">
-              <HardDrive size={18} />
-              <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {t('settings.hotCacheTitle')}
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                    background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 22%, transparent)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {t('settings.hotCacheAlphaBadge')}
-                </span>
-              </h2>
-            </div>
-            <div className="settings-card">
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-                {t('settings.hotCacheDisclaimer')}
-              </div>
-
-              <div className="settings-toggle-row">
-                <div>
-                  <div style={{ fontWeight: 500 }}>{t('settings.hotCacheEnabled')}</div>
-                </div>
-                <label className="toggle-switch" aria-label={t('settings.hotCacheEnabled')}>
-                  <input
-                    type="checkbox"
-                    checked={auth.hotCacheEnabled}
-                    onChange={async e => {
-                      const enabled = e.target.checked;
-                      if (!enabled) {
-                        await clearHotCacheDisk(auth.hotCacheDownloadDir || null);
-                        setHotCacheBytes(0);
-                        auth.setHotCacheEnabled(false);
-                      } else {
-                        auth.setHotCacheEnabled(true);
-                        invoke<number>('get_hot_cache_size', { customDir: auth.hotCacheDownloadDir || null })
-                          .then(setHotCacheBytes)
-                          .catch(() => setHotCacheBytes(0));
-                      }
-                    }}
-                    id="hot-cache-enabled-toggle"
-                  />
-                  <span className="toggle-track" />
-                </label>
-              </div>
-
-              {auth.hotCacheEnabled && (
-                <div style={{ marginTop: '1.25rem' }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input
-                      className="input"
-                      type="text"
-                      readOnly
-                      value={auth.hotCacheDownloadDir || t('settings.hotCacheDirDefault')}
-                      style={{ flex: 1, fontSize: 13, color: auth.hotCacheDownloadDir ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'default' }}
-                    />
-                    {auth.hotCacheDownloadDir && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => {
-                          auth.setHotCacheDownloadDir('');
-                          useHotCacheStore.setState({ entries: {} });
-                          invoke<number>('get_hot_cache_size', { customDir: null }).then(setHotCacheBytes).catch(() => setHotCacheBytes(0));
-                        }}
-                        data-tooltip={t('settings.hotCacheDirClear')}
-                        style={{ color: 'var(--text-muted)', flexShrink: 0 }}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                    <button type="button" className="btn btn-surface" onClick={pickHotCacheDir} style={{ flexShrink: 0 }}>
-                      <FolderOpen size={16} /> {t('settings.hotCacheDirChange')}
-                    </button>
-                  </div>
-                  {auth.hotCacheDownloadDir && (
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.4 }}>
-                      {t('settings.hotCacheDirHint')}
-                    </div>
-                  )}
-
-                  <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0' }} />
-
-                  <div style={{ fontSize: 12, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <div style={{ color: 'var(--text-secondary)' }}>
-                      <span style={{ color: 'var(--text-muted)', marginRight: 4 }}>{t('settings.cacheUsedHot')}</span>
-                      {hotCacheBytes !== null ? formatBytes(hotCacheBytes) : '…'}
-                    </div>
-                    <div style={{ color: 'var(--text-secondary)' }}>
-                      <span style={{ color: 'var(--text-muted)', marginRight: 4 }}>{t('settings.hotCacheTrackCount')}</span>
-                      {hotCacheTrackCount}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontWeight: 500, marginBottom: 6 }}>{t('settings.hotCacheMaxMb')}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <input
-                        type="range"
-                        min={32}
-                        max={20000}
-                        step={32}
-                        value={snapHotCacheMb(auth.hotCacheMaxMb)}
-                        onChange={e => auth.setHotCacheMaxMb(parseInt(e.target.value, 10))}
-                        style={{ width: 140 }}
-                        id="hot-cache-max-mb-slider"
-                      />
-                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', minWidth: 72 }}>
-                        {snapHotCacheMb(auth.hotCacheMaxMb)} MB
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <div style={{ fontWeight: 500, marginBottom: 6 }}>{t('settings.hotCacheDebounce')}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <input
-                        type="range"
-                        min={0}
-                        max={600}
-                        step={1}
-                        value={Math.min(600, Math.max(0, auth.hotCacheDebounceSec))}
-                        onChange={e => auth.setHotCacheDebounceSec(parseInt(e.target.value, 10))}
-                        style={{ width: 140 }}
-                        id="hot-cache-debounce-slider"
-                      />
-                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', minWidth: 100 }}>
-                        {Math.min(600, Math.max(0, auth.hotCacheDebounceSec)) === 0
-                          ? t('settings.hotCacheDebounceImmediate')
-                          : t('settings.hotCacheDebounceSeconds', { n: Math.min(600, Math.max(0, auth.hotCacheDebounceSec)) })}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0' }} />
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    style={{ fontSize: 13 }}
-                    onClick={async () => {
-                      await clearHotCacheDisk(auth.hotCacheDownloadDir || null);
-                      const b = await invoke<number>('get_hot_cache_size', { customDir: auth.hotCacheDownloadDir || null }).catch(() => 0);
-                      setHotCacheBytes(b);
-                    }}
-                  >
-                    <Trash2 size={14} /> {t('settings.hotCacheClearBtn')}
-                  </button>
-                </div>
               )}
             </div>
           </section>

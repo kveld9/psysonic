@@ -37,7 +37,7 @@ interface AuthState {
   crossfadeEnabled: boolean;
   crossfadeSecs: number;
   gaplessEnabled: boolean;
-  preloadMode: 'balanced' | 'early' | 'custom';
+  preloadMode: 'off' | 'balanced' | 'early' | 'custom';
   preloadCustomSeconds: number;
   infiniteQueueEnabled: boolean;
   showArtistImages: boolean;
@@ -133,7 +133,7 @@ interface AuthState {
   setCrossfadeEnabled: (v: boolean) => void;
   setCrossfadeSecs: (v: number) => void;
   setGaplessEnabled: (v: boolean) => void;
-  setPreloadMode: (v: 'balanced' | 'early' | 'custom') => void;
+  setPreloadMode: (v: 'off' | 'balanced' | 'early' | 'custom') => void;
   setPreloadCustomSeconds: (v: number) => void;
   setInfiniteQueueEnabled: (v: boolean) => void;
   setShowArtistImages: (v: boolean) => void;
@@ -315,7 +315,7 @@ export const useAuthStore = create<AuthState>()(
       setCrossfadeEnabled: (v) => set({ crossfadeEnabled: v }),
       setCrossfadeSecs: (v) => set({ crossfadeSecs: v }),
       setGaplessEnabled: (v) => set({ gaplessEnabled: v }),
-      setPreloadMode: (v: 'balanced' | 'early' | 'custom') => set({ preloadMode: v }),
+      setPreloadMode: (v: 'off' | 'balanced' | 'early' | 'custom') => set({ preloadMode: v }),
       setPreloadCustomSeconds: (v: number) => set({ preloadCustomSeconds: v }),
       setInfiniteQueueEnabled: (v) => set({ infiniteQueueEnabled: v }),
       setShowArtistImages: (v) => set({ showArtistImages: v }),

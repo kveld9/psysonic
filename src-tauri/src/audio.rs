@@ -2345,8 +2345,8 @@ fn spawn_progress_task(
         let mut samples_played = samples_played;
 
         loop {
-            // 100 ms tick — tight enough for responsive UI, low enough CPU cost.
-            tokio::time::sleep(Duration::from_millis(100)).await;
+            // 500 ms tick — frontend interpolates visually at 60 fps via rAF.
+            tokio::time::sleep(Duration::from_millis(500)).await;
 
             if gen_counter.load(Ordering::SeqCst) != gen {
                 break;
