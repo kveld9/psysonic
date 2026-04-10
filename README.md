@@ -8,9 +8,13 @@
     <a href="https://github.com/Psychotoxical/psysonic/blob/main/LICENSE"><img alt="License: GPL v3" src="https://img.shields.io/badge/License-GPLv3-cba6f7?style=flat-square"></a>
     <a href="https://tauri.app/"><img alt="Built with Tauri" src="https://img.shields.io/badge/Built%20with-Tauri-242938?style=flat-square&logo=tauri"></a>
     <a href="https://aur.archlinux.org/packages/psysonic"><img alt="AUR" src="https://img.shields.io/aur/version/psysonic?style=flat-square&color=1793d1"></a>
+    <a href="https://aur.archlinux.org/packages/psysonic-bin"><img alt="AUR (bin)" src="https://img.shields.io/aur/version/psysonic-bin?style=flat-square&color=1793d1&label=AUR%20(bin)"></a>
     <a href="https://discord.gg/ckVPGPMS"><img alt="Discord" src="https://img.shields.io/badge/Discord-Join%20us-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
   </p>
 </div>
+
+> [!WARNING]
+> **Psysonic is under heavy active development.** Bugs and rough edges are to be expected. We reserve the right to change, remove, or rework existing features at any time without prior notice.
 
 ---
 
