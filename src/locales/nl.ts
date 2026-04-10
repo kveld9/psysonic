@@ -94,6 +94,7 @@ export const nlTranslation = {
     addToQueue: 'Aan wachtrij toevoegen',
     enqueueAlbum: 'Album in wachtrij',
     startRadio: 'Radio starten',
+    instantMix: 'Instant Mix',
     lfmLove: 'Liken op Last.fm',
     lfmUnlove: 'Niet meer liken op Last.fm',
     favorite: 'Favoriet',
@@ -396,6 +397,9 @@ export const nlTranslation = {
     testBtn: 'Verbinding testen',
     testingBtn: 'Testen…',
     serverCompatible: 'Compatibel met: Navidrome · Gonic · Airsonic · Subsonic',
+    audiomuseTitle: 'AudioMuse-AI (Navidrome)',
+    audiomuseDesc:
+      'Zet aan als deze server de AudioMuse-AI Navidrome-plugin gebruikt. Schakelt Instant Mix per nummer in en toont vergelijkbare artiesten van de server i.p.v. Last.fm op artiestpagina’s.',
     connected: 'Verbonden',
     failed: 'Mislukt',
     eqTitle: 'Equalizer',

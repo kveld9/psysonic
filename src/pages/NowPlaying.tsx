@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Music, Star, ExternalLink, MicVocal, Heart } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
+import { useAuthStore } from '../store/authStore';
 import { useLyricsStore } from '../store/lyricsStore';
 import {
   buildCoverArtUrl, coverArtCacheKey, getSong, star, unstar,
@@ -217,6 +218,9 @@ export default function NowPlaying() {
   const activeTab       = useLyricsStore(s => s.activeTab);
   const isQueueVisible  = usePlayerStore(s => s.isQueueVisible);
   const toggleQueue     = usePlayerStore(s => s.toggleQueue);
+  const audiomuseNavidromeEnabled = useAuthStore(
+    s => !!(s.activeServerId && s.audiomuseNavidromeByServer[s.activeServerId]),
+  );
 
   const stableNavigate = useCallback((path: string) => navigate(path), [navigate]);
 
@@ -231,8 +235,10 @@ export default function NowPlaying() {
   const [artistInfo, setArtistInfo] = useState<SubsonicArtistInfo | null>(null);
   useEffect(() => {
     if (!currentTrack?.artistId) { setArtistInfo(null); return; }
-    getArtistInfo(currentTrack.artistId).then(setArtistInfo).catch(() => setArtistInfo(null));
-  }, [currentTrack?.artistId]);
+    getArtistInfo(currentTrack.artistId, { similarArtistCount: audiomuseNavidromeEnabled ? 24 : undefined })
+      .then(setArtistInfo)
+      .catch(() => setArtistInfo(null));
+  }, [currentTrack?.artistId, audiomuseNavidromeEnabled]);
 
   // Album tracks
   const [albumTracks, setAlbumTracks] = useState<SubsonicSong[]>([]);

@@ -104,6 +104,13 @@ interface AuthState {
   entityRatingSupportByServer: Record<string, EntityRatingSupportLevel>;
   setEntityRatingSupport: (serverId: string, level: EntityRatingSupportLevel) => void;
 
+  /**
+   * Per server: Navidrome has the AudioMuse-AI plugin — use `getSimilarSongs` (Instant Mix) and
+   * `getArtistInfo2` similar artists instead of Last.fm for discovery on this server.
+   */
+  audiomuseNavidromeByServer: Record<string, boolean>;
+  setAudiomuseNavidromeEnabled: (serverId: string, enabled: boolean) => void;
+
   // Status
   isLoggedIn: boolean;
   isConnecting: boolean;
@@ -250,6 +257,7 @@ export const useAuthStore = create<AuthState>()(
       musicLibraryFilterByServer: {},
       musicLibraryFilterVersion: 0,
       entityRatingSupportByServer: {},
+      audiomuseNavidromeByServer: {},
       isLoggedIn: false,
       isConnecting: false,
       connectionError: null,
@@ -272,11 +280,13 @@ export const useAuthStore = create<AuthState>()(
           const newServers = s.servers.filter(srv => srv.id !== id);
           const switchedAway = s.activeServerId === id;
           const { [id]: _r, ...entityRatingRest } = s.entityRatingSupportByServer;
+          const { [id]: _a, ...audiomuseRest } = s.audiomuseNavidromeByServer;
           return {
             servers: newServers,
             activeServerId: switchedAway ? (newServers[0]?.id ?? null) : s.activeServerId,
             isLoggedIn: switchedAway ? false : s.isLoggedIn,
             entityRatingSupportByServer: entityRatingRest,
+            audiomuseNavidromeByServer: audiomuseRest,
           };
         });
       },
@@ -401,6 +411,16 @@ export const useAuthStore = create<AuthState>()(
       setEntityRatingSupport: (serverId, level) =>
         set(s => ({
           entityRatingSupportByServer: { ...s.entityRatingSupportByServer, [serverId]: level },
+        })),
+
+      setAudiomuseNavidromeEnabled: (serverId, enabled) =>
+        set(s => ({
+          audiomuseNavidromeByServer: enabled
+            ? { ...s.audiomuseNavidromeByServer, [serverId]: true }
+            : (() => {
+                const { [serverId]: _removed, ...rest } = s.audiomuseNavidromeByServer;
+                return rest;
+              })(),
         })),
 
       logout: () => set({ isLoggedIn: false, musicFolders: [] }),

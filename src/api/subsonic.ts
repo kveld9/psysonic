@@ -309,6 +309,68 @@ export async function getAlbumList(
   return data.albumList2?.album ?? [];
 }
 
+/**
+ * Navidrome (and some servers) ignore `musicFolderId` on getSimilarSongs / getSimilarSongs2 / getTopSongs,
+ * so similar tracks can leak from other libraries. When the user scoped to one folder, we keep a set of
+ * album ids in that scope (paginated getAlbumList2) and drop songs whose albumId is not in the set.
+ */
+let scopedLibraryAlbumIdCache: {
+  serverId: string;
+  folderId: string;
+  filterVersion: number;
+  ids: Set<string>;
+} | null = null;
+
+async function albumIdsInActiveLibraryScope(): Promise<Set<string> | null> {
+  const { activeServerId, musicLibraryFilterByServer, musicLibraryFilterVersion } = useAuthStore.getState();
+  if (!activeServerId) return null;
+  const folder = musicLibraryFilterByServer[activeServerId];
+  if (folder === undefined || folder === 'all') {
+    scopedLibraryAlbumIdCache = null;
+    return null;
+  }
+  const hit = scopedLibraryAlbumIdCache;
+  if (
+    hit &&
+    hit.serverId === activeServerId &&
+    hit.folderId === folder &&
+    hit.filterVersion === musicLibraryFilterVersion
+  ) {
+    return hit.ids;
+  }
+  const ids = new Set<string>();
+  const pageSize = 500;
+  let offset = 0;
+  for (;;) {
+    const albums = await getAlbumList('alphabeticalByName', pageSize, offset);
+    for (const a of albums) ids.add(a.id);
+    if (albums.length < pageSize) break;
+    offset += pageSize;
+    if (offset > 500_000) break;
+  }
+  scopedLibraryAlbumIdCache = {
+    serverId: activeServerId,
+    folderId: folder,
+    filterVersion: musicLibraryFilterVersion,
+    ids,
+  };
+  return ids;
+}
+
+export async function filterSongsToActiveLibrary(songs: SubsonicSong[]): Promise<SubsonicSong[]> {
+  const allowed = await albumIdsInActiveLibraryScope();
+  if (!allowed || allowed.size === 0) return songs;
+  return songs.filter(s => s.albumId && allowed.has(s.albumId));
+}
+
+/** When scoped to one library, ask the server for more similar tracks — many will be filtered out client-side. */
+function similarSongsRequestCount(desired: number): number {
+  const { activeServerId, musicLibraryFilterByServer } = useAuthStore.getState();
+  const f = activeServerId ? musicLibraryFilterByServer[activeServerId] : undefined;
+  if (f === undefined || f === 'all') return desired;
+  return Math.min(300, Math.max(desired, desired * 4));
+}
+
 export async function getRandomSongs(size = 50, genre?: string, timeout = 15000): Promise<SubsonicSong[]> {
   const params: Record<string, string | number> = { size, _t: Date.now(), ...libraryFilterParams() };
   if (genre) params.genre = genre;
@@ -590,15 +652,21 @@ export async function getArtist(id: string): Promise<{ artist: SubsonicArtist; a
   return { artist, albums: album ?? [] };
 }
 
-export async function getArtistInfo(id: string): Promise<SubsonicArtistInfo> {
-  const data = await api<{ artistInfo2: SubsonicArtistInfo }>('getArtistInfo2.view', { id, count: 5 });
+export async function getArtistInfo(id: string, options?: { similarArtistCount?: number }): Promise<SubsonicArtistInfo> {
+  const count = options?.similarArtistCount ?? 5;
+  const data = await api<{ artistInfo2: SubsonicArtistInfo }>('getArtistInfo2.view', { id, count, ...libraryFilterParams() });
   return data.artistInfo2 ?? {};
 }
 
 export async function getTopSongs(artist: string): Promise<SubsonicSong[]> {
   try {
-    const data = await api<{ topSongs: { song: SubsonicSong[] } }>('getTopSongs.view', { artist, count: 5 });
-    return data.topSongs?.song ?? [];
+    const { activeServerId, musicLibraryFilterByServer } = useAuthStore.getState();
+    const scoped = activeServerId && musicLibraryFilterByServer[activeServerId] && musicLibraryFilterByServer[activeServerId] !== 'all';
+    const topCount = scoped ? 20 : 5;
+    const data = await api<{ topSongs: { song: SubsonicSong[] } }>('getTopSongs.view', { artist, count: topCount, ...libraryFilterParams() });
+    const raw = data.topSongs?.song ?? [];
+    const filtered = await filterSongsToActiveLibrary(raw);
+    return filtered.slice(0, 5);
   } catch {
     return [];
   }
@@ -606,8 +674,26 @@ export async function getTopSongs(artist: string): Promise<SubsonicSong[]> {
 
 export async function getSimilarSongs2(id: string, count = 50): Promise<SubsonicSong[]> {
   try {
-    const data = await api<{ similarSongs2: { song: SubsonicSong[] } }>('getSimilarSongs2.view', { id, count });
-    return data.similarSongs2?.song ?? [];
+    const requestCount = similarSongsRequestCount(count);
+    const data = await api<{ similarSongs2: { song: SubsonicSong[] } }>('getSimilarSongs2.view', { id, count: requestCount, ...libraryFilterParams() });
+    const raw = data.similarSongs2?.song ?? [];
+    const filtered = await filterSongsToActiveLibrary(raw);
+    return filtered.slice(0, count);
+  } catch {
+    return [];
+  }
+}
+
+/** Similar tracks for a song id (Subsonic `getSimilarSongs`) — Navidrome + AudioMuse Instant Mix. */
+export async function getSimilarSongs(id: string, count = 50): Promise<SubsonicSong[]> {
+  try {
+    const requestCount = similarSongsRequestCount(count);
+    const data = await api<{ similarSongs: { song: SubsonicSong | SubsonicSong[] } }>('getSimilarSongs.view', { id, count: requestCount, ...libraryFilterParams() });
+    const raw = data.similarSongs?.song;
+    if (!raw) return [];
+    const list = Array.isArray(raw) ? raw : [raw];
+    const filtered = await filterSongsToActiveLibrary(list);
+    return filtered.slice(0, count);
   } catch {
     return [];
   }

@@ -73,6 +73,9 @@ export default function ArtistDetail() {
   const downloadArtist = useOfflineStore(s => s.downloadArtist);
   const bulkProgress = useOfflineJobStore(s => s.bulkProgress);
   const activeServerId = useAuthStore(s => s.activeServerId) ?? '';
+  const audiomuseNavidromeEnabled = useAuthStore(
+    s => !!(s.activeServerId && s.audiomuseNavidromeByServer[s.activeServerId]),
+  );
   const musicLibraryFilterVersion = useAuthStore(s => s.musicLibraryFilterVersion);
   const entityRatingSupportByServer = useAuthStore(s => s.entityRatingSupportByServer);
   const setEntityRatingSupport = useAuthStore(s => s.setEntityRatingSupport);
@@ -95,12 +98,6 @@ export default function ArtistDetail() {
       // Render the page immediately from local data
       setLoading(false);
 
-      // Fetch artist info (may trigger slow external lookup on the server)
-      // and top songs in the background — do not block rendering
-      getArtistInfo(id).then(artistInfo => {
-        if (!cancelled) setInfo(artistInfo ?? null);
-      }).catch(() => {});
-
       getTopSongs(artistData.artist.name).then(songsData => {
         if (!cancelled) setTopSongs(songsData ?? []);
       }).catch(() => {});
@@ -109,6 +106,15 @@ export default function ArtistDetail() {
     });
     return () => { cancelled = true; };
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    getArtistInfo(id, { similarArtistCount: audiomuseNavidromeEnabled ? 24 : undefined }).then(artistInfo => {
+      if (!cancelled) setInfo(artistInfo ?? null);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [id, audiomuseNavidromeEnabled]);
 
   useEffect(() => {
     if (!id) return;
@@ -174,7 +180,7 @@ export default function ArtistDetail() {
   }, [artist?.id, musicLibraryFilterVersion]);
 
   useEffect(() => {
-    if (!artist || !lastfmIsConfigured()) return;
+    if (!artist || audiomuseNavidromeEnabled || !lastfmIsConfigured()) return;
     setSimilarArtists([]);
     setSimilarLoading(true);
     lastfmGetSimilarArtists(artist.name).then(async names => {
@@ -197,7 +203,7 @@ export default function ArtistDetail() {
       setSimilarArtists(found);
       setSimilarLoading(false);
     }).catch(() => setSimilarLoading(false));
-  }, [artist?.id, musicLibraryFilterVersion]);
+  }, [artist?.id, musicLibraryFilterVersion, audiomuseNavidromeEnabled]);
 
   const openLink = (url: string, key: string) => {
     open(url);
@@ -330,6 +336,15 @@ export default function ArtistDetail() {
 
   const coverId = artist.coverArt || artist.id;
   const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(artist.name)}`;
+
+  const serverSimilarArtists: SubsonicArtist[] = (info?.similarArtist ?? []).map(sa => ({
+    id: sa.id,
+    name: sa.name,
+    albumCount: sa.albumCount,
+  }));
+  const showAudiomuseSimilar = audiomuseNavidromeEnabled && serverSimilarArtists.length > 0;
+  const showLastfmSimilar = !audiomuseNavidromeEnabled && lastfmIsConfigured() && (similarLoading || similarArtists.length > 0);
+  const showSimilarSection = showAudiomuseSimilar || showLastfmSimilar;
 
   return (
     <div className="content-body animate-fade-in">
@@ -564,20 +579,19 @@ export default function ArtistDetail() {
          </>
        )}
 
-      {/* Similar Artists (Last.fm) */}
-      {lastfmIsConfigured() && (similarLoading || similarArtists.length > 0) && (
+      {showSimilarSection && (
         <>
           <h2 className="section-title" style={{ marginTop: '2rem', marginBottom: '1rem' }}>
             {t('artistDetail.similarArtists')}
           </h2>
-          {similarLoading ? (
+          {showLastfmSimilar && similarLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
               <div className="spinner" style={{ width: 16, height: 16, borderTopColor: 'currentColor' }} />
               {t('artistDetail.loading')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {similarArtists.map(a => (
+              {(showAudiomuseSimilar ? serverSimilarArtists : similarArtists).map(a => (
                 <button
                   key={a.id}
                   className="artist-ext-link"
@@ -592,7 +606,7 @@ export default function ArtistDetail() {
       )}
 
       {/* Albums */}
-      <h2 className="section-title" style={{ marginTop: (info?.biography || topSongs.length > 0 || lastfmIsConfigured()) ? '2rem' : '0', marginBottom: '1rem' }}>
+      <h2 className="section-title" style={{ marginTop: (info?.biography || topSongs.length > 0 || showSimilarSection || (lastfmIsConfigured() && !audiomuseNavidromeEnabled)) ? '2rem' : '0', marginBottom: '1rem' }}>
         {t('artistDetail.albumsBy', { name: artist.name })}
       </h2>
 

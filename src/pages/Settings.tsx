@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Wifi, WifiOff, Globe, Music2, Sliders, LogOut, CheckCircle2, FolderOpen,
   Palette, Server, Plus, Trash2, Eye, EyeOff, Info, ExternalLink, Shuffle, X, Play, Type, Keyboard, ChevronDown,
-  GripVertical, PanelLeft, RotateCcw, LayoutGrid, AppWindow, HardDrive, Upload, Download, Waves, Star, Clock, ZoomIn
+  GripVertical, PanelLeft, RotateCcw, LayoutGrid, AppWindow, HardDrive, Upload, Download, Waves, Star, Clock, ZoomIn, Sparkles
 } from 'lucide-react';
 import { exportBackup, importBackup } from '../utils/backup';
 import { showToast } from '../utils/toast';
@@ -1655,6 +1655,42 @@ export default function Settings() {
                             <Trash2 size={14} />
                           </button>
                         </div>
+                      </div>
+                      <div
+                        className="settings-toggle-row"
+                        style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid color-mix(in srgb, var(--text-muted) 18%, transparent)' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', minWidth: 0 }}>
+                          <Sparkles size={16} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
+                          <div>
+                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                              {t('settings.audiomuseTitle')}
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.04em',
+                                  padding: '2px 6px',
+                                  borderRadius: 4,
+                                  background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 22%, transparent)',
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                {t('settings.hotCacheAlphaBadge')}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.45 }}>{t('settings.audiomuseDesc')}</div>
+                          </div>
+                        </div>
+                        <label className="toggle-switch" aria-label={t('settings.audiomuseTitle')}>
+                          <input
+                            type="checkbox"
+                            checked={!!auth.audiomuseNavidromeByServer[srv.id]}
+                            onChange={e => auth.setAudiomuseNavidromeEnabled(srv.id, e.target.checked)}
+                          />
+                          <span className="toggle-track" />
+                        </label>
                       </div>
                     </div>
                   );

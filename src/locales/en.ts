@@ -95,6 +95,7 @@ export const enTranslation = {
     addToQueue: 'Add to Queue',
     enqueueAlbum: 'Enqueue Album',
     startRadio: 'Start Radio',
+    instantMix: 'Instant Mix',
     lfmLove: 'Love on Last.fm',
     lfmUnlove: 'Unlove on Last.fm',
     favorite: 'Favorite',
@@ -397,6 +398,9 @@ export const enTranslation = {
     testBtn: 'Test Connection',
     testingBtn: 'Testing…',
     serverCompatible: 'Compatible with: Navidrome · Gonic · Airsonic · Subsonic',
+    audiomuseTitle: 'AudioMuse-AI (Navidrome)',
+    audiomuseDesc:
+      'Turn on if this server has the AudioMuse-AI Navidrome plugin configured. Enables Instant Mix from tracks and uses server-side similar artists instead of Last.fm on artist pages.',
     connected: 'Connected',
     failed: 'Failed',
     eqTitle: 'Equalizer',

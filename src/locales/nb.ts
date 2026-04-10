@@ -94,6 +94,7 @@ export const nbTranslation = {
     addToQueue: 'Legg til i kø',
     enqueueAlbum: 'Legg albumet i kø',
     startRadio: 'Start radio',
+    instantMix: 'Instant Mix',
     lfmLove: 'Lik på Last.fm',
     lfmUnlove: 'Fjern fra likte på Last.fm',
     favorite: 'Favoritt',
@@ -396,6 +397,9 @@ export const nbTranslation = {
     testBtn: 'Test tilkobling',
     testingBtn: 'Tester…',
     serverCompatible: 'Kompatibel med: Navidrome · Gonic · Airsonic · Subsonic',
+    audiomuseTitle: 'AudioMuse-AI (Navidrome)',
+    audiomuseDesc:
+      'Slå på hvis denne serveren bruker AudioMuse-AI Navidrome-plugin. Aktiverer Instant Mix fra spor og henter lignende artister fra serveren i stedet for Last.fm på artistsider.',
     connected: 'Tilkoblet',
     failed: 'Mislyktes',
     eqTitle: 'Jevnstiller',
