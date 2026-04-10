@@ -1088,6 +1088,7 @@
   flex-shrink: 0;
   border-radius: var(--radius-sm);
   overflow: hidden;
+  background: var(--bg-card);
 }
 .player-album-art-wrap::after {
   content: '';

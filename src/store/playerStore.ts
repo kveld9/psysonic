@@ -272,10 +272,10 @@ function touchHotCacheOnPlayback(trackId: string, serverId: string) {
   useHotCacheStore.getState().touchPlayed(trackId, serverId);
 }
 
-// Track ID that has already been sent to audio_chain_preload / audio_preload.
-// Prevents the 100ms progress ticker from firing 300 identical IPC calls over
-// the last 30 seconds of a track, each spawning its own HTTP download.
+// Track ID that has already been sent to audio_chain_preload (gapless chain).
 let gaplessPreloadingId: string | null = null;
+// Track ID that has already been sent to audio_preload (byte pre-download).
+let bytePreloadingId: string | null = null;
 
 // ─── Server queue sync ─────────────────────────────────────────────────────────
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -329,50 +329,57 @@ function handleAudioProgress(current_time: number, duration: number) {
   }
 
   // Pre-buffer / pre-chain next track based on preload mode.
-  const { gaplessEnabled, preloadMode, preloadCustomSeconds } = useAuthStore.getState();
+  const { gaplessEnabled, preloadMode, preloadCustomSeconds, hotCacheEnabled } = useAuthStore.getState();
   const remaining = dur - current_time;
-  const shouldPreload = preloadMode !== 'off' && (
+
+  // Gapless chain: always triggers at 30s regardless of preloadMode.
+  const shouldChainGapless = gaplessEnabled && remaining < 30 && remaining > 0;
+  // Byte pre-download: skip when Hot Cache is active (it already handles buffering).
+  const shouldBytePreload = !hotCacheEnabled && preloadMode !== 'off' && (
     preloadMode === 'early'
       ? current_time >= 5
       : preloadMode === 'custom'
         ? remaining < preloadCustomSeconds && remaining > 0
         : remaining < 30 && remaining > 0 // balanced (default)
   );
-  if (shouldPreload) {
+
+  if (shouldChainGapless || shouldBytePreload) {
     const { queue, queueIndex, repeatMode } = store;
     const nextIdx = queueIndex + 1;
     const nextTrack = repeatMode === 'one'
       ? track
       : (nextIdx < queue.length ? queue[nextIdx] : (repeatMode === 'all' ? queue[0] : null));
-    if (nextTrack && nextTrack.id !== track.id && nextTrack.id !== gaplessPreloadingId) {
+    if (!nextTrack || nextTrack.id === track.id) return;
+
+    const serverId = useAuthStore.getState().activeServerId ?? '';
+    const nextUrl = resolvePlaybackUrl(nextTrack.id, serverId);
+
+    // Byte pre-download — runs early so bytes are cached by chain time.
+    if (shouldBytePreload && nextTrack.id !== bytePreloadingId) {
+      bytePreloadingId = nextTrack.id;
+      invoke('audio_preload', { url: nextUrl, durationHint: nextTrack.duration }).catch(() => {});
+    }
+
+    // Gapless chain — decode + chain into Sink 30s before track boundary.
+    if (shouldChainGapless && nextTrack.id !== gaplessPreloadingId) {
       gaplessPreloadingId = nextTrack.id;
-      const serverId = useAuthStore.getState().activeServerId ?? '';
-      const nextUrl = resolvePlaybackUrl(nextTrack.id, serverId);
-      if (gaplessEnabled) {
-        // Gapless ON: decode + chain directly into the Sink now, 30 s in
-        // advance. By the time the track boundary arrives, the next source is
-        // already live — no IPC round-trip at the gap point.
-        const authState = useAuthStore.getState();
-        const replayGainDb = authState.replayGainEnabled
-          ? (authState.replayGainMode === 'album'
-              ? (nextTrack.replayGainAlbumDb ?? nextTrack.replayGainTrackDb)
-              : nextTrack.replayGainTrackDb) ?? null
-          : null;
-        const replayGainPeak = authState.replayGainEnabled
-          ? (nextTrack.replayGainPeak ?? null)
-          : null;
-        invoke('audio_chain_preload', {
-          url: nextUrl,
-          volume: store.volume,
-          durationHint: nextTrack.duration,
-          replayGainDb,
-          replayGainPeak,
-          hiResEnabled: useAuthStore.getState().enableHiRes,
-        }).catch(() => {});
-      } else {
-        // Gapless OFF: just pre-download bytes so audio_play finds them cached.
-        invoke('audio_preload', { url: nextUrl, durationHint: nextTrack.duration }).catch(() => {});
-      }
+      const authState = useAuthStore.getState();
+      const replayGainDb = authState.replayGainEnabled
+        ? (authState.replayGainMode === 'album'
+            ? (nextTrack.replayGainAlbumDb ?? nextTrack.replayGainTrackDb)
+            : nextTrack.replayGainTrackDb) ?? null
+        : null;
+      const replayGainPeak = authState.replayGainEnabled
+        ? (nextTrack.replayGainPeak ?? null)
+        : null;
+      invoke('audio_chain_preload', {
+        url: nextUrl,
+        volume: store.volume,
+        durationHint: nextTrack.duration,
+        replayGainDb,
+        replayGainPeak,
+        hiResEnabled: authState.enableHiRes,
+      }).catch(() => {});
     }
   }
 }
@@ -410,7 +417,7 @@ function handleAudioEnded() {
  */
 function handleAudioTrackSwitched(duration: number) {
   lastGaplessSwitchTime = Date.now();
-  gaplessPreloadingId = null; // allow preloading for the track after this one
+  gaplessPreloadingId = null; bytePreloadingId = null; // allow preloading for the track after this one
   isAudioPaused = false;
 
   const store = usePlayerStore.getState();
@@ -763,7 +770,7 @@ export const usePlayerStore = create<PlayerState>()(
         isAudioPaused = false;
         clearRadioReconnectTimer();
         radioReconnectCount = 0;
-        gaplessPreloadingId = null;
+        gaplessPreloadingId = null; bytePreloadingId = null;
         if (seekDebounce) { clearTimeout(seekDebounce); seekDebounce = null; } seekTarget = null;
         // Stop Rust engine in case a regular track was playing.
         invoke('audio_stop').catch(() => {});
@@ -798,7 +805,7 @@ export const usePlayerStore = create<PlayerState>()(
 
         const gen = ++playGeneration;
         isAudioPaused = false;
-        gaplessPreloadingId = null; // new track — allow fresh preload for next
+        gaplessPreloadingId = null; bytePreloadingId = null; // new track — allow fresh preload for next
         if (seekDebounce) { clearTimeout(seekDebounce); seekDebounce = null; } seekTarget = null;
 
         // If a radio stream is active, stop it before the new track starts so
