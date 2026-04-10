@@ -144,11 +144,12 @@ export function useLyrics(currentTrack: Track | null): UseLyricsResult {
       }
     };
 
+    const NETEASE_META = /^(作词|作曲|编曲|制作人|出版|发行|MV导演|录音|混音|监制)/;
     const fetchNetease = async (): Promise<boolean> => {
       try {
         const lrc = await fetchNeteaselyrics(currentTrack.artist ?? '', currentTrack.title);
         if (!lrc) return false;
-        const lines = parseLrc(lrc);
+        const lines = parseLrc(lrc).filter(l => !NETEASE_META.test(l.text));
         const synced = lines.length > 0 ? lines : null;
         if (!synced) return false;
         store({ syncedLines: synced, plainLyrics: null, source: 'netease', notFound: false });
