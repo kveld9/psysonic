@@ -7,6 +7,7 @@ import {
   Palette, Server, Plus, Trash2, Eye, EyeOff, Info, ExternalLink, Shuffle, X, Play, Type, Keyboard, ChevronDown,
   GripVertical, PanelLeft, RotateCcw, LayoutGrid, AppWindow, HardDrive, Upload, Download, Waves, Star, Clock, ZoomIn, Sparkles, AlertTriangle
 } from 'lucide-react';
+import i18n from '../i18n';
 import { exportBackup, importBackup } from '../utils/backup';
 import { showToast } from '../utils/toast';
 import { invoke } from '@tauri-apps/api/core';
@@ -471,6 +472,41 @@ export default function Settings() {
           </button>
         ))}
       </nav>
+
+      {/* ── General ────────────────────────────────────────────────────────────── */}
+      {activeTab === 'general' && (
+        <>
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <Globe size={18} />
+              <h2>{t('settings.language')}</h2>
+            </div>
+            <div className="settings-card">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { id: 'en', label: t('settings.languageEn') },
+                  { id: 'de', label: t('settings.languageDe') },
+                  { id: 'es', label: t('settings.languageEs') },
+                  { id: 'fr', label: t('settings.languageFr') },
+                  { id: 'nl', label: t('settings.languageNl') },
+                  { id: 'zh', label: t('settings.languageZh') },
+                  { id: 'nb', label: t('settings.languageNb') },
+                  { id: 'ru', label: t('settings.languageRu') },
+                ].map(lang => (
+                  <button
+                    key={lang.id}
+                    className={`btn ${i18n.language === lang.id ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ justifyContent: 'flex-start' }}
+                    onClick={() => i18n.changeLanguage(lang.id)}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* ── Audio ────────────────────────────────────────────────────────────── */}
       {activeTab === 'audio' && (
