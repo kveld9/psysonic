@@ -473,41 +473,6 @@ export default function Settings() {
         ))}
       </nav>
 
-      {/* ── General ────────────────────────────────────────────────────────────── */}
-      {activeTab === 'general' && (
-        <>
-          <section className="settings-section">
-            <div className="settings-section-header">
-              <Globe size={18} />
-              <h2>{t('settings.language')}</h2>
-            </div>
-            <div className="settings-card">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {[
-                  { id: 'en', label: t('settings.languageEn') },
-                  { id: 'de', label: t('settings.languageDe') },
-                  { id: 'es', label: t('settings.languageEs') },
-                  { id: 'fr', label: t('settings.languageFr') },
-                  { id: 'nl', label: t('settings.languageNl') },
-                  { id: 'zh', label: t('settings.languageZh') },
-                  { id: 'nb', label: t('settings.languageNb') },
-                  { id: 'ru', label: t('settings.languageRu') },
-                ].map(lang => (
-                  <button
-                    key={lang.id}
-                    className={`btn ${i18n.language === lang.id ? 'btn-primary' : 'btn-ghost'}`}
-                    style={{ justifyContent: 'flex-start' }}
-                    onClick={() => i18n.changeLanguage(lang.id)}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-
       {/* ── Audio ────────────────────────────────────────────────────────────── */}
       {activeTab === 'audio' && (
         <>
@@ -1305,6 +1270,7 @@ export default function Settings() {
                   options={[
                     { value: 'en', label: t('settings.languageEn') },
                     { value: 'de', label: t('settings.languageDe') },
+                    { value: 'es', label: t('settings.languageEs') },
                     { value: 'fr', label: t('settings.languageFr') },
                     { value: 'nl', label: t('settings.languageNl') },
                     { value: 'nb', label: t('settings.languageNb') },
