@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Play, ListPlus, Radio, Heart, Download, ChevronRight, User, Disc3, ListMusic, Plus, Info, Sparkles, Star, Trash2 } from 'lucide-react';
 import LastfmIcon from './LastfmIcon';
 import StarRating from './StarRating';
 import { lastfmLoveTrack, lastfmUnloveTrack } from '../api/lastfm';
 import { usePlayerStore, Track, songToTrack } from '../store/playerStore';
 import { useShallow } from 'zustand/react/shallow';
-import { SubsonicAlbum, SubsonicArtist, star, unstar, getSimilarSongs2, getSimilarSongs, getTopSongs, buildDownloadUrl, getAlbum, getArtist, getPlaylists, getPlaylist, createPlaylist, updatePlaylist, SubsonicPlaylist, setRating } from '../api/subsonic';
+import { SubsonicAlbum, SubsonicArtist, star, unstar, getSimilarSongs2, getSimilarSongs, getTopSongs, buildDownloadUrl, getAlbum, getArtist, getPlaylists, getPlaylist, updatePlaylist, SubsonicPlaylist, setRating } from '../api/subsonic';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useDownloadModalStore } from '../store/downloadModalStore';
@@ -40,28 +40,26 @@ export function AddToPlaylistSubmenu({ songIds, onDone, dropDown, triggerId }: {
   const { t } = useTranslation();
   const subRef = useRef<HTMLDivElement>(null);
   const newNameRef = useRef<HTMLInputElement>(null);
-  const [playlists, setPlaylists] = useState<SubsonicPlaylist[]>([]);
   const [adding, setAdding] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [flipLeft, setFlipLeft] = useState(false);
-  const touchPlaylist = usePlaylistStore((s) => s.touchPlaylist);
+  const storePlaylists = usePlaylistStore((s) => s.playlists);
   const recentIds = usePlaylistStore((s) => s.recentIds);
+  const createPlaylist = usePlaylistStore((s) => s.createPlaylist);
+  const touchPlaylist = usePlaylistStore((s) => s.touchPlaylist);
 
-  useEffect(() => {
-    getPlaylists().then((all) => {
-      const sorted = [...all].sort((a, b) => {
-        const ai = recentIds.indexOf(a.id);
-        const bi = recentIds.indexOf(b.id);
-        if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
-        if (ai === -1) return 1;
-        if (bi === -1) return -1;
-        return ai - bi;
-      });
-      setPlaylists(sorted);
-    }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Sort playlists by recent usage
+  const playlists = useMemo(() => {
+    return [...storePlaylists].sort((a, b) => {
+      const ai = recentIds.indexOf(a.id);
+      const bi = recentIds.indexOf(b.id);
+      if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }, [storePlaylists, recentIds]);
 
   // Flip submenu left if it would overflow the right edge of the viewport
   useLayoutEffect(() => {
@@ -92,10 +90,7 @@ export function AddToPlaylistSubmenu({ songIds, onDone, dropDown, triggerId }: {
 
   const handleCreate = async () => {
     const name = newName.trim() || t('playlists.unnamed');
-    try {
-      const pl = await createPlaylist(name, songIds);
-      if (pl?.id) touchPlaylist(pl.id);
-    } catch {}
+    await createPlaylist(name, songIds);
     onDone();
   };
 
@@ -139,7 +134,7 @@ export function AddToPlaylistSubmenu({ songIds, onDone, dropDown, triggerId }: {
       {playlists.length === 0 && (
         <div className="context-submenu-empty">{t('playlists.empty')}</div>
       )}
-      {playlists.map((pl) => (
+      {playlists.map((pl: SubsonicPlaylist) => (
         <div
           key={pl.id}
           className="context-menu-item"
@@ -990,6 +985,10 @@ export default function ContextMenu() {
       previousFocusRef.current = document.activeElement as HTMLElement | null;
       return;
     }
+    // Clean up any keyboard focus styling when menu closes
+    menuRef.current
+      ?.querySelectorAll<HTMLElement>('.context-menu-keyboard-active')
+      .forEach(el => el.classList.remove('context-menu-keyboard-active'));
     const prev = previousFocusRef.current;
     previousFocusRef.current = null;
     if (prev?.isConnected) {
@@ -1572,12 +1571,15 @@ export default function ContextMenu() {
                 const { showToast } = await import('../utils/toast');
                 const { deletePlaylist } = await import('../api/subsonic');
                 const { usePlaylistStore } = await import('../store/playlistStore');
-                const removeId = usePlaylistStore.getState().removeId;
+                const { removeId } = usePlaylistStore.getState();
                 try {
                   await deletePlaylist(playlist.id);
                   removeId(playlist.id);
+                  // Update local playlist state without page reload to preserve audio playback state
+                  usePlaylistStore.setState((s) => ({
+                    playlists: s.playlists.filter((p) => p.id !== playlist.id),
+                  }));
                   showToast(t('playlists.deleteSuccess', { count: 1 }), 3000, 'info');
-                  window.location.reload();
                 } catch {
                   showToast(t('playlists.deleteFailed', { name: playlist.name }), 3000, 'error');
                 }
@@ -1713,21 +1715,24 @@ export default function ContextMenu() {
                 const { showToast } = await import('../utils/toast');
                 const { usePlaylistStore } = await import('../store/playlistStore');
                 const { deletePlaylist } = await import('../api/subsonic');
-                const removeId = usePlaylistStore.getState().removeId;
-                let deleted = 0;
+                const { removeId } = usePlaylistStore.getState();
+                const deletedIds: string[] = [];
                 for (const pl of selectedPlaylists) {
                   try {
                     await deletePlaylist(pl.id);
                     removeId(pl.id);
-                    deleted++;
+                    deletedIds.push(pl.id);
                   } catch {
                     showToast(t('playlists.deleteFailed', { name: pl.name }), 3000, 'error');
                   }
                 }
-                if (deleted > 0) {
-                  showToast(t('playlists.deleteSuccess', { count: deleted }), 3000, 'info');
+                if (deletedIds.length > 0) {
+                  // Update local playlist state without page reload to preserve audio playback state
+                  usePlaylistStore.setState((s) => ({
+                    playlists: s.playlists.filter((p) => !deletedIds.includes(p.id)),
+                  }));
+                  showToast(t('playlists.deleteSuccess', { count: deletedIds.length }), 3000, 'info');
                 }
-                window.location.reload();
               })}>
                 <Trash2 size={14} /> {t('playlists.deleteSelected')}
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useLayoutEffect, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { usePlayerStore } from '../store/playerStore';
 import { useOfflineStore } from '../store/offlineStore';
@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import PsysonicLogo from './PsysonicLogo';
 import PSmallLogo from './PSmallLogo';
-import { getPlaylists, SubsonicPlaylist } from '../api/subsonic';
+import { getPlaylists } from '../api/subsonic';
+import { usePlaylistStore } from '../store/playlistStore';
 
 // All configurable nav items — order and visibility controlled by sidebarStore.
 // Exported so Settings can render the same item metadata.
@@ -58,8 +59,13 @@ export default function Sidebar({
   const sidebarItems = useSidebarStore(s => s.items);
   const [libraryDropdownOpen, setLibraryDropdownOpen] = useState(false);
   const [playlistsExpanded, setPlaylistsExpanded] = useState(false);
-  const [playlists, setPlaylists] = useState<SubsonicPlaylist[]>([]);
-  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const playlistsRaw = usePlaylistStore(s => s.playlists);
+  const playlistsLoading = usePlaylistStore(s => s.playlistsLoading);
+  const fetchPlaylists = usePlaylistStore(s => s.fetchPlaylists);
+  // Sort playlists alphabetically by name
+  const playlists = useMemo(() => {
+    return [...playlistsRaw].sort((a, b) => a.name.localeCompare(b.name));
+  }, [playlistsRaw]);
   const [dropdownRect, setDropdownRect] = useState({ top: 0, left: 0, width: 0 });
   const libraryTriggerRef = useRef<HTMLButtonElement>(null);
   const showLibraryPicker = !isCollapsed && isLoggedIn && musicFolders.length > 1;
@@ -120,12 +126,8 @@ export default function Sidebar({
   // Fetch playlists when expanded
   useEffect(() => {
     if (!playlistsExpanded || !isLoggedIn) return;
-    setPlaylistsLoading(true);
-    getPlaylists()
-      .then(setPlaylists)
-      .catch(() => {})
-      .finally(() => setPlaylistsLoading(false));
-  }, [playlistsExpanded, isLoggedIn]);
+    fetchPlaylists();
+  }, [playlistsExpanded, isLoggedIn, fetchPlaylists]);
 
   // Resolve ordered, visible items per section from store config
   const visibleLibrary = sidebarItems
@@ -264,7 +266,7 @@ export default function Sidebar({
                   ) : playlists.length === 0 ? (
                     <div className="sidebar-playlists-empty">{t('playlists.empty')}</div>
                   ) : (
-                    playlists.map(pl => (
+                    playlists.map((pl: { id: string; name: string }) => (
                       <NavLink
                         key={pl.id}
                         to={`/playlists/${pl.id}`}

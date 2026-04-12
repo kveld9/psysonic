@@ -3713,6 +3713,7 @@ html.no-compositing .fs-lyrics-rail {
   backdrop-filter: blur(16px);
   color: var(--text-primary);
   font-size: 13px;
+  outline: none;
 }
 
 .context-menu-item {

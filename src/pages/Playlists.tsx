@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListMusic, Play, Plus, Trash2, X, CheckSquare2, Check } from 'lucide-react';
-import { getPlaylists, createPlaylist, deletePlaylist, SubsonicPlaylist, getPlaylist, buildCoverArtUrl, coverArtCacheKey, updatePlaylist } from '../api/subsonic';
+import { getPlaylists, deletePlaylist, SubsonicPlaylist, getPlaylist, buildCoverArtUrl, coverArtCacheKey, updatePlaylist } from '../api/subsonic';
 import { usePlayerStore, songToTrack } from '../store/playerStore';
 import { usePlaylistStore } from '../store/playlistStore';
 import CachedImage from '../components/CachedImage';
@@ -20,8 +20,10 @@ export default function Playlists() {
   const openContextMenu = usePlayerStore(s => s.openContextMenu);
   const touchPlaylist = usePlaylistStore((s) => s.touchPlaylist);
   const removeId = usePlaylistStore((s) => s.removeId);
+  const playlists = usePlaylistStore((s) => s.playlists);
+  const fetchPlaylists = usePlaylistStore((s) => s.fetchPlaylists);
+  const playlistsLoading = usePlaylistStore((s) => s.playlistsLoading);
 
-  const [playlists, setPlaylists] = useState<SubsonicPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -54,23 +56,20 @@ export default function Playlists() {
   const selectedPlaylists = playlists.filter(p => selectedIds.has(p.id));
 
   useEffect(() => {
-    getPlaylists()
-      .then(setPlaylists)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    fetchPlaylists().finally(() => setLoading(false));
+  }, [fetchPlaylists]);
 
   useEffect(() => {
     if (creating) nameInputRef.current?.focus();
   }, [creating]);
 
+  const createPlaylist = usePlaylistStore(s => s.createPlaylist);
+
   const handleCreate = async () => {
     const name = newName.trim() || t('playlists.unnamed');
-    try {
-      await createPlaylist(name);
-      const updated = await getPlaylists();
-      setPlaylists(updated);
-    } catch {}
+    await createPlaylist(name);
+    // Refresh playlists from API to get the new one
+    await fetchPlaylists();
     setCreating(false);
     setNewName('');
   };
@@ -99,8 +98,13 @@ export default function Playlists() {
     try {
       await deletePlaylist(pl.id);
       removeId(pl.id);
-      setPlaylists((prev) => prev.filter((p) => p.id !== pl.id));
-    } catch {}
+      usePlaylistStore.setState((s) => ({
+        playlists: s.playlists.filter((p) => p.id !== pl.id),
+      }));
+      showToast(t('playlists.deleteSuccess', { count: 1 }), 3000, 'info');
+    } catch {
+      showToast(t('playlists.deleteFailed', { name: pl.name }), 3000, 'error');
+    }
     setDeleteConfirmId(null);
   };
 
@@ -116,7 +120,9 @@ export default function Playlists() {
         showToast(t('playlists.deleteFailed', { name: pl.name }), 3000, 'error');
       }
     }
-    setPlaylists((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+    usePlaylistStore.setState((s) => ({
+      playlists: s.playlists.filter((p) => !selectedIds.has(p.id)),
+    }));
     clearSelection();
     if (deleted > 0) {
       showToast(t('playlists.deleteSuccess', { count: deleted }), 3000, 'info');
