@@ -106,6 +106,7 @@ const CONTRIBUTORS = [
       'Hot playback cache — eviction budgeting, grace period, and live Audio settings readout (PR #153)',
       'Folder Browser: keyboard navigation, context menus, now-playing path emphasis, and adaptive column layout (PR #158)',
       'Infinite queue: artist-driven candidates via Top Songs + Similar Songs with random fallback (PR #163)',
+      'Folder Browser: per-column filter with keyboard flow and Shift+Enter queue append (PR #165)',
     ],
   },
   {
