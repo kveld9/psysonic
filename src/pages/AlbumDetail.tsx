@@ -60,6 +60,7 @@ export default function AlbumDetail() {
   const [filterText, setFilterText] = useState('');
   const [sortKey, setSortKey] = useState<'natural' | 'title' | 'artist' | 'album' | 'favorite' | 'rating' | 'duration'>('natural');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sortClickCount, setSortClickCount] = useState(0);
 
   // Derive a stable albumId for the selectors below (empty string when not yet loaded).
   const albumId = album?.album.id ?? '';
@@ -263,8 +264,22 @@ const handleEnqueueAll = () => {
   };
 
   const handleSort = (key: typeof sortKey) => {
-    if (sortKey === key && key !== 'natural') setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortKey(key); setSortDir('asc'); }
+    if (key === 'natural') return;
+    if (sortKey === key) {
+      const nextCount = sortClickCount + 1;
+      if (nextCount >= 3) {
+        setSortKey('natural');
+        setSortDir('asc');
+        setSortClickCount(0);
+      } else {
+        setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        setSortClickCount(nextCount);
+      }
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+      setSortClickCount(1);
+    }
   };
 
   // Must be before early returns — hooks must be called unconditionally.

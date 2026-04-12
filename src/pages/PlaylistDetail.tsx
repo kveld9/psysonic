@@ -116,6 +116,7 @@ export default function PlaylistDetail() {
   const [filterText, setFilterText] = useState('');
   const [sortKey, setSortKey] = useState<'natural' | 'title' | 'artist' | 'album' | 'favorite' | 'rating' | 'duration'>('natural');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sortClickCount, setSortClickCount] = useState(0);
   const [starredSongs, setStarredSongs] = useState<Set<string>>(new Set());
   const [hoveredSuggestionId, setHoveredSuggestionId] = useState<string | null>(null);
   const [contextMenuSongId, setContextMenuSongId] = useState<string | null>(null);
@@ -781,10 +782,19 @@ export default function PlaylistDetail() {
               const handleSortClick = () => {
                 if (!canSort) return;
                 if (sortKey === key) {
-                  setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                  const nextCount = sortClickCount + 1;
+                  if (nextCount >= 3) {
+                    setSortKey('natural');
+                    setSortDir('asc');
+                    setSortClickCount(0);
+                  } else {
+                    setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                    setSortClickCount(nextCount);
+                  }
                 } else {
                   setSortKey(key as typeof sortKey);
                   setSortDir('asc');
+                  setSortClickCount(1);
                 }
               };
 
