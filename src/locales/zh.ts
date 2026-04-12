@@ -779,6 +779,7 @@ export const zhTranslation = {
     genreDistribution: '流派分布（前 20）',
     loadMore: '加载更多',
     statArtists: '艺术家',
+    statArtistsTooltip: '仅限专辑艺术家——仅作为单曲艺术家出现（合唱、客串等）且无自己专辑的艺术家不计入此处。',
     statAlbums: '专辑',
     statSongs: '歌曲',
     statGenres: '流派',

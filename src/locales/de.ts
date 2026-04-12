@@ -785,6 +785,7 @@ export const deTranslation = {
     genreDistribution: 'Genre-Verteilung (Top 20)',
     loadMore: 'Mehr laden',
     statArtists: 'Künstler',
+    statArtistsTooltip: 'Nur Album-Künstler — Künstler, die ausschließlich als Track-Künstler vorkommen (Featured, Gast usw.) und kein eigenes Album haben, werden nicht gezählt.',
     statAlbums: 'Alben',
     statSongs: 'Songs',
     statGenres: 'Genres',

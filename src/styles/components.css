@@ -3982,6 +3982,13 @@ html.no-compositing .fs-lyrics-rail {
   color: var(--text-muted);
 }
 
+.stats-card-label[data-tooltip] {
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
 /* Genre chart */
 .genre-chart {
   background: var(--bg-card);

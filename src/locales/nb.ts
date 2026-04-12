@@ -782,6 +782,7 @@ export const nbTranslation = {
     genreDistribution: 'Sjangerfordeling (Topp 20)',
     loadMore: 'Last inn mer',
     statArtists: 'Artister',
+    statArtistsTooltip: 'Kun albumartister — artister som bare opptrer som sporartist (featuring, gjest, osv.) uten eget album telles ikke med.',
     statAlbums: 'Album',
     statSongs: 'Sanger',
     statGenres: 'Sjangere',

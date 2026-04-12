@@ -161,7 +161,7 @@ export default function Statistics() {
     n === null ? t('statistics.computing') : (playtimeCapped ? '≥ ' : '') + n.toLocaleString();
 
   const stats = [
-    { label: t('statistics.statArtists'), value: artistCount?.toLocaleString() ?? '—' },
+    { label: t('statistics.statArtists'), value: artistCount?.toLocaleString() ?? '—', tooltip: t('statistics.statArtistsTooltip') },
     { label: t('statistics.statAlbums'), value: countDisplay(totalAlbums) },
     { label: t('statistics.statSongs'), value: countDisplay(totalSongs) },
     { label: t('statistics.statPlaytime'), value: playtimeDisplay },
@@ -183,7 +183,7 @@ export default function Statistics() {
             {stats.map(s => (
               <div key={s.label} className="stats-card">
                 <span className="stats-card-value">{s.value}</span>
-                <span className="stats-card-label">{s.label}</span>
+                <span className="stats-card-label" data-tooltip={s.tooltip} data-tooltip-wrap="true">{s.label}</span>
               </div>
             ))}
           </div>

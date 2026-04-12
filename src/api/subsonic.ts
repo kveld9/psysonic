@@ -631,11 +631,10 @@ export async function fetchStatisticsLibraryAggregates(): Promise<StatisticsLibr
   let songsCounted = 0;
   const genreAgg = new Map<string, { songCount: number; albumCount: number }>();
   const pageSize = 500;
-  const maxPages = 10;
-  let capped = false;
+  const capped = false;
   let offset = 0;
-  let nextPage = getAlbumList('newest', pageSize, 0);
-  for (let page = 0; page < maxPages; page++) {
+  let nextPage = getAlbumList('alphabeticalByName', pageSize, 0);
+  for (;;) {
     try {
       const albums = await nextPage;
       for (const a of albums) {
@@ -653,12 +652,8 @@ export async function fetchStatisticsLibraryAggregates(): Promise<StatisticsLibr
         g.albumCount += 1;
       }
       if (albums.length < pageSize) break;
-      if (page === maxPages - 1) {
-        capped = true;
-        break;
-      }
       offset += pageSize;
-      nextPage = getAlbumList('newest', pageSize, offset);
+      nextPage = getAlbumList('alphabeticalByName', pageSize, offset);
     } catch {
       break;
     }

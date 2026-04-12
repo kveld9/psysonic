@@ -834,6 +834,7 @@ export const ruTranslation = {
     genreDistribution: 'Жанры (топ-20)',
     loadMore: 'Ещё',
     statArtists: 'Исполнители',
+    statArtistsTooltip: 'Только исполнители альбомов — артисты, присутствующие лишь в треках (фичеринг, гость и т. д.) без собственного альбома, не учитываются.',
     statAlbums: 'Альбомы',
     statSongs: 'Треки',
     statGenres: 'Жанры',

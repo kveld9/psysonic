@@ -783,6 +783,7 @@ export const frTranslation = {
     genreDistribution: 'Répartition par genre (Top 20)',
     loadMore: 'Charger plus',
     statArtists: 'Artistes',
+    statArtistsTooltip: 'Artistes d\'album uniquement — les artistes apparaissant seulement sur des pistes (featuring, invité, etc.) sans album propre ne sont pas comptés.',
     statAlbums: 'Albums',
     statSongs: 'Morceaux',
     statGenres: 'Genres',

@@ -774,6 +774,7 @@ export const esTranslation = {
     genreDistribution: 'Distribución de Géneros (Top 20)',
     loadMore: 'Cargar más',
     statArtists: 'Artistas',
+    statArtistsTooltip: 'Solo artistas de álbum — los artistas que aparecen únicamente como artistas de pista (featuring, invitado, etc.) sin álbum propio no se cuentan.',
     statAlbums: 'Álbumes',
     statSongs: 'Canciones',
     statGenres: 'Géneros',

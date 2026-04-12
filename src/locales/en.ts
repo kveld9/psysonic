@@ -787,6 +787,7 @@ export const enTranslation = {
     genreDistribution: 'Genre Distribution (Top 20)',
     loadMore: 'Load more',
     statArtists: 'Artists',
+    statArtistsTooltip: 'Album artists only — artists appearing only as a track-level artist (featured, guest, etc.) without their own album are not included.',
     statAlbums: 'Albums',
     statSongs: 'Songs',
     statGenres: 'Genres',

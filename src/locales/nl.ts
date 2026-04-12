@@ -783,6 +783,7 @@ export const nlTranslation = {
     genreDistribution: 'Genreverdeling (Top 20)',
     loadMore: 'Meer laden',
     statArtists: 'Artiesten',
+    statArtistsTooltip: 'Alleen albumartiesten — artiesten die enkel als trackartiest voorkomen (featuring, gast, enz.) zonder eigen album worden niet meegeteld.',
     statAlbums: 'Albums',
     statSongs: 'Nummers',
     statGenres: 'Genres',
