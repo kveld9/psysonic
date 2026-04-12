@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Navidrome AudioMuse-AI Integration** *(contributed by [@cucadmuh](https://github.com/cucadmuh), PR [#147](https://github.com/Psychotoxical/psysonic/pull/147))*: Psysonic now  supports [AudioMuse-AI](https://github.com/cucadmuh/audiomuse-ai) if it is active on the Navidrome server and uses it for Random Mix, Similar Artists, and Instant Mix. No configuration required — Psysonic keeps its existing behavior when AudioMuse is unavailable. Also includes an Instant Mix probe, ping identity, and improved UX for AudioMuse-specific actions.
 
-- **ICY metadata & AzuraCast radio** *(contributed by [@sorensiimSalling](https://github.com/sorensiimSalling), PR [#146](https://github.com/Psychotoxical/psysonic/pull/146))*: Internet radio now displays live track metadata from ICY streams. AzuraCast stations are supported with extended now-playing information.
+- **ICY metadata & AzuraCast radio** *(contributed by [@nisrael](https://github.com/nisrael), PR [#146](https://github.com/Psychotoxical/psysonic/pull/146))*: Internet radio now displays live track metadata from ICY streams. AzuraCast stations are supported with extended now-playing information.
 
 - **Automatic audio device switching**: Psysonic now detects newly connected or changed audio output devices and switches to them automatically — no app restart required.
 
