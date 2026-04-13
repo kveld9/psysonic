@@ -127,6 +127,7 @@ const CONTRIBUTORS = [
       'Russian translation refinements (PR #148)',
       'Merge Random Mix & Albums into a single Build a Mix hub (PR #155)',
       'Fullscreen player: software-rendering performance fixes + portrait toggle & dimming setting (PR #156)',
+      'Fullscreen player: stop mesh blob and portrait animations in no-compositing mode; remove seekbar box-shadow repaint (PR #175)',
     ],
   },
   {
