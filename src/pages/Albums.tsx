@@ -11,9 +11,13 @@ import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
 import { showToast } from '../utils/toast';
 import { useZipDownloadStore } from '../store/zipDownloadStore';
-import { X, CheckSquare2, Download, HardDriveDownload, ListMusic } from 'lucide-react';
+import { X, CheckSquare2, Download, HardDriveDownload, ChevronDown, SlidersHorizontal } from 'lucide-react';
 
-type SortType = 'alphabeticalByName' | 'alphabeticalByArtist';
+type SortDirection = 'asc';
+interface SortState {
+  field: 'name' | 'artist';
+  direction: SortDirection;
+}
 
 const PAGE_SIZE = 30;
 const CURRENT_YEAR = new Date().getFullYear();
@@ -37,13 +41,17 @@ export default function Albums() {
   const requestDownloadFolder = useDownloadModalStore(s => s.requestFolder);
 
   const [albums, setAlbums] = useState<SubsonicAlbum[]>([]);
-  const [sort, setSort] = useState<SortType>('alphabeticalByName');
+  const [sort, setSort] = useState<SortState>({ field: 'name', direction: 'asc' });
+  // Note: Only ascending order is supported to ensure proper pagination
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [yearFrom, setYearFrom] = useState('');
-  const [yearTo, setYearTo] = useState('');
+
+  // ── Advanced filters ─────────────────────────────────────────────────────
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [trackCountFilter, setTrackCountFilter] = useState<'all' | 'ep' | 'album' | 'double'>('all');
+  const [yearRange, setYearRange] = useState<[number, number]>([1950, CURRENT_YEAR]);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // ── Multi-selection ──────────────────────────────────────────────────────
@@ -70,6 +78,45 @@ export default function Albums() {
 
   const selectedAlbums = albums.filter(a => selectedIds.has(a.id));
   const openContextMenu = usePlayerStore(state => state.openContextMenu);
+
+  // ── Data loading ─────────────────────────────────────────────────────────
+  const genreFiltered = selectedGenres.length > 0;
+
+  const load = useCallback(async (
+    sortState: SortState,
+    offset: number,
+    append = false,
+  ) => {
+    setLoading(true);
+    try {
+      // Use alphabetical sorting
+      const type: Parameters<typeof getAlbumList>[0] = sortState.field === 'name' ? 'alphabeticalByName' : 'alphabeticalByArtist';
+
+      const data = await getAlbumList(type, PAGE_SIZE, offset);
+
+      if (append) setAlbums(prev => [...prev, ...data]);
+      else setAlbums(data);
+      setHasMore(data.length === PAGE_SIZE);
+    } finally {
+      setLoading(false);
+    }
+  }, [sort.field, musicLibraryFilterVersion]);
+
+  const loadFiltered = useCallback(async (genres: string[], sortState: SortState) => {
+    setLoading(true);
+    try {
+      const data = await fetchByGenres(genres);
+      const sorted = [...data].sort((a, b) => {
+        return sortState.field === 'artist'
+          ? a.artist.localeCompare(b.artist)
+          : a.name.localeCompare(b.name);
+      });
+      setAlbums(sorted);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [musicLibraryFilterVersion]);
 
   const handleDownloadZips = async () => {
     if (selectedAlbums.length === 0) return;
@@ -110,65 +157,25 @@ export default function Albums() {
     clearSelection();
   };
 
-  // ── Data loading ─────────────────────────────────────────────────────────
-  const genreFiltered = selectedGenres.length > 0;
-  const fromNum = parseInt(yearFrom, 10);
-  const toNum = parseInt(yearTo, 10);
-  const yearActive = !isNaN(fromNum) && !isNaN(toNum) && fromNum >= 1 && toNum >= 1;
-
-  const load = useCallback(async (
-    sortType: SortType,
-    offset: number,
-    append = false,
-    yearFilter?: { from: number; to: number },
-  ) => {
-    setLoading(true);
-    try {
-      const extra = yearFilter ? { fromYear: yearFilter.from, toYear: yearFilter.to } : {};
-      const type = yearFilter ? 'byYear' : sortType;
-      const data = await getAlbumList(type, PAGE_SIZE, offset, extra);
-      if (append) setAlbums(prev => [...prev, ...data]);
-      else setAlbums(data);
-      setHasMore(data.length === PAGE_SIZE);
-    } finally {
-      setLoading(false);
-    }
-  }, [musicLibraryFilterVersion]);
-
-  const loadFiltered = useCallback(async (genres: string[], sortType: SortType) => {
-    setLoading(true);
-    try {
-      const data = await fetchByGenres(genres);
-      const sorted = [...data].sort((a, b) =>
-        sortType === 'alphabeticalByArtist'
-          ? a.artist.localeCompare(b.artist)
-          : a.name.localeCompare(b.name)
-      );
-      setAlbums(sorted);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [musicLibraryFilterVersion]);
-
   useEffect(() => {
     setPage(0);
     if (genreFiltered) {
       loadFiltered(selectedGenres, sort);
-    } else if (yearActive) {
-      load(sort, 0, false, { from: fromNum, to: toNum });
     } else {
       load(sort, 0);
     }
-  }, [sort, genreFiltered, selectedGenres, yearActive, fromNum, toNum, load, loadFiltered]);
+  }, [sort, genreFiltered, selectedGenres, load, loadFiltered]);
+
+  const handleSortClick = (field: 'name' | 'artist') => {
+    setSort({ field, direction: 'asc' });
+  };
 
   const loadMore = useCallback(() => {
     if (loading || !hasMore || genreFiltered) return;
     const next = page + 1;
     setPage(next);
-    const yf = yearActive ? { from: fromNum, to: toNum } : undefined;
-    load(sort, next * PAGE_SIZE, true, yf);
-  }, [loading, hasMore, page, sort, load, genreFiltered, yearActive, fromNum, toNum]);
+    load(sort, next * PAGE_SIZE, true);
+  }, [loading, hasMore, page, sort, load, genreFiltered]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -179,12 +186,39 @@ export default function Albums() {
     return () => observer.disconnect();
   }, [loadMore]);
 
-  const clearYear = () => { setYearFrom(''); setYearTo(''); };
+  // ── Client-side advanced filtering ───────────────────────────────────────
+  const filteredAlbums = React.useMemo(() => {
+    let result = [...albums];
+    
+    // Year range filter (client-side, works with any data source)
+    if (yearRange[0] > 1950 || yearRange[1] < CURRENT_YEAR) {
+      result = result.filter(a => {
+        if (!a.year) return false;
+        return a.year >= yearRange[0] && a.year <= yearRange[1];
+      });
+    }
+    
+    // Track count filter
+    if (trackCountFilter !== 'all') {
+      result = result.filter(a => {
+        const count = a.songCount ?? 0;
+        switch (trackCountFilter) {
+          case 'ep': return count <= 4;
+          case 'album': return count >= 5 && count <= 11;
+          case 'double': return count >= 12;
+          default: return true;
+        }
+      });
+    }
+    
+    return result;
+  }, [albums, yearRange, trackCountFilter]);
 
-  const sortOptions: { value: SortType; label: string }[] = [
-    { value: 'alphabeticalByName',   label: t('albums.sortByName') },
-    { value: 'alphabeticalByArtist', label: t('albums.sortByArtist') },
-  ];
+  const activeAdvancedFilters = (yearRange[0] > 1950 || yearRange[1] < CURRENT_YEAR || trackCountFilter !== 'all');
+  const clearAdvancedFilters = () => {
+    setYearRange([1950, CURRENT_YEAR]);
+    setTrackCountFilter('all');
+  };
 
   return (
     <div className="content-body animate-fade-in">
@@ -208,54 +242,33 @@ export default function Albums() {
             </>
           ) : (
             <>
-              {!yearActive && sortOptions.map(o => (
-                <button
-                  key={o.value}
-                  className={`btn btn-surface ${sort === o.value ? 'btn-sort-active' : ''}`}
-                  onClick={() => setSort(o.value)}
-                  style={sort === o.value ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}}
-                >
-                  {o.label}
-                </button>
-              ))}
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontSize: 14, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {t('albums.yearFilterLabel')}
-                </span>
-                <input
-                  className="input"
-                  type="number"
-                  min={1900}
-                  max={CURRENT_YEAR}
-                  placeholder={t('albums.yearFrom')}
-                  value={yearFrom}
-                  onChange={e => setYearFrom(e.target.value)}
-                  style={{ width: 76, padding: 'var(--space-2) var(--space-2)' }}
-                />
-                <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>–</span>
-                <input
-                  className="input"
-                  type="number"
-                  min={1900}
-                  max={CURRENT_YEAR}
-                  placeholder={t('albums.yearTo')}
-                  value={yearTo}
-                  onChange={e => setYearTo(e.target.value)}
-                  style={{ width: 76, padding: 'var(--space-2) var(--space-2)' }}
-                />
-                {yearActive && (
-                  <button
-                    className="btn btn-ghost"
-                    onClick={clearYear}
-                    data-tooltip={t('albums.yearFilterClear')}
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
+              <button
+                className={`btn btn-surface ${sort.field === 'name' ? 'btn-sort-active' : ''}`}
+                onClick={() => handleSortClick('name')}
+                style={sort.field === 'name' ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}}
+              >
+                {t('albums.sortByName')}
+              </button>
+              <button
+                className={`btn btn-surface ${sort.field === 'artist' ? 'btn-sort-active' : ''}`}
+                onClick={() => handleSortClick('artist')}
+                style={sort.field === 'artist' ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}}
+              >
+                {t('albums.sortByArtist')}
+              </button>
 
               <GenreFilterBar selected={selectedGenres} onSelectionChange={setSelectedGenres} />
+              
+              <button
+                className={`btn btn-surface${advancedOpen ? ' btn-sort-active' : ''}`}
+                onClick={() => setAdvancedOpen((o: boolean) => !o)}
+                style={activeAdvancedFilters ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : {}}
+              >
+                <SlidersHorizontal size={15} />
+                {t('albums.advanced')}
+                {activeAdvancedFilters && <span style={{ marginLeft: 4, fontSize: 11, opacity: 0.8 }}>•</span>}
+                <ChevronDown size={14} style={{ transform: advancedOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginLeft: 4 }} />
+              </button>
             </>
           )}
 
@@ -272,6 +285,78 @@ export default function Albums() {
         </div>
       </div>
 
+      {/* ─── Advanced Filters Panel ──────────────────────────────────────────── */}
+      {advancedOpen && (
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Year Range Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{t('albums.yearRange')}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{yearRange[0]} – {yearRange[1]}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <input
+                  type="range"
+                  min={1950}
+                  max={CURRENT_YEAR}
+                  value={yearRange[0]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const val = parseInt(e.target.value);
+                    setYearRange((prev: [number, number]) => [Math.min(val, prev[1] - 1), prev[1]]);
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="range"
+                  min={1950}
+                  max={CURRENT_YEAR}
+                  value={yearRange[1]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const val = parseInt(e.target.value);
+                    setYearRange((prev: [number, number]) => [prev[0], Math.max(val, prev[0] + 1)]);
+                  }}
+                  style={{ flex: 1 }}
+                />
+              </div>
+            </div>
+
+            {/* Track Count Filter */}
+            <div>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', marginBottom: '0.5rem', display: 'block' }}>{t('albums.trackCount')}</span>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'all', label: t('albums.trackCountAll'), count: null },
+                  { id: 'ep', label: 'EP', count: '≤ 4' },
+                  { id: 'album', label: t('albums.trackCountAlbum'), count: '5–11' },
+                  { id: 'double', label: t('albums.trackCountDouble'), count: '≥ 12' },
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    className={`btn btn-sm ${trackCountFilter === opt.id ? 'btn-primary' : 'btn-surface'}`}
+                    onClick={() => setTrackCountFilter(opt.id as typeof trackCountFilter)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    {opt.label}
+                    {opt.count && <span style={{ opacity: 0.6, fontSize: 11 }}>({opt.count})</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear button */}
+            {activeAdvancedFilters && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-ghost btn-sm" onClick={clearAdvancedFilters}>
+                  <X size={14} />
+                  {t('albums.clearAdvanced')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {loading && albums.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
           <div className="spinner" />
@@ -279,7 +364,7 @@ export default function Albums() {
       ) : (
         <>
           <div className="album-grid-wrap">
-            {albums.map(a => (
+            {filteredAlbums.map((a: SubsonicAlbum) => (
               <AlbumCard
                 key={a.id}
                 album={a}

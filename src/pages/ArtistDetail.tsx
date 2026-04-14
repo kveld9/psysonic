@@ -507,9 +507,10 @@ export default function ArtistDetail() {
           <div style={{ display: 'flex', gap: '8px', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             {albums.length > 0 && (
               <>
-                <button className="btn btn-primary" onClick={handlePlayAll} disabled={playAllLoading}>
-                  {playAllLoading ? <div className="spinner" style={{ width: 16, height: 16, borderTopColor: 'currentColor' }} /> : <Play size={16} />}
-                  {t('artistDetail.playAll')}
+                <button className="btn-play-glass" onClick={handlePlayAll} disabled={playAllLoading}>
+                  <span className="glass-base-glow" />
+                  {playAllLoading ? <div className="spinner" style={{ width: 16, height: 16, borderTopColor: 'currentColor' }} /> : <Play size={16} fill="currentColor" />}
+                  {t('common.play', 'Reproducir')}
                 </button>
                 <button className="btn btn-surface" onClick={handleShuffle} disabled={playAllLoading}>
                   {playAllLoading ? <div className="spinner" style={{ width: 16, height: 16, borderTopColor: 'currentColor' }} /> : <Shuffle size={16} />}

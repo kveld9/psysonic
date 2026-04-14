@@ -1468,14 +1468,6 @@ export default function ContextMenu() {
                   <Sparkles size={14} /> {t('contextMenu.instantMix')}
                 </div>
               )}
-              <div className="context-menu-item" onClick={() => handleAction(() => {
-                const starred = isStarred(song.id, song.starred);
-                setStarredOverride(song.id, !starred);
-                return starred ? unstar(song.id, 'song') : star(song.id, 'song');
-              })}>
-                <Heart size={14} fill={isStarred(song.id, song.starred) ? 'currentColor' : 'none'} />
-                {isStarred(song.id, song.starred) ? t('contextMenu.unfavorite') : t('contextMenu.favorite')}
-              </div>
               {auth.lastfmSessionKey && (() => {
                 const loveKey = `${song.title}::${song.artist}`;
                 const loved = lastfmLovedCache[loveKey] ?? false;
@@ -1511,6 +1503,26 @@ export default function ContextMenu() {
               <div className="context-menu-item" onClick={() => handleAction(() => openSongInfo(song.id))}>
                 <Info size={14} /> {t('contextMenu.songInfo')}
               </div>
+              {(() => {
+                const starred = isStarred(song.id, song.starred);
+                return starred ? (
+                  <div className="context-menu-item context-menu-item-danger" onClick={() => handleAction(() => {
+                    setStarredOverride(song.id, false);
+                    return unstar(song.id, 'song');
+                  })}>
+                    <Trash2 size={14} />
+                    {t('contextMenu.unfavorite')}
+                  </div>
+                ) : (
+                  <div className="context-menu-item" onClick={() => handleAction(() => {
+                    setStarredOverride(song.id, true);
+                    return star(song.id, 'song');
+                  })}>
+                    <Heart size={14} fill="none" />
+                    {t('contextMenu.favorite')}
+                  </div>
+                );
+              })()}
               {playlistId && playlistSongIndex !== undefined && (
                 <div className="context-menu-item" style={{ color: 'var(--danger)' }} onClick={() => handleAction(async () => {
                   const { getPlaylist, updatePlaylist } = await import('../api/subsonic');
@@ -1547,14 +1559,6 @@ export default function ContextMenu() {
               <div className="context-menu-item" onClick={() => handleAction(() => navigate(`/artist/${album.artistId}`))}>
                 <User size={14} /> {t('contextMenu.goToArtist')}
               </div>
-              <div className="context-menu-item" onClick={() => handleAction(() => {
-                const starred = isStarred(album.id, album.starred);
-                setStarredOverride(album.id, !starred);
-                return starred ? unstar(album.id, 'album') : star(album.id, 'album');
-              })}>
-                <Heart size={14} fill={isStarred(album.id, album.starred) ? 'currentColor' : 'none'} />
-                {isStarred(album.id, album.starred) ? t('contextMenu.unfavoriteAlbum') : t('contextMenu.favoriteAlbum')}
-              </div>
               <div
                 className="context-menu-rating-row"
                 data-rating-kind="album"
@@ -1588,6 +1592,26 @@ export default function ContextMenu() {
                   <AlbumToPlaylistSubmenu albumId={album.id} triggerId={`album:${album.id}`} onDone={() => { setPlaylistSubmenuOpen(false); closeContextMenu(); }} />
                 )}
               </div>
+              {(() => {
+                const starred = isStarred(album.id, album.starred);
+                return starred ? (
+                  <div className="context-menu-item context-menu-item-danger" onClick={() => handleAction(() => {
+                    setStarredOverride(album.id, false);
+                    return unstar(album.id, 'album');
+                  })}>
+                    <Trash2 size={14} />
+                    {t('contextMenu.unfavoriteAlbum')}
+                  </div>
+                ) : (
+                  <div className="context-menu-item" onClick={() => handleAction(() => {
+                    setStarredOverride(album.id, true);
+                    return star(album.id, 'album');
+                  })}>
+                    <Heart size={14} fill="none" />
+                    {t('contextMenu.favoriteAlbum')}
+                  </div>
+                );
+              })()}
             </>
           );
         })()}
@@ -1682,14 +1706,6 @@ export default function ContextMenu() {
                 )}
               </div>
               <div className="context-menu-divider" />
-              <div className="context-menu-item" onClick={() => handleAction(() => {
-                const starred = isStarred(artist.id, artist.starred);
-                setStarredOverride(artist.id, !starred);
-                return starred ? unstar(artist.id, 'artist') : star(artist.id, 'artist');
-              })}>
-                <Heart size={14} fill={isStarred(artist.id, artist.starred) ? 'currentColor' : 'none'} />
-                {isStarred(artist.id, artist.starred) ? t('contextMenu.unfavoriteArtist') : t('contextMenu.favoriteArtist')}
-              </div>
               <div
                 className="context-menu-rating-row"
                 data-rating-kind="artist"
@@ -1707,6 +1723,26 @@ export default function ContextMenu() {
                   onChange={r => { setKeyboardRating({ kind: 'artist', id: artist.id, value: r }); applyArtistRating(artist, r); }}
                 />
               </div>
+              {(() => {
+                const starred = isStarred(artist.id, artist.starred);
+                return starred ? (
+                  <div className="context-menu-item context-menu-item-danger" onClick={() => handleAction(() => {
+                    setStarredOverride(artist.id, false);
+                    return unstar(artist.id, 'artist');
+                  })}>
+                    <Trash2 size={14} />
+                    {t('contextMenu.unfavoriteArtist')}
+                  </div>
+                ) : (
+                  <div className="context-menu-item" onClick={() => handleAction(() => {
+                    setStarredOverride(artist.id, true);
+                    return star(artist.id, 'artist');
+                  })}>
+                    <Heart size={14} fill="none" />
+                    {t('contextMenu.favoriteArtist')}
+                  </div>
+                );
+              })()}
             </>
           );
         })()}
@@ -1829,14 +1865,6 @@ export default function ContextMenu() {
                   <Sparkles size={14} /> {t('contextMenu.instantMix')}
                 </div>
               )}
-              <div className="context-menu-item" onClick={() => handleAction(() => {
-                const starred = isStarred(song.id, song.starred);
-                setStarredOverride(song.id, !starred);
-                return starred ? unstar(song.id, 'song') : star(song.id, 'song');
-              })}>
-                <Heart size={14} fill={isStarred(song.id, song.starred) ? 'currentColor' : 'none'} />
-                {isStarred(song.id, song.starred) ? t('contextMenu.unfavorite') : t('contextMenu.favorite')}
-              </div>
               {auth.lastfmSessionKey && (() => {
                 const loveKey = `${song.title}::${song.artist}`;
                 const loved = lastfmLovedCache[loveKey] ?? false;
@@ -1872,6 +1900,26 @@ export default function ContextMenu() {
               <div className="context-menu-item" onClick={() => handleAction(() => openSongInfo(song.id))}>
                 <Info size={14} /> {t('contextMenu.songInfo')}
               </div>
+              {(() => {
+                const starred = isStarred(song.id, song.starred);
+                return starred ? (
+                  <div className="context-menu-item context-menu-item-danger" onClick={() => handleAction(() => {
+                    setStarredOverride(song.id, false);
+                    return unstar(song.id, 'song');
+                  })}>
+                    <Trash2 size={14} />
+                    {t('contextMenu.unfavorite')}
+                  </div>
+                ) : (
+                  <div className="context-menu-item" onClick={() => handleAction(() => {
+                    setStarredOverride(song.id, true);
+                    return star(song.id, 'song');
+                  })}>
+                    <Heart size={14} fill="none" />
+                    {t('contextMenu.favorite')}
+                  </div>
+                );
+              })()}
             </>
           );
         })()}

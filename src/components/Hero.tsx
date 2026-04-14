@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { playAlbum } from '../utils/playAlbum';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { filterAlbumsByMixRatings, getMixMinRatingsConfigFromAuth } from '../utils/mixRatingFilter';
 
 const INTERVAL_MS = 10000;
@@ -141,7 +142,7 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
       onClick={() => navigate(`/album/${album.id}`)}
       style={{ cursor: 'pointer' }}
     >
-      <HeroBg url={stableBgUrl.current} />
+      {useThemeStore.getState().enableCoverArtBackground && <HeroBg url={stableBgUrl.current} />}
       <div className="hero-overlay" aria-hidden="true" />
 
       {/* key causes re-mount → animate-fade-in triggers on each album change */}
@@ -191,13 +192,14 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
           ) : (
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <button
-                className="hero-play-btn"
+                className="btn-play-glass"
                 id="hero-play-btn"
                 onClick={e => { e.stopPropagation(); playAlbum(album.id); }}
                 aria-label={`${t('hero.playAlbum')} ${album.name}`}
               >
-                <Play size={18} fill="currentColor" />
-                {t('hero.playAlbum')}
+                <span className="glass-base-glow" />
+                <Play size={16} fill="currentColor" />
+                {t('common.play', 'Reproducir')}
               </button>
               <button
                 className="btn btn-surface"

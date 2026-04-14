@@ -199,14 +199,14 @@ export default function RandomMix() {
             const isDisabled = loading || (selectedGenre ? !genreMixComplete || genreMixSongs.length === 0 : filteredSongs.length === 0);
             return (
               <button
-                className={`btn ${isGenreLoading ? 'btn-surface' : 'btn-primary'}`}
+                className={isGenreLoading ? 'btn btn-surface' : 'btn-play-glass'}
                 onClick={handlePlayAll}
                 disabled={isDisabled}
               >
                 {isGenreLoading ? (
                   <><div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> {Math.min(genreMixSongs.length, 50)} / 50</>
                 ) : (
-                  <><Play size={18} fill="currentColor" /> {t('randomMix.playAll')}</>
+                  <><span className="glass-base-glow" /><Play size={16} fill="currentColor" /> {t('common.play', 'Reproducir')}</>
                 )}
               </button>
             );

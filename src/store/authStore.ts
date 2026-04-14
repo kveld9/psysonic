@@ -546,7 +546,8 @@ export const useAuthStore = create<AuthState>()(
         const s = get();
         const server = s.servers.find(srv => srv.id === s.activeServerId);
         if (!server?.url) return '';
-        return server.url.startsWith('http') ? server.url : `http://${server.url}`;
+        const base = server.url.startsWith('http') ? server.url.replace(/\/$/, '') : `http://${server.url.replace(/\/$/, '')}`;
+        return base;
       },
 
       getActiveServer: () => {

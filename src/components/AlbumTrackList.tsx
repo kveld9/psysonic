@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, Heart, ListPlus, X, ChevronDown, Check } from 'lucide-react';
 import { useTracklistColumns, type ColDef } from '../utils/useTracklistColumns';
 import { SubsonicSong } from '../api/subsonic';
@@ -10,6 +11,7 @@ import { AddToPlaylistSubmenu } from './ContextMenu';
 import { useIsMobile } from '../hooks/useIsMobile';
 import StarRating from './StarRating';
 import { useSelectionStore } from '../store/selectionStore';
+import { useThemeStore } from '../store/themeStore';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -19,10 +21,10 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function codecLabel(song: { suffix?: string; bitRate?: number }): string {
+function codecLabel(song: { suffix?: string; bitRate?: number }, showBitrate: boolean): string {
   const parts: string[] = [];
   if (song.suffix) parts.push(song.suffix.toUpperCase());
-  if (song.bitRate) parts.push(`${song.bitRate}`);
+  if (showBitrate && song.bitRate) parts.push(`${song.bitRate}`);
   return parts.join(' ');
 }
 
@@ -108,6 +110,7 @@ const TrackRow = React.memo(function TrackRow({
 }: TrackRowProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showBitrate } = useThemeStore();
   // Fine-grained: only re-renders when THIS row's selection boolean flips.
   const isSelected = useSelectionStore(s => s.selectedIds.has(song.id));
   const isActive = currentTrackId === song.id;
@@ -192,8 +195,8 @@ const TrackRow = React.memo(function TrackRow({
       case 'format':
         return (
           <div key="format" className="track-meta">
-            {(song.suffix || song.bitRate) && (
-              <span className="track-codec">{codecLabel(song)}</span>
+            {(song.suffix || (showBitrate && song.bitRate)) && (
+              <span className="track-codec">{codecLabel(song, showBitrate)}</span>
             )}
           </div>
         );
@@ -285,12 +288,17 @@ export default function AlbumTrackList({
 
   const [showPlPicker, setShowPlPicker] = useState(false);
 
+  // ── Column picker dropdown position for portal rendering ───────────────────
+  const [pickerPos, setPickerPos] = useState<{ top: number; right: number } | null>(null);
+  const pickerBtnRef = useRef<HTMLButtonElement>(null);
+  const pickerMenuRef = useRef<HTMLDivElement>(null);
+
   // ── Column state ──────────────────────────────────────────────────────────
   const {
     colVisible, visibleCols, gridStyle,
     startResize, toggleColumn,
     pickerOpen, setPickerOpen, pickerRef, tracklistRef,
-  } = useTracklistColumns(COLUMNS, 'psysonic_tracklist_columns');
+  } = useTracklistColumns(COLUMNS, 'psysonic_tracklist_columns', pickerMenuRef);
 
   // Clear selection when the song list changes (different album / filter applied).
   useEffect(() => {
@@ -322,6 +330,42 @@ export default function AlbumTrackList({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showPlPicker]);
+
+  // Click-outside handler for column picker portal dropdown
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      // Don't close if clicking inside the button, the picker container, or the portal menu
+      if (
+        pickerBtnRef.current?.contains(target) ||
+        pickerRef.current?.contains(target) ||
+        pickerMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setPickerOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [pickerOpen, setPickerOpen]);
+
+  // Update picker position on resize/scroll while open
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const updatePos = () => {
+      if (pickerBtnRef.current) {
+        const rect = pickerBtnRef.current.getBoundingClientRect();
+        setPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+      }
+    };
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [pickerOpen]);
 
   // ── Stable callbacks passed to memoised TrackRow ──────────────────────────
 
@@ -579,14 +623,26 @@ export default function AlbumTrackList({
         {/* Column visibility picker */}
         <div className="tracklist-col-picker" ref={pickerRef}>
           <button
+            ref={pickerBtnRef}
             className="tracklist-col-picker-btn"
-            onClick={e => { e.stopPropagation(); setPickerOpen(v => !v); }}
+            onClick={e => {
+              e.stopPropagation();
+              if (!pickerOpen && pickerBtnRef.current) {
+                const rect = pickerBtnRef.current.getBoundingClientRect();
+                setPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+              }
+              setPickerOpen(v => !v);
+            }}
             data-tooltip={t('albumDetail.columns')}
           >
             <ChevronDown size={14} />
           </button>
-          {pickerOpen && (
-            <div className="tracklist-col-picker-menu">
+          {pickerOpen && pickerPos && createPortal(
+            <div
+              ref={pickerMenuRef}
+              className="tracklist-col-picker-menu"
+              style={{ position: 'fixed', top: pickerPos.top, right: pickerPos.right, zIndex: 9999 }}
+            >
               <div className="tracklist-col-picker-label">{t('albumDetail.columns')}</div>
               {COLUMNS.filter(c => !c.required).map(c => {
                 const label = c.i18nKey ? t(`albumDetail.${c.i18nKey as string}`) : c.key;
@@ -604,7 +660,8 @@ export default function AlbumTrackList({
                   </button>
                 );
               })}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>

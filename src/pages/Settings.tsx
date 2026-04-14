@@ -1544,6 +1544,39 @@ export default function Settings() {
                 </div>
               )}
               <ThemePicker value={theme.theme} onChange={v => theme.setTheme(v as any)} />
+
+              <div className="settings-toggle-row" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{t('settings.coverArtBackground')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.coverArtBackgroundSub')}</div>
+                </div>
+                <label className="toggle-switch" aria-label={t('settings.coverArtBackground')}>
+                  <input type="checkbox" checked={theme.enableCoverArtBackground} onChange={e => theme.setEnableCoverArtBackground(e.target.checked)} />
+                  <span className="toggle-track" />
+                </label>
+              </div>
+
+              <div className="settings-toggle-row" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{t('settings.playlistCoverPhoto')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.playlistCoverPhotoSub')}</div>
+                </div>
+                <label className="toggle-switch" aria-label={t('settings.playlistCoverPhoto')}>
+                  <input type="checkbox" checked={theme.enablePlaylistCoverPhoto} onChange={e => theme.setEnablePlaylistCoverPhoto(e.target.checked)} />
+                  <span className="toggle-track" />
+                </label>
+              </div>
+
+              <div className="settings-toggle-row" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{t('settings.showBitrate')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.showBitrateSub')}</div>
+                </div>
+                <label className="toggle-switch" aria-label={t('settings.showBitrate')}>
+                  <input type="checkbox" checked={theme.showBitrate} onChange={e => theme.setShowBitrate(e.target.checked)} />
+                  <span className="toggle-track" />
+                </label>
+              </div>
             </div>
           </section>
 
@@ -1685,6 +1718,8 @@ export default function Settings() {
                     { id: 'manrope',           label: 'Manrope',           stack: "'Manrope', sans-serif" },
                     { id: 'plus-jakarta-sans', label: 'Plus Jakarta Sans', stack: "'Plus Jakarta Sans', sans-serif" },
                     { id: 'lexend',            label: 'Lexend',            stack: "'Lexend', sans-serif" },
+                    { id: 'jetbrains-mono',    label: 'JetBrains Mono',    stack: "'JetBrains Mono Variable', monospace" },
+                    { id: 'geist',             label: 'Geist',             stack: "'Geist Sans Variable', sans-serif" },
                   ] as { id: FontId; label: string; stack: string }[]
                 ).map(f => (
                   <button

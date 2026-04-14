@@ -46,7 +46,11 @@ function savePrefs(storageKey: string, widths: Record<string, number>, visible: 
   localStorage.setItem(storageKey, JSON.stringify({ widths, visible: [...visible], known }));
 }
 
-export function useTracklistColumns(columns: readonly ColDef[], storageKey: string) {
+export function useTracklistColumns(
+  columns: readonly ColDef[],
+  storageKey: string,
+  menuRef?: React.RefObject<HTMLElement | null>,
+) {
   const [colWidths, setColWidths] = useState<Record<string, number>>(
     () => loadPrefs(storageKey, columns).widths,
   );
@@ -167,11 +171,15 @@ export function useTracklistColumns(columns: readonly ColDef[], storageKey: stri
   useEffect(() => {
     if (!pickerOpen) return;
     const handler = (e: MouseEvent) => {
-      if (!pickerRef.current?.contains(e.target as Node)) setPickerOpen(false);
+      const target = e.target as Node;
+      // If clicking inside picker container or portal menu, don't close
+      if (pickerRef.current?.contains(target)) return;
+      if (menuRef?.current?.contains(target)) return;
+      setPickerOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [pickerOpen]);
+  }, [pickerOpen, menuRef]);
 
   return {
     colWidths,
