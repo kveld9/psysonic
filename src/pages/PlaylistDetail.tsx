@@ -14,6 +14,7 @@ import { usePlaylistStore } from '../store/playlistStore';
 import { useOfflineStore } from '../store/offlineStore';
 import { useOfflineJobStore } from '../store/offlineJobStore';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { useDownloadModalStore } from '../store/downloadModalStore';
 import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
@@ -45,10 +46,10 @@ function totalDurationLabel(songs: SubsonicSong[]): string {
   return formatHumanHoursMinutes(total);
 }
 
-function codecLabel(song: SubsonicSong): string {
+function codecLabel(song: SubsonicSong, showBitrate: boolean): string {
   const parts: string[] = [];
   if (song.suffix) parts.push(song.suffix.toUpperCase());
-  if (song.bitRate) parts.push(`${song.bitRate} kbps`);
+  if (showBitrate && song.bitRate) parts.push(`${song.bitRate} kbps`);
   return parts.join(' · ');
 }
 
@@ -106,6 +107,10 @@ export default function PlaylistDetail() {
   const downloadFolder = useAuthStore(s => s.downloadFolder);
   const setDownloadFolder = useAuthStore(s => s.setDownloadFolder);
   const requestDownloadFolder = useDownloadModalStore(s => s.requestFolder);
+
+  const enableCoverArtBackground = useThemeStore(s => s.enableCoverArtBackground);
+  const enablePlaylistCoverPhoto = useThemeStore(s => s.enablePlaylistCoverPhoto);
+  const showBitrate = useThemeStore(s => s.showBitrate);
 
   const [playlist, setPlaylist] = useState<SubsonicPlaylist | null>(null);
   const [songs, setSongs] = useState<SubsonicSong[]>([]);
@@ -540,10 +545,12 @@ export default function PlaylistDetail() {
 
       {/* ── Hero ── */}
       <div className="album-detail-header">
-        {resolvedBgUrl && (
-          <div className="album-detail-bg" style={{ backgroundImage: `url(${resolvedBgUrl})` }} aria-hidden="true" />
+        {resolvedBgUrl && enableCoverArtBackground && (
+          <>
+            <div className="album-detail-bg" style={{ backgroundImage: `url(${resolvedBgUrl})` }} aria-hidden="true" />
+            <div className="album-detail-overlay" aria-hidden="true" />
+          </>
         )}
-        <div className="album-detail-overlay" aria-hidden="true" />
 
         <div className="album-detail-content">
           <button className="btn btn-ghost album-detail-back" onClick={() => navigate('/playlists')}>
@@ -552,31 +559,33 @@ export default function PlaylistDetail() {
 
           <div className="album-detail-hero">
             {/* Cover — click to open edit modal */}
-            <div
-              className="playlist-hero-cover"
-              onClick={() => setEditingMeta(true)}
-            >
-              {customCoverId && customCoverFetchUrl && customCoverCacheKey ? (
-                <CachedImage
-                  src={customCoverFetchUrl}
-                  cacheKey={customCoverCacheKey}
-                  alt=""
-                  className="playlist-cover-grid"
-                  style={{ objectFit: 'cover', display: 'block' }}
-                />
-              ) : (
-                <div className="playlist-cover-grid">
-                  {coverQuadUrls.map((entry, i) =>
-                    entry
-                      ? <CachedImage key={i} className="playlist-cover-cell" src={entry.src} cacheKey={entry.cacheKey} alt="" />
-                      : <div key={i} className="playlist-cover-cell playlist-cover-cell--empty" />
-                  )}
+            {enablePlaylistCoverPhoto && (
+              <div
+                className="playlist-hero-cover"
+                onClick={() => setEditingMeta(true)}
+              >
+                {customCoverId && customCoverFetchUrl && customCoverCacheKey ? (
+                  <CachedImage
+                    src={customCoverFetchUrl}
+                    cacheKey={customCoverCacheKey}
+                    alt=""
+                    className="playlist-cover-grid"
+                    style={{ objectFit: 'cover', display: 'block' }}
+                  />
+                ) : (
+                  <div className="playlist-cover-grid">
+                    {coverQuadUrls.map((entry, i) =>
+                      entry
+                        ? <CachedImage key={i} className="playlist-cover-cell" src={entry.src} cacheKey={entry.cacheKey} alt="" />
+                        : <div key={i} className="playlist-cover-cell playlist-cover-cell--empty" />
+                    )}
+                  </div>
+                )}
+                <div className="playlist-hero-cover-overlay">
+                  <Camera size={28} />
                 </div>
-              )}
-              <div className="playlist-hero-cover-overlay">
-                <Camera size={28} />
               </div>
-            </div>
+            )}
 
             <div className="album-detail-meta">
               <span className="badge album-detail-badge">{t('playlists.titleBadge')}</span>
@@ -1059,7 +1068,7 @@ export default function PlaylistDetail() {
                   case 'duration': return <div key="duration" className="track-duration">{formatDuration(song.duration ?? 0)}</div>;
                   case 'format': return (
                     <div key="format" className="track-meta">
-                      {(song.suffix || song.bitRate) && <span className="track-codec">{codecLabel(song)}</span>}
+                      {(song.suffix || (showBitrate && song.bitRate)) && <span className="track-codec">{codecLabel(song, showBitrate)}</span>}
                     </div>
                   );
                   case 'delete': return (
@@ -1148,7 +1157,7 @@ export default function PlaylistDetail() {
                     case 'duration': return <div key="duration" className="track-duration">{formatDuration(song.duration ?? 0)}</div>;
                     case 'format': return (
                       <div key="format" className="track-meta">
-                        {(song.suffix || song.bitRate) && <span className="track-codec">{codecLabel(song)}</span>}
+                        {(song.suffix || (showBitrate && song.bitRate)) && <span className="track-codec">{codecLabel(song, showBitrate)}</span>}
                       </div>
                     );
                     case 'delete': return (
