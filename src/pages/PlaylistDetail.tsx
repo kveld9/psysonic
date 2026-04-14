@@ -586,7 +586,7 @@ export default function PlaylistDetail() {
   }
 
   return (
-    <div className="content-body animate-fade-in">
+    <div className="album-detail animate-fade-in">
 
       {/* ── Hero ── */}
       <div className="album-detail-header">
