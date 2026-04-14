@@ -211,6 +211,11 @@ export const esTranslation = {
     playAll: 'Reproducir todo',
     removeSong: 'Quitar de favoritos',
     stations: 'Estaciones de Radio',
+    showingFiltered: 'Mostrando {{filtered}} de {{total}} ({{artist}})',
+    showingCount: 'Mostrando {{filtered}} de {{total}}',
+    clearArtistFilter: 'Limpiar filtro de artista',
+    noFilterResults: 'No hay resultados con los filtros seleccionados.',
+    allArtists: 'Todos los Artistas',
   },
   randomLanding: {
     title: 'Crear Mezcla',
@@ -400,6 +405,10 @@ export const esTranslation = {
     durationHoursMinutes: '{{hours}}h {{minutes}}m',
     durationMinutesOnly: '{{minutes}}m',
     updaterOpenGitHub: 'Abrir en GitHub',
+    filters: 'Filtros',
+    more: 'más',
+    yearRange: 'Rango de años',
+    clearAll: 'Limpiar todo',
   },
   settings: {
     title: 'Configuración',

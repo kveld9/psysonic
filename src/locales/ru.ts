@@ -214,6 +214,11 @@ export const ruTranslation = {
     playAll: 'Воспроизвести всё',
     removeSong: 'Убрать из избранного',
     stations: 'Радиостанции',
+    showingFiltered: 'Показано {{filtered}} из {{total}} ({{artist}})',
+    showingCount: 'Показано {{filtered}} из {{total}}',
+    clearArtistFilter: 'Сбросить фильтр исполнителя',
+    noFilterResults: 'Нет результатов с выбранными фильтрами.',
+    allArtists: 'Все исполнители',
   },
   randomLanding: {
     title: 'Собрать микс',
@@ -412,6 +417,10 @@ export const ruTranslation = {
     durationHoursMinutes: '{{hours}}ч {{minutes}}мин',
     durationMinutesOnly: '{{minutes}}мин',
     updaterOpenGitHub: 'Открыть на GitHub',
+    filters: 'Фильтры',
+    more: 'еще',
+    yearRange: 'Диапазон лет',
+    clearAll: 'Очистить всё',
   },
   settings: {
     title: 'Настройки',

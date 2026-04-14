@@ -209,6 +209,11 @@ export const nlTranslation = {
     playAll: 'Alles afspelen',
     removeSong: 'Verwijderen uit favorieten',
     stations: 'Radiostations',
+    showingFiltered: 'Toont {{filtered}} van {{total}} ({{artist}})',
+    showingCount: 'Toont {{filtered}} van {{total}}',
+    clearArtistFilter: 'Artiestfilter wissen',
+    noFilterResults: 'Geen resultaten met de geselecteerde filters.',
+    allArtists: 'Alle artiesten',
   },
   randomLanding: {
     title: 'Mix samenstellen',
@@ -397,6 +402,10 @@ export const nlTranslation = {
     durationHoursMinutes: '{{hours}} u {{minutes}} min',
     durationMinutesOnly: '{{minutes}} min',
     updaterOpenGitHub: 'Openen op GitHub',
+    filters: 'Filters',
+    more: 'meer',
+    yearRange: 'Jaarbereik',
+    clearAll: 'Alles wissen',
   },
   settings: {
     title: 'Instellingen',
