@@ -366,6 +366,7 @@ export default function PlaylistDetail() {
     savePlaylist(next);
     setSuggestions(prev => prev.filter(s => s.id !== song.id));
     setSearchResults(prev => prev.filter(s => s.id !== song.id));
+    showToast(t('playlists.addSuccess', { count: 1, playlist: playlist?.name }));
   };
 
   // ── Rating / Star ─────────────────────────────────────────────
@@ -759,13 +760,18 @@ export default function PlaylistDetail() {
           )}
           {searchResults.map(song => {
             const isSelected = selectedSearchIds.has(song.id);
-            return (
-              <div
-                key={song.id}
-                className={`playlist-search-row${isSelected ? ' playlist-search-row--selected' : ''}`}
-                style={{ cursor: 'pointer' }}
-                onClick={() => addSong(song)}
-              >
+              return (
+                <div
+                  key={song.id}
+                  className={`playlist-search-row${isSelected ? ' playlist-search-row--selected' : ''}${contextMenuSongId === song.id ? ' context-active' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => addSong(song)}
+                  onContextMenu={e => {
+                    e.preventDefault();
+                    setContextMenuSongId(song.id);
+                    openContextMenu(e.clientX, e.clientY, songToTrack(song), 'album-song');
+                  }}
+                >
                 <input
                   type="checkbox"
                   className="playlist-search-checkbox"

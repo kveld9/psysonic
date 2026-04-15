@@ -12,6 +12,7 @@ import ArtistRow from '../components/ArtistRow';
 import CustomSelect from '../components/CustomSelect';
 import { useDragDrop } from '../contexts/DragDropContext';
 import { useAuthStore } from '../store/authStore';
+import { useShallow } from 'zustand/react/shallow';
 
 type ResultType = 'all' | 'artists' | 'albums' | 'songs';
 
@@ -35,8 +36,23 @@ export default function AdvancedSearch() {
   const qFromUrl = params.get('q') ?? '';
   const navigate = useNavigate();
   const psyDrag = useDragDrop();
-  const playTrack = usePlayerStore(s => s.playTrack);
-  const openContextMenu = usePlayerStore(s => s.openContextMenu);
+  const total = results
+    ? results.artists.length + results.albums.length + results.songs.length
+    : 0;
+
+  const { playTrack, openContextMenu } = usePlayerStore(
+    useShallow(s => ({
+      playTrack: s.playTrack,
+      openContextMenu: s.openContextMenu,
+    }))
+  );
+
+  const [contextMenuSongId, setContextMenuSongId] = useState<string | null>(null);
+  const contextMenuOpen = usePlayerStore(s => s.contextMenu.isOpen);
+
+  useEffect(() => {
+    if (!contextMenuOpen) setContextMenuSongId(null);
+  }, [contextMenuOpen]);
 
   const [query, setQuery] = useState(params.get('q') ?? '');
   const [genre, setGenre] = useState('');
@@ -288,11 +304,15 @@ export default function AdvancedSearch() {
                   return (
                     <div
                       key={song.id}
-                      className="track-row"
+                      className={`track-row${contextMenuSongId === song.id ? ' context-active' : ''}`}
                       style={{ gridTemplateColumns: '60px minmax(150px, 1fr) minmax(80px, 1fr) minmax(80px, 1fr) 90px 65px' }}
                       onDoubleClick={() => playTrack(track, results.songs.map(songToTrack))}
                       role="row"
-                      onContextMenu={e => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, track, 'song'); }}
+                      onContextMenu={e => {
+                        e.preventDefault();
+                        setContextMenuSongId(song.id);
+                        openContextMenu(e.clientX, e.clientY, track, 'song');
+                      }}
                       onMouseDown={e => {
                         if (e.button !== 0) return;
                         e.preventDefault();

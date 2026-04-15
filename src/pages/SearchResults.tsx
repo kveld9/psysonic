@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useDragDrop } from '../contexts/DragDropContext';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { useShallow } from 'zustand/react/shallow';
 
 function formatDuration(s: number) {
   return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
@@ -20,11 +21,25 @@ export default function SearchResults() {
   const query = params.get('q') ?? '';
   const [results, setResults] = useState<ISearchResults | null>(null);
   const [loading, setLoading] = useState(false);
-  const playTrack = usePlayerStore(s => s.playTrack);
-  const currentTrack = usePlayerStore(s => s.currentTrack);
-  const psyDrag = useDragDrop();
   const musicLibraryFilterVersion = useAuthStore(s => s.musicLibraryFilterVersion);
   const showBitrate = useThemeStore(s => s.showBitrate);
+  const psyDrag = useDragDrop();
+
+  const { playTrack, enqueue, openContextMenu, currentTrack } = usePlayerStore(
+    useShallow(s => ({
+      playTrack: s.playTrack,
+      enqueue: s.enqueue,
+      openContextMenu: s.openContextMenu,
+      currentTrack: s.currentTrack,
+    }))
+  );
+
+  const [contextMenuSongId, setContextMenuSongId] = useState<string | null>(null);
+  const contextMenuOpen = usePlayerStore(s => s.contextMenu.isOpen);
+
+  useEffect(() => {
+    if (!contextMenuOpen) setContextMenuSongId(null);
+  }, [contextMenuOpen]);
 
   useEffect(() => {
     if (!query.trim()) { setResults(null); return; }
@@ -84,9 +99,14 @@ export default function SearchResults() {
                 {results.songs.map(song => (
                   <div
                     key={song.id}
-                    className={`track-row${currentTrack?.id === song.id ? ' active' : ''}`}
+                    className={`track-row${currentTrack?.id === song.id ? ' active' : ''}${contextMenuSongId === song.id ? ' context-active' : ''}`}
                     style={{ gridTemplateColumns: '60px minmax(150px, 1fr) minmax(80px, 1fr) minmax(80px, 1fr) 100px 65px' }}
                     onDoubleClick={() => playSong(song, results.songs)}
+                    onContextMenu={e => {
+                      e.preventDefault();
+                      setContextMenuSongId(song.id);
+                      openContextMenu(e.clientX, e.clientY, songToTrack(song), 'album-song');
+                    }}
                     role="row"
                     onMouseDown={e => {
                       if (e.button !== 0) return;

@@ -91,16 +91,28 @@ export function AddToPlaylistSubmenu({ songIds, onDone, dropDown, triggerId }: {
       const newIds = songIds.filter((id) => !existingIds.has(id));
       if (newIds.length > 0) {
         await updatePlaylist(pl.id, [...songs.map((s) => s.id), ...newIds]);
+        showToast(t('playlists.addSuccess', { count: newIds.length, playlist: pl.name }));
+      } else {
+        showToast(t('playlists.addAllSkipped', { count: songIds.length, playlist: pl.name }), 3000, 'info');
       }
       touchPlaylist(pl.id);
-    } catch {}
+    } catch {
+      showToast(t('playlists.addError'), 3000, 'error');
+    }
     setAdding(null);
     onDone();
   };
 
   const handleCreate = async () => {
     const name = newName.trim() || t('playlists.unnamed');
-    await createPlaylist(name, songIds);
+    try {
+      const pl = await createPlaylist(name, songIds);
+      if (pl?.id) {
+        showToast(t('playlists.createAndAddSuccess', { count: songIds.length, playlist: pl.name || name }));
+      }
+    } catch {
+      showToast(t('playlists.createError'), 3000, 'error');
+    }
     onDone();
   };
 
