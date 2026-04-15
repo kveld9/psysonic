@@ -5,6 +5,7 @@ const COMPLETIONS_BASH: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), 
 const COMPLETIONS_ZSH: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../completions/_psysonic"));
 
 use std::path::PathBuf;
+#[cfg(target_os = "linux")]
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
