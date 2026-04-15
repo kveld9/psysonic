@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Heart, ExternalLink, X, ChevronLeft, Download, ListPlus, HardDriveDownload, Loader2, Highlighter } from 'lucide-react';
+import { Play, Heart, ExternalLink, X, ChevronLeft, Download, ListPlus, HardDriveDownload, Loader2, Highlighter, Shuffle } from 'lucide-react';
 import { SubsonicSong, buildCoverArtUrl } from '../api/subsonic';
 import CachedImage from './CachedImage';
 import CoverLightbox from './CoverLightbox';
@@ -86,6 +86,7 @@ interface AlbumHeaderProps {
   onRemoveOffline: () => void;
   onPlayAll: () => void;
   onEnqueueAll: () => void;
+  onShuffleAll?: () => void;
   onBio: () => void;
   onCloseBio: () => void;
   entityRatingValue: number;
@@ -112,6 +113,7 @@ export default function AlbumHeader({
   onRemoveOffline,
   onPlayAll,
   onEnqueueAll,
+  onShuffleAll,
   onBio,
   onCloseBio,
   entityRatingValue,
@@ -121,12 +123,12 @@ export default function AlbumHeader({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const enableCoverArtBackground = useThemeStore(s => s.enableCoverArtBackground);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const totalDuration = songs.reduce((acc, s) => acc + s.duration, 0);
   const totalSize = songs.reduce((acc, s) => acc + (s.size ?? 0), 0);
   const formatLabel = [...new Set(songs.map(s => s.suffix).filter((f): f is string => !!f))].map(f => f.toUpperCase()).join(' / ');
-  const enableCoverArtBackground = useThemeStore(s => s.enableCoverArtBackground);
 
   return (
     <>
@@ -169,7 +171,6 @@ export default function AlbumHeader({
               <div className="album-detail-cover album-cover-placeholder">♪</div>
             )}
             <div className="album-detail-meta">
-              <span className="badge album-detail-badge">{t('common.album')}</span>
               <h1 className="album-detail-title">{info.name}</h1>
               <p className="album-detail-artist">
                 <button
@@ -295,26 +296,32 @@ export default function AlbumHeader({
                 <div className="album-detail-actions">
                   <div className="album-detail-actions-primary">
                     <button className="btn btn-primary" id="album-play-all-btn" onClick={onPlayAll}>
-                      <Play size={16} fill="currentColor" /> {t('albumDetail.playAll')}
+                      <Play size={15} /> {t('common.play', 'Reproducir')}
                     </button>
+                    {onShuffleAll && (
+                      <button
+                        className="btn btn-ghost"
+                        onClick={onShuffleAll}
+                        data-tooltip={t('playlists.shuffle', 'Shuffle')}
+                      >
+                        <Shuffle size={16} />
+                      </button>
+                    )}
                     <button
-                      className="btn btn-surface"
+                      className="btn btn-ghost"
                       onClick={onEnqueueAll}
                       data-tooltip={t('albumDetail.enqueueTooltip')}
                     >
-                      <ListPlus size={16} /> {t('albumDetail.enqueue')}
+                      <ListPlus size={16} />
+                    </button>
+                    <button
+                      className={`btn btn-ghost${isStarred ? ' is-starred' : ''}`}
+                      onClick={onToggleStar}
+                      data-tooltip={isStarred ? t('albumDetail.favoriteRemove') : t('albumDetail.favoriteAdd')}
+                    >
+                      <Heart size={16} fill={isStarred ? 'currentColor' : 'none'} />
                     </button>
                   </div>
-
-                  <button
-                    className={`btn btn-ghost album-detail-star-btn${isStarred ? ' is-starred' : ''}`}
-                    id="album-star-btn"
-                    onClick={onToggleStar}
-                    data-tooltip={isStarred ? t('albumDetail.favoriteRemove') : t('albumDetail.favoriteAdd')}
-                  >
-                    <Heart size={16} fill={isStarred ? 'currentColor' : 'none'} />
-                    {t('albumDetail.favorite')}
-                  </button>
 
                   <button className="btn btn-ghost" id="album-bio-btn" onClick={onBio}>
                     <Highlighter size={16} /> {t('albumDetail.artistBio')}
