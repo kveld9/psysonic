@@ -3109,6 +3109,7 @@ pub fn audio_set_gapless(enabled: bool, state: State<'_, AudioEngine>) {
 //      Linux: case 2 is disabled — ALSA/cpal often omit the active sink from
 //      enumeration while streaming, which caused false resets to system default.
 
+
 pub fn start_device_watcher(engine: &AudioEngine, app: tauri::AppHandle) {
     let reopen_tx       = engine.stream_reopen_tx.clone();
     let stream_handle   = engine.stream_handle.clone();

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '../store/playerStore';
 import { useAuthStore, type SeekbarStyle } from '../store/authStore';
-
 function fmt(s: number): string {
   if (!s || isNaN(s)) return '0:00';
   return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
@@ -733,7 +732,10 @@ export function SeekbarPreview({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const heights   = style === 'waveform' ? makeHeights('seekbar-preview-demo') : null;
+    let heights: Float32Array | null = null;
+    if (style === 'waveform') {
+      heights = makeHeights('seekbar-preview-demo');
+    }
     const animState = makeAnimState();
     let t = 0;
     const tick = () => {
@@ -818,7 +820,11 @@ export default function WaveformSeek({ trackId }: Props) {
   styleRef.current = seekbarStyle;
 
   useEffect(() => {
-    heightsRef.current = trackId ? makeHeights(trackId) : null;
+    if (!trackId) {
+      heightsRef.current = null;
+      return;
+    }
+    heightsRef.current = makeHeights(trackId);
   }, [trackId]);
 
   // Imperative subscription — no React re-renders from progress changes.
