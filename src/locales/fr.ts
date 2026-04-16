@@ -848,6 +848,9 @@ export const frTranslation = {
     trackPlural: 'pistes',
     showRemaining: 'Afficher le temps restant',
     showTotal: 'Afficher la durée totale',
+    rgTrack: 'T {{db}} dB',
+    rgAlbum: 'A {{db}} dB',
+    rgPeak: 'Pic {{pk}}',
   },
   statistics: {
     title: 'Statistiques',

@@ -853,6 +853,9 @@ export const esTranslation = {
     trackPlural: 'pistas',
     showRemaining: 'Mostrar tiempo restante',
     showTotal: 'Mostrar tiempo total',
+    rgTrack: 'T {{db}} dB',
+    rgAlbum: 'A {{db}} dB',
+    rgPeak: 'Pico {{pk}}',
   },
   statistics: {
     title: 'Estadísticas',

@@ -847,6 +847,9 @@ export const nbTranslation = {
     trackPlural: 'spor',
     showRemaining: 'Vis gjenværende tid',
     showTotal: 'Vis total tid',
+    rgTrack: 'T {{db}} dB',
+    rgAlbum: 'A {{db}} dB',
+    rgPeak: 'Topp {{pk}}',
   },
   statistics: {
     title: 'Statistikk',

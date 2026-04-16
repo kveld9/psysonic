@@ -843,6 +843,9 @@ export const zhTranslation = {
     trackPlural: '首曲目',
     showRemaining: '显示剩余时间',
     showTotal: '显示总时间',
+    rgTrack: '曲目 {{db}} dB',
+    rgAlbum: '专辑 {{db}} dB',
+    rgPeak: '峰值 {{pk}}',
   },
   statistics: {
     title: '统计',

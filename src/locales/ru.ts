@@ -898,6 +898,9 @@ export const ruTranslation = {
     trackPlural: 'треков',
     showRemaining: 'Осталось',
     showTotal: 'Всего',
+    rgTrack: 'Т {{db}} дБ',
+    rgAlbum: 'А {{db}} дБ',
+    rgPeak: 'Пик {{pk}}',
   },
   statistics: {
     title: 'Статистика',

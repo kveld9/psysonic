@@ -20,6 +20,21 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function formatQueueReplayGainParts(track: Track, t: TFunction): string[] {
+  const parts: string[] = [];
+  const fmtDb = (db: number) => `${db >= 0 ? '+' : ''}${db.toFixed(1)}`;
+  if (track.replayGainTrackDb != null) {
+    parts.push(t('queue.rgTrack', { db: fmtDb(track.replayGainTrackDb) }));
+  }
+  if (track.replayGainAlbumDb != null) {
+    parts.push(t('queue.rgAlbum', { db: fmtDb(track.replayGainAlbumDb) }));
+  }
+  if (track.replayGainPeak != null) {
+    parts.push(t('queue.rgPeak', { pk: track.replayGainPeak.toFixed(3) }));
+  }
+  return parts;
+}
+
 function renderStars(rating?: number) {
   if (!rating) return null;
   const stars = [];
@@ -420,22 +435,24 @@ export default function QueuePanel() {
 
       {currentTrack && (
         <div className="queue-current-track">
-          {(currentTrack.suffix || currentTrack.bitRate || currentTrack.samplingRate || currentTrack.bitDepth) && (
-            <div className="queue-current-tech">
-              {[
-                currentTrack.suffix?.toUpperCase(),
-                currentTrack.bitRate ? `${currentTrack.bitRate} kbps` : undefined,
-                (() => {
-                  const bd = currentTrack.bitDepth;
-                  const sr = currentTrack.samplingRate ? `${currentTrack.samplingRate / 1000} kHz` : '';
-                  if (bd && sr) return `${bd}/${sr}`;
-                  if (bd) return `${bd}-bit`;
-                  if (sr) return sr;
-                  return undefined;
-                })(),
-              ].filter(Boolean).join(' · ')}
-            </div>
-          )}
+          {(() => {
+            const baseParts = [
+              currentTrack.suffix?.toUpperCase(),
+              currentTrack.bitRate ? `${currentTrack.bitRate} kbps` : undefined,
+              (() => {
+                const bd = currentTrack.bitDepth;
+                const sr = currentTrack.samplingRate ? `${currentTrack.samplingRate / 1000} kHz` : '';
+                if (bd && sr) return `${bd}/${sr}`;
+                if (bd) return `${bd}-bit`;
+                if (sr) return sr;
+                return undefined;
+              })(),
+            ].filter(Boolean) as string[];
+            const rgParts = formatQueueReplayGainParts(currentTrack, t);
+            const techLine = [...baseParts, ...rgParts].join(' · ');
+            if (!techLine) return null;
+            return <div className="queue-current-tech">{techLine}</div>;
+          })()}
           <div className="queue-current-track-body">
             <div className="queue-current-cover">
               {currentTrack.coverArt ? (
