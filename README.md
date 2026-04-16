@@ -36,74 +36,25 @@ Designed specifically for users hosting their own music via Navidrome or other S
 
 ## ✨ Features
 
-- 🎨 **Gorgeous UI**: 67 beautiful themes across 8 groups — Open Source Classics (Catppuccin, Nord, Gruvbox, Nightfox, Dracula), Operating Systems, Games, Movies, Series, Social Media, Psysonic originals, and Mediaplayer — with smooth glassmorphism effects and micro-animations. A time-based **Theme Scheduler** can automatically switch between a day and night theme.
-- ⚡ **Blazing Fast**: Built with Rust & Tauri — native audio engine (rodio), minimal RAM usage compared to typical Electron apps.
-- 🌍 **Internationalization (i18n)**: Fully translated into English, German, French, Dutch, Chinese, Norwegian, and Russian.
-- 📻 **Live "Now Playing"**: See what other users on your server are currently listening to in real-time.
-- 🎵 **Last.fm Integration**: Direct scrobbling, Now Playing updates, love/unlove, Similar Artists, and top stats — no Navidrome configuration required.
-- 🎤 **Synchronized Lyrics**: Lyrics pane in the sidebar and fullscreen player — powered by LRCLIB and your Navidrome server. Synced lyrics auto-scroll with line highlighting and click-to-seek; plain-text fallback for unsynced tracks.
-- 📻 **Smart Radio**: Start a Radio session from any song or artist. Playback begins instantly from top local tracks while similar artist tracks (via Last.fm) load in the background. Radio queues reload proactively so sessions never run dry.
-- ♾️ **Infinite Queue**: When the queue runs out with Repeat off, Psysonic silently appends more random tracks (optionally filtered by genre) so playback never stops. Auto-added tracks appear below a clear `— Auto —` divider.
-- 🎛️ **10-Band Graphic EQ**: Built-in EQ with presets and the ability to save custom presets. **AutoEQ** support lets you load headphone correction profiles automatically.
-- 🔀 **Gapless & Crossfade**: True gapless playback and configurable crossfade between tracks (mutually exclusive).
-- 📻 **Internet Radio**: Built-in internet radio player — browse and play any ICY/HLS stream directly within Psysonic.
-- ⭐ **Ratings**: Rate songs, albums, and artists with 1–5 stars via the context menu, player bar, or album detail view. Supports the OpenSubsonic ratings extension. Auto-rate-down songs you skip repeatedly (configurable threshold). Filter Random Mix and Random Albums by minimum star rating.
-- 🖥️ **Fullscreen Player**: A dedicated fullscreen view with album art, animated lyrics overlay, and artist image — toggled with a single click.
-- 📋 **Playlist Management**: Create, edit, rename, and delete playlists. Drag-and-drop track reordering, song search, and smart suggestions right inside the playlist view.
-- 💾 **IndexedDB Caching**: Ultra-fast loading times with persistent IndexedDB image caching for cover art and artist images.
-- 📀 **Album Downloads**: Support for downloading entire albums directly to your local machine.
-- 💿 **Album & Artist Views**: Beautiful grid displays, multi-select album actions, and detailed artist pages with related albums.
-- 〰️ **Multi-Style Seekbar**: 10 canvas-drawn seekbar styles — Waveform, Bar, Thick Bar, Segmented, Line+Dot, Neon, Pulse Wave, Particle Trail, Liquid Fill, and Retro Tape.
-- 🎛️ **Queue Management**: Drag & drop reordering, shuffle, playlist saving/loading, and server-side queue synchronization.
-- ⌨️ **Configurable Keybindings**: Rebind any playback action (play/pause, next, seek, volume…) directly in Settings.
-- 🔤 **Font Picker & UI Scale**: 10 UI fonts and a global zoom slider (80–150%) to match your display and taste.
-- 🎼 **Random Mix**: Generate a random playlist from your entire library. Filter by keyword or pick a Super Genre (Metal, Rock, Electronic, Jazz…) for a focused mix with progressive loading.
-- 🏷️ **Genres**: Browse your entire library by genre — coloured cards sorted by album count with a dedicated album view per genre. Multi-select genre filter available on Albums, New Releases, and Random Albums pages.
-- 🔔 **System Tray**: Minimize Psysonic to the system tray. Play/Pause, Prev, Next, and Show/Hide controls available from the tray icon.
-- 💾 **Backup & Restore**: Export and import all your settings, themes, and server profiles in one click.
-- 🔄 **In-App Auto-Update**: Checks for new releases on startup. macOS and Windows can install and relaunch directly in-app; Linux users get a link to the GitHub release page.
-- 🖥️ **Cross-Platform**: Available natively for Windows, macOS, and Linux (Arch AUR, .deb, .rpm).
+- 🎨 **Wide Theme Selection**: Dozens of themes across 8 groups — Open Source Classics (Catppuccin, Nord, Gruvbox, Nightfox, Dracula), Operating Systems, Games, Movies, Series, Social Media, and Psysonic originals. Glassmorphism effects, micro-animations, and a time-based **Theme Scheduler** for automatic day/night switching.
+- ⚡ **Native Performance**: Built with Rust & Tauri — native audio engine (rodio), minimal RAM usage, no Electron overhead.
+- 🎵 **Last.fm Integration**: Scrobbling, Now Playing, love/unlove, Similar Artists, and top stats — no Navidrome config needed.
+- 🎤 **Synchronized Lyrics**: Auto-scrolling synced lyrics with click-to-seek in the sidebar and fullscreen player, powered by LRCLIB and your Navidrome server.
+- 📻 **Radio & Infinite Queue**: Smart Radio sessions from any song or artist, built-in Internet Radio (ICY/HLS), and an Infinite Queue that silently refills when the queue runs out.
+- 🎛️ **Advanced Audio**: 10-band graphic EQ with custom presets, **AutoEQ** headphone correction, Replay Gain, gapless playback, and crossfade.
+- 〰️ **10 Seekbar Styles**: Waveform, Bar, Thick Bar, Segmented, Line+Dot, Neon, Pulse Wave, Particle Trail, Liquid Fill, and Retro Tape.
+- 🖥️ **Fullscreen Player**: Album art, animated synced lyrics overlay, and artist image in a dedicated fullscreen view.
+- 📋 **Playlists & Library**: Full playlist management with drag-and-drop reorder and smart suggestions. Genre browsing, Random Mix, Advanced Search, ratings (1–5 stars), and multi-select actions.
+- 💾 **Device Sync**: Export your library to a USB drive or portable device using a configurable filename template.
+- 🖥️ **CLI Control**: Control playback, switch servers, manage the queue, and more directly from the command line.
+- ⌨️ **Customization**: Configurable keybindings, UI fonts, global zoom slider, system tray, backup & restore, and in-app auto-update.
+- 🌍 **8 Languages**: English, German, French, Dutch, Spanish, Chinese, Norwegian, Russian.
+- 🖥️ **Cross-Platform**: Windows, macOS, and Linux (Arch AUR, .deb, .rpm).
 
 ## 🗺️ Roadmap
 
-### ✅ Completed
-- [x] Native Rust/rodio audio engine (replaces Howler.js)
-- [x] 10-band graphic EQ with built-in and custom presets
-- [x] AutoEQ — automatic headphone correction profile loader
-- [x] Crossfade between tracks
-- [x] Replay Gain (track + album mode)
-- [x] Gapless playback
-- [x] Multi-style seekbar (10 styles: Waveform, Bar, Thick, Segmented, Line+Dot, Neon, Pulse Wave, Particle Trail, Liquid Fill, Retro Tape)
-- [x] Last.fm scrobbling, Now Playing & love/unlove
-- [x] Similar Artists via Last.fm, filtered to library
-- [x] Statistics — Last.fm top charts, recent scrobbles, top-rated songs & artists
-- [x] Synchronized lyrics via LRCLIB and Navidrome server (in-sidebar + fullscreen, auto-scroll, click-to-seek)
-- [x] Smart Radio with proactive queue loading
-- [x] Infinite Queue (random auto-fill when queue runs out)
-- [x] OGG/Vorbis native playback
-- [x] Internet Radio (ICY/HLS streams)
-- [x] In-app auto-updater (macOS + Windows)
-- [x] Multi-server support
-- [x] IndexedDB image caching
-- [x] Random Mix with server-native Genre Mix (top genres by song count, shuffleable)
-- [x] Advanced Search (text + genre + year + result-type filters)
-- [x] 67 themes across 8 groups: Open Source Classics, Operating Systems, Games, Movies, Series, Social Media, Psysonic originals, Mediaplayer
-- [x] Time-based Theme Scheduler (auto day/night theme switching)
-- [x] Internationalization (English, German, French, Dutch, Chinese, Norwegian, Russian)
-- [x] AUR package (Arch / CachyOS)
-- [x] Configurable keybindings
-- [x] Font picker (10 UI fonts) + global UI scale slider
-- [x] Playlist management (create, edit, delete, drag-and-drop reorder, suggestions)
-- [x] Fullscreen player with synced lyrics overlay
-- [x] System tray icon with playback controls
-- [x] Song / Album / Artist ratings (1–5 stars, OpenSubsonic extension)
-- [x] Auto-rate-down on repeated skips + minimum-rating filter for mixes
-- [x] Album multi-select actions
-- [x] Custom Linux titlebar
-- [x] Backup & Restore (settings export/import)
-
 ### 📋 Planned
-- [ ] Theme contrast & legibility audit — systematic review of text/background contrast ratios across all 67 themes
+- [ ] Theme contrast & legibility audit — systematic review of text/background contrast ratios across all themes
 - [ ] Accessibility (a11y) — keyboard navigation, screen reader support, ARIA labels
 - [ ] More languages
 
