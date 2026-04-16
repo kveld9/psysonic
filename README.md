@@ -216,4 +216,4 @@ No Data Collection: The application does not use analytics, tracking pixels, or 
 
 Local Storage: All configuration data (Server URLs, credentials, and theme settings) is stored locally on the user's device and is never shared.
 
-Direct Integration: Third-party integrations (like Last.fm scrobbling or LRC Lib for lyrics) are optional and only active if explicitly enabled by the user."
+Direct Integration: Third-party integrations (like Last.fm scrobbling or LRC Lib for lyrics) are optional and only active if explicitly enabled by the user.
