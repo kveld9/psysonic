@@ -940,6 +940,20 @@
   z-index: 1;
 }
 
+/* Scoped UI scaling target. Sidebar / queue / player / titlebar live in
+   sibling grid cells of .app-shell and stay at 1:1. The wrapper inherits
+   .main-content's flex column layout so .content-header (fixed height) and
+   .content-body (flex: 1, scroll) keep working unchanged.
+   Zoom is applied via inline style only when uiScale !== 1, so the default
+   case has no extra layer or layout cost. */
+.main-content-zoom {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
 .content-header {
   display: flex;
   align-items: center;

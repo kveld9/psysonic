@@ -1739,50 +1739,56 @@ export default function Settings() {
               <h2>{t('settings.uiScaleTitle')}</h2>
             </div>
             <div className="settings-card">
-              {/* TODO: UI scaling is being reworked — disabled until fixed */}
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-                Interface scaling is currently being reworked and will be available in a future update.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: 0.4, pointerEvents: 'none', marginTop: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('settings.uiScaleLabel')}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', minWidth: 40, textAlign: 'right' }}>
                     {Math.round(fontStore.uiScale * 100)}%
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min={0.8}
-                  max={1.5}
-                  step={0.05}
-                  value={fontStore.uiScale}
-                  onChange={e => fontStore.setUiScale(parseFloat(e.target.value))}
-                  className="ui-scale-slider"
-                />
-                <div style={{ position: 'relative', height: 24 }}>
-                  {[80, 90, 100, 110, 125, 150].map(p => {
-                    const pct = ((p / 100) - 0.8) / (1.5 - 0.8) * 100;
-                    const active = Math.round(fontStore.uiScale * 100) === p;
-                    return (
-                      <button
-                        key={p}
-                        className="btn btn-ghost"
-                        style={{
-                          position: 'absolute',
-                          left: `${pct}%`,
-                          transform: 'translateX(-50%)',
-                          fontSize: 11,
-                          padding: '2px 6px',
-                          opacity: active ? 1 : 0.5,
-                          color: active ? 'var(--accent)' : undefined,
-                        }}
-                        onClick={() => fontStore.setUiScale(p / 100)}
-                      >
-                        {p}%
-                      </button>
-                    );
-                  })}
-                </div>
+                {(() => {
+                  const presets = [80, 90, 100, 110, 125, 150];
+                  const currentPct = Math.round(fontStore.uiScale * 100);
+                  let idx = presets.indexOf(currentPct);
+                  if (idx < 0) {
+                    // Snap legacy off-preset values to the closest preset.
+                    idx = presets.reduce((best, p, i) =>
+                      Math.abs(p - currentPct) < Math.abs(presets[best] - currentPct) ? i : best, 0);
+                  }
+                  return (
+                    <>
+                      <input
+                        type="range"
+                        min={0}
+                        max={presets.length - 1}
+                        step={1}
+                        value={idx}
+                        onChange={e => fontStore.setUiScale(presets[parseInt(e.target.value, 10)] / 100)}
+                        className="ui-scale-slider"
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        {presets.map(p => {
+                          const active = currentPct === p;
+                          return (
+                            <button
+                              key={p}
+                              className="btn btn-ghost"
+                              style={{
+                                fontSize: 11,
+                                padding: '2px 6px',
+                                opacity: active ? 1 : 0.5,
+                                color: active ? 'var(--accent)' : undefined,
+                              }}
+                              onClick={() => fontStore.setUiScale(p / 100)}
+                            >
+                              {p}%
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </section>

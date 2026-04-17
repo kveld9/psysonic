@@ -127,6 +127,7 @@ function AppShell() {
   const toggleFullscreen = usePlayerStore(s => s.toggleFullscreen);
   const isQueueVisible = usePlayerStore(s => s.isQueueVisible);
   const toggleQueue = usePlayerStore(s => s.toggleQueue);
+  const uiScale = useFontStore(s => s.uiScale);
   const initializeFromServerQueue = usePlayerStore(s => s.initializeFromServerQueue);
   const currentTrack = usePlayerStore(s => s.currentTrack);
   const isPlaying = usePlayerStore(s => s.isPlaying);
@@ -341,6 +342,7 @@ function AppShell() {
         />
       )}
       <main className="main-content">
+        <div className="main-content-zoom" style={uiScale !== 1 ? { zoom: uiScale } : undefined}>
         <header className="content-header">
           <LiveSearch />
           <div className="spacer" />
@@ -388,6 +390,7 @@ function AppShell() {
             <Route path="/folders" element={<FolderBrowser />} />
             <Route path="/device-sync" element={<DeviceSync />} />
           </Routes>
+        </div>
         </div>
       </main>
       {!isMobile && (
@@ -919,8 +922,6 @@ export default function App() {
   useThemeStore(s => s.theme); // keep subscription so re-render on manual change
   const effectiveTheme = useThemeScheduler();
   const font = useFontStore(s => s.font);
-  const uiScale = useFontStore(s => s.uiScale);
-  const setUiScale = useFontStore(s => s.setUiScale);
   const [exportPickerOpen, setExportPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -931,17 +932,10 @@ export default function App() {
     document.documentElement.setAttribute('data-font', font);
   }, [font]);
 
-  // TODO(ui-scale): UI scaling is disabled pending a cross-platform rework.
-  // Reset any stored non-100% value so users aren't stuck at a broken scale.
-  // When re-enabling: remove this effect AND re-enable the slider in Settings.tsx.
-  useEffect(() => {
-    if (uiScale !== 1.0) setUiScale(1.0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.style.zoom = String(uiScale);
-  }, [uiScale]);
+  // UI scaling is scoped to .main-content via an inner wrapper (see <main>
+  // below). Sidebar, queue, player bar and (Linux) custom title bar stay 1:1
+  // because they live in separate grid cells. Document-level zoom is not used
+  // — it broke portal positioning and Tauri window measurement.
 
   useEffect(() => {
     return initAudioListeners();
