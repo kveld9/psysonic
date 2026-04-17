@@ -458,7 +458,7 @@ export default function QueuePanel() {
                 {playbackSource && (
                   <span
                     className="queue-current-tech-source"
-                    title={
+                    data-tooltip={
                       playbackSource === 'offline'
                         ? t('queue.sourceOffline')
                         : playbackSource === 'hot'
