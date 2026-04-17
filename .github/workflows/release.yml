@@ -160,12 +160,13 @@ jobs:
             \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) \
             | xargs gh release upload "app-v${VERSION}" --clobber
 
-  # Verifies that `nix build .#psysonic` still works against the current source
-  # and refreshes `nix/upstream-sources.json` (npmDepsHash) + `flake.lock`
-  # (nixpkgs pin). Commits the refreshed files back to `main` when they change.
+  # Verifies that `nix build .#psysonic` still works against the current source,
+  # refreshes `nix/upstream-sources.json` (npmDepsHash) + `flake.lock`
+  # (nixpkgs pin), and pushes the resulting store paths to the public Cachix
+  # binary cache so end users can `nix profile install github:Psychotoxical/psysonic`
+  # without having to compile locally.
   #
-  # Tarball publishing / Cachix upload are intentionally out of scope here —
-  # those will live in a dedicated workflow tied to a binary cache setup.
+  # The refreshed lock/hash files are committed back to `main` when they change.
   verify-nix:
     needs: create-release
     runs-on: ubuntu-24.04
@@ -182,6 +183,15 @@ jobs:
 
       - name: install Nix
         uses: DeterminateSystems/nix-installer-action@v15
+
+      # cachix-action with no signingKey = Cachix-managed signing (Cachix signs
+      # server-side). The action watches the nix store during subsequent build
+      # steps and uploads new paths automatically.
+      - name: configure Cachix (managed signing)
+        uses: cachix/cachix-action@v15
+        with:
+          name: psysonic
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: compute npmDepsHash from package-lock.json
         id: npm-hash
@@ -202,7 +212,7 @@ jobs:
       - name: refresh flake.lock (nixpkgs pin)
         run: nix flake update --accept-flake-config
 
-      - name: verify nix build
+      - name: verify nix build + push to Cachix
         run: nix build .#psysonic --accept-flake-config --no-link --print-build-logs
 
       - name: commit + push refreshed lock and hash (if changed)
