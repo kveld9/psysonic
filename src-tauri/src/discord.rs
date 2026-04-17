@@ -37,7 +37,7 @@ pub struct DiscordState {
     /// Last calculated start timestamp for the current track (for freezing timer when paused).
     pub last_start_timestamp: Mutex<Option<i64>>,
     /// Track whether we were playing in the last update to detect transitions.
-    pub was_playing: Mutex<bool>,
+    pub _was_playing: Mutex<bool>,
 }
 
 impl DiscordState {
@@ -50,7 +50,7 @@ impl DiscordState {
                 .build()
                 .unwrap_or_else(|_| Client::new()),
             last_start_timestamp: Mutex::new(None),
-            was_playing: Mutex::new(false),
+            _was_playing: Mutex::new(false),
         }
     }
 }
@@ -258,7 +258,7 @@ pub async fn discord_update_presence(
     album: Option<String>,
     is_playing: bool,
     elapsed_secs: Option<f64>,
-    duration_secs: Option<f64>,
+    _duration_secs: Option<f64>,
     cover_art_url: Option<String>,
     fetch_itunes_covers: bool,
     details_template: Option<String>,
