@@ -1044,6 +1044,8 @@ export const enTranslation = {
     csvImportNoValidTracks: 'No valid tracks found in CSV file',
     csvImportFailed: 'Failed to import CSV file',
     csvImportToast: '{{added}} added, {{notFound}} not found, {{duplicates}} duplicates',
+    csvImportDownloadSuccess: 'Report downloaded successfully',
+    csvImportDownloadError: 'Failed to download report',
   },
   mostPlayed: {
     title: 'Most Played',

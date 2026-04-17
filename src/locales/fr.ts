@@ -1040,6 +1040,8 @@ export const frTranslation = {
     csvImportNoValidTracks: 'Aucun titre valide trouvé dans le fichier CSV',
     csvImportFailed: 'Échec de l\'import CSV',
     csvImportToast: '{{added}} ajoutés, {{notFound}} non trouvés, {{duplicates}} doublons',
+    csvImportDownloadSuccess: 'Rapport téléchargé avec succès',
+    csvImportDownloadError: 'Échec du téléchargement du rapport',
   },
   mostPlayed: {
     title: 'Les plus joués',
