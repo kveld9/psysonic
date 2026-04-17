@@ -692,6 +692,7 @@ export function initAudioListeners(): () => void {
   let discordPrevTemplateDetails: string | null = null;
   let discordPrevTemplateState: string | null = null;
   let discordPrevTemplateLargeText: string | null = null;
+  let discordPrevCurrentTime: number | null = null;
 
   function syncDiscord() {
     const { currentTrack, isPlaying, currentTime } = usePlayerStore.getState();
@@ -722,7 +723,8 @@ export function initAudioListeners(): () => void {
     const detailsTemplateChanged = discordTemplateDetails !== discordPrevTemplateDetails;
     const stateTemplateChanged = discordTemplateState !== discordPrevTemplateState;
     const largeTextTemplateChanged = discordTemplateLargeText !== discordPrevTemplateLargeText;
-    if (!trackChanged && !playingChanged && !coversSettingChanged && !detailsTemplateChanged && !stateTemplateChanged && !largeTextTemplateChanged) return;
+    const timeChanged = Math.abs(currentTime - (discordPrevCurrentTime ?? -1)) > 1; // Only update if time changed by more than 1 second
+    if (!trackChanged && !playingChanged && !coversSettingChanged && !detailsTemplateChanged && !stateTemplateChanged && !largeTextTemplateChanged && !timeChanged) return;
 
     discordPrevTrackId = currentTrack.id;
     discordPrevIsPlaying = isPlaying;
@@ -730,15 +732,17 @@ export function initAudioListeners(): () => void {
     discordPrevTemplateDetails = discordTemplateDetails;
     discordPrevTemplateState = discordTemplateState;
     discordPrevTemplateLargeText = discordTemplateLargeText;
+    discordPrevCurrentTime = currentTime;
 
     invoke('discord_update_presence', {
       title: currentTrack.title,
       artist: currentTrack.artist ?? 'Unknown Artist',
       album: currentTrack.album ?? null,
       isPlaying,
-      // Pass elapsed when playing so Discord shows a live running timer.
-      // Pass null when paused — Discord clears the timer.
-      elapsedSecs: isPlaying ? currentTime : null,
+      // Always pass elapsedSecs so backend can handle both playing and paused states.
+      // Backend will freeze timer when paused using end timestamp.
+      elapsedSecs: currentTime,
+      durationSecs: currentTrack.duration,
       // coverArtUrl is intentionally not passed — Subsonic URLs require auth.
       // iTunes cover fetching is only done when explicitly opted in.
       coverArtUrl: null,

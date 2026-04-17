@@ -34,6 +34,10 @@ pub struct DiscordState {
     pub artwork_cache: Arc<Mutex<HashMap<String, ArtworkCacheEntry>>>,
     /// HTTP client for iTunes API requests. blocking::Client is Clone (Arc-internally).
     pub http_client: Client,
+    /// Last calculated start timestamp for the current track (for freezing timer when paused).
+    pub last_start_timestamp: Mutex<Option<i64>>,
+    /// Track whether we were playing in the last update to detect transitions.
+    pub was_playing: Mutex<bool>,
 }
 
 impl DiscordState {
@@ -45,6 +49,8 @@ impl DiscordState {
                 .timeout(std::time::Duration::from_secs(5))
                 .build()
                 .unwrap_or_else(|_| Client::new()),
+            last_start_timestamp: Mutex::new(None),
+            was_playing: Mutex::new(false),
         }
     }
 }
@@ -219,7 +225,7 @@ fn try_connect() -> Option<DiscordIpcClient> {
 /// Apply a template string, replacing placeholders with actual values.
 /// Supported placeholders: {title}, {artist}, {album}, {paused}
 fn apply_template(template: &str, title: &str, artist: &str, album: Option<&str>, is_playing: bool) -> String {
-    let paused_text = if is_playing { "" } else { "Paused — " };
+    let paused_text = if is_playing { "" } else { "(Paused) " };
     let album_text = album.unwrap_or("");
 
     template
@@ -252,6 +258,7 @@ pub async fn discord_update_presence(
     album: Option<String>,
     is_playing: bool,
     elapsed_secs: Option<f64>,
+    duration_secs: Option<f64>,
     cover_art_url: Option<String>,
     fetch_itunes_covers: bool,
     details_template: Option<String>,
@@ -316,38 +323,33 @@ pub async fn discord_update_presence(
             .large_text(&large_text)
     };
 
-    // ActivityType::Listening causes the Discord client to auto-start a running
-    // timer from "now" even when no timestamps are provided. Switch to Playing
-    // when paused — Playing only shows a timer when timestamps are explicitly set.
-    let activity_type = if is_playing {
-        ActivityType::Listening
-    } else {
-        ActivityType::Playing
-    };
+    // When paused: clear activity completely to avoid any timer issues
+    // When playing: show full activity with timer
+    if !is_playing {
+        if client.clear_activity().is_err() {
+            *guard = None;
+        }
+        return Ok(());
+    }
 
-    let mut activity = Activity::new()
-        .activity_type(activity_type)
+    // Only reach here when playing
+    let activity = Activity::new()
+        .activity_type(ActivityType::Listening)
         .details(&details_text)
         .state(&state_text)
-        .assets(assets);
-
-    // Start timestamp: Discord auto-counts up from this point. We back-calculate
-    // it so the displayed elapsed time matches the actual playback position.
-    // Only set when playing — Playing type without timestamps shows no timer.
-    if is_playing {
-        if let Some(elapsed) = elapsed_secs {
+        .assets(assets)
+        .timestamps(if let Some(elapsed) = elapsed_secs {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs() as i64;
             let start = now - elapsed.floor() as i64;
-            activity = activity.timestamps(Timestamps::new().start(start));
-        }
-    }
+            Timestamps::new().start(start)
+        } else {
+            Timestamps::new()
+        });
 
     if client.set_activity(activity).is_err() {
-        // IPC pipe broke (Discord restarted etc.) — drop the client so the next
-        // call re-connects.
         *guard = None;
     }
 
@@ -363,5 +365,8 @@ pub fn discord_clear_presence(state: tauri::State<DiscordState>) -> Result<(), S
             *guard = None;
         }
     }
+    // Clear saved timestamp so next track starts fresh
+    let mut start_guard = state.last_start_timestamp.lock().unwrap();
+    *start_guard = None;
     Ok(())
 }
