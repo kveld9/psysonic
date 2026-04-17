@@ -3076,11 +3076,13 @@ pub fn audio_set_eq(gains: [f32; 10], enabled: bool, pre_gain: f32, state: State
 pub async fn audio_preload(
     url: String,
     duration_hint: f64,
+    app: AppHandle,
     state: State<'_, AudioEngine>,
 ) -> Result<(), String> {
     {
         let preloaded = state.preloaded.lock().unwrap();
         if preloaded.as_ref().is_some_and(|p| same_playback_target(&p.url, &url)) {
+            let _ = app.emit("audio:preload-ready", url.clone());
             return Ok(());
         }
     }
@@ -3102,7 +3104,9 @@ pub async fn audio_preload(
         response.bytes().await.map_err(|e| e.to_string())?.into()
     };
     let _ = duration_hint; // kept in API for compatibility
+    let url_for_emit = url.clone();
     *state.preloaded.lock().unwrap() = Some(PreloadedTrack { url, data });
+    let _ = app.emit("audio:preload-ready", url_for_emit);
     Ok(())
 }
 
