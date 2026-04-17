@@ -537,6 +537,7 @@ export const nlTranslation = {
     discordRichPresenceDesc: 'Toont het huidige nummer op je Discord-profiel. Discord moet daarvoor geopend zijn.',
     discordAppleCovers: 'Hoezen ophalen via Apple Music voor Discord',
     discordAppleCoversDesc: 'Stuurt artiest- en albumnaam naar de Apple-zoek-API om een hoes te vinden voor je Discord-profiel. Standaard uitgeschakeld vanwege privacy.',
+    discordOptions: 'Geavanceerde Discord-opties',
     discordTemplates: 'Aangepaste tekstsjablonen',
     discordTemplatesDesc: 'Pas aan welke informatie wordt weergegeven op je Discord-profiel. Variabelen: {title}, {artist}, {album}',
     discordTemplateDetails: 'Primaire regel (details)',

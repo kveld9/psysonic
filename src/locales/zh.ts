@@ -533,6 +533,7 @@ export const zhTranslation = {
     discordRichPresenceDesc: '在 Discord 个人资料上显示当前播放的曲目。需要 Discord 处于运行状态。',
     discordAppleCovers: '通过 Apple Music 为 Discord 获取封面',
     discordAppleCoversDesc: '将艺术家和专辑名称发送至 Apple 搜索 API，以为 Discord 个人资料查找封面图片。出于隐私考虑，默认禁用。',
+    discordOptions: 'Discord 高级选项',
     discordTemplates: '自定义文本模板',
     discordTemplatesDesc: '自定义在 Discord 个人资料上显示的信息。变量：{title}, {artist}, {album}',
     discordTemplateDetails: '主行 (details)',

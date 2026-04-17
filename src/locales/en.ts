@@ -542,6 +542,7 @@ export const enTranslation = {
     useCustomTitlebarDesc: 'Replace the system title bar with a built-in one that matches the app theme. Disable to use the native GNOME/GTK title bar.',
     discordAppleCovers: 'Fetch covers from Apple Music for Discord',
     discordAppleCoversDesc: 'Sends the artist and album name to Apple\'s search API to find cover art for your Discord profile. Disabled by default for privacy.',
+    discordOptions: 'Advanced Discord options',
     discordTemplates: 'Custom text templates',
     discordTemplatesDesc: 'Customize what information is shown on your Discord profile. Variables: {title}, {artist}, {album}',
     discordTemplateDetails: 'Primary line (details)',

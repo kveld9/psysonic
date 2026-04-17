@@ -412,6 +412,7 @@ export default function Settings() {
   const [clearing, setClearing] = useState(false);
   const [contributorsOpen, setContributorsOpen] = useState(false);
   const [fontPickerOpen, setFontPickerOpen] = useState(false);
+  const [discordOptionsOpen, setDiscordOptionsOpen] = useState(false);
 
   useEffect(() => {
     if (!auth.lastfmSessionKey || !auth.lastfmUsername) { setLfmUserInfo(null); return; }
@@ -1160,50 +1161,79 @@ export default function Settings() {
               {auth.discordRichPresence && (
                 <>
                   <div className="settings-section-divider" />
-                  <div className="settings-toggle-row" style={{ paddingLeft: 16 }}>
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{t('settings.discordAppleCovers')}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.discordAppleCoversDesc')}</div>
-                    </div>
-                    <label className="toggle-switch" aria-label={t('settings.discordAppleCovers')}>
-                      <input type="checkbox" checked={auth.enableAppleMusicCoversDiscord} onChange={e => auth.setEnableAppleMusicCoversDiscord(e.target.checked)} />
-                      <span className="toggle-track" />
-                    </label>
-                  </div>
-                  <div className="settings-section-divider" />
                   <div style={{ paddingLeft: 16, paddingTop: 8, paddingBottom: 8 }}>
-                    <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 8 }}>{t('settings.discordTemplates')}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{t('settings.discordTemplatesDesc')}</div>
-                    <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                      <label style={{ fontSize: 12 }}>{t('settings.discordTemplateDetails')}</label>
-                      <input
-                        className="input"
-                        type="text"
-                        value={auth.discordTemplateDetails}
-                        onChange={e => auth.setDiscordTemplateDetails(e.target.value)}
-                        placeholder="{artist} - {title}"
+                    <button
+                      type="button"
+                      onClick={() => setDiscordOptionsOpen(v => !v)}
+                      style={{
+                        background: 'none', border: 'none', padding: 0, width: '100%',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        cursor: 'pointer', color: 'inherit', textAlign: 'left',
+                      }}
+                      aria-expanded={discordOptionsOpen}
+                    >
+                      <ChevronDown
+                        size={14}
+                        style={{
+                          color: 'var(--text-muted)',
+                          transform: discordOptionsOpen ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.2s',
+                          flexShrink: 0,
+                        }}
                       />
-                    </div>
-                    <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                      <label style={{ fontSize: 12 }}>{t('settings.discordTemplateState')}</label>
-                      <input
-                        className="input"
-                        type="text"
-                        value={auth.discordTemplateState}
-                        onChange={e => auth.setDiscordTemplateState(e.target.value)}
-                        placeholder="{album}"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label style={{ fontSize: 12 }}>{t('settings.discordTemplateLargeText')}</label>
-                      <input
-                        className="input"
-                        type="text"
-                        value={auth.discordTemplateLargeText}
-                        onChange={e => auth.setDiscordTemplateLargeText(e.target.value)}
-                        placeholder="{album}"
-                      />
-                    </div>
+                      <div style={{ flex: 1, fontWeight: 500, fontSize: 13 }}>
+                        {t('settings.discordOptions')}
+                      </div>
+                    </button>
+                    {discordOptionsOpen && (
+                      <div style={{ marginTop: 12 }}>
+                        <div className="settings-toggle-row" style={{ paddingLeft: 0 }}>
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{t('settings.discordAppleCovers')}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.discordAppleCoversDesc')}</div>
+                          </div>
+                          <label className="toggle-switch" aria-label={t('settings.discordAppleCovers')}>
+                            <input type="checkbox" checked={auth.enableAppleMusicCoversDiscord} onChange={e => auth.setEnableAppleMusicCoversDiscord(e.target.checked)} />
+                            <span className="toggle-track" />
+                          </label>
+                        </div>
+                        <div className="settings-section-divider" />
+                        <div style={{ paddingTop: 8 }}>
+                          <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 8 }}>{t('settings.discordTemplates')}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{t('settings.discordTemplatesDesc')}</div>
+                          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                            <label style={{ fontSize: 12 }}>{t('settings.discordTemplateDetails')}</label>
+                            <input
+                              className="input"
+                              type="text"
+                              value={auth.discordTemplateDetails}
+                              onChange={e => auth.setDiscordTemplateDetails(e.target.value)}
+                              placeholder="{artist} - {title}"
+                            />
+                          </div>
+                          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                            <label style={{ fontSize: 12 }}>{t('settings.discordTemplateState')}</label>
+                            <input
+                              className="input"
+                              type="text"
+                              value={auth.discordTemplateState}
+                              onChange={e => auth.setDiscordTemplateState(e.target.value)}
+                              placeholder="{album}"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label style={{ fontSize: 12 }}>{t('settings.discordTemplateLargeText')}</label>
+                            <input
+                              className="input"
+                              type="text"
+                              value={auth.discordTemplateLargeText}
+                              onChange={e => auth.setDiscordTemplateLargeText(e.target.value)}
+                              placeholder="{album}"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

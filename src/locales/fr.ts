@@ -538,6 +538,7 @@ export const frTranslation = {
     discordRichPresenceDesc: 'Affiche le titre en cours de lecture sur votre profil Discord. Discord doit être ouvert.',
     discordAppleCovers: 'Récupérer les pochettes via Apple Music pour Discord',
     discordAppleCoversDesc: 'Envoie le nom de l\'artiste et de l\'album à l\'API Apple pour trouver une pochette pour votre profil Discord. Désactivé par défaut pour des raisons de confidentialité.',
+    discordOptions: 'Options Discord avancées',
     discordTemplates: 'Modèles de texte personnalisés',
     discordTemplatesDesc: 'Personnalisez les informations affichées sur votre profil Discord. Variables : {title}, {artist}, {album}',
     discordTemplateDetails: 'Ligne principale (details)',

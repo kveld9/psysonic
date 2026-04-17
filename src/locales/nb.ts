@@ -537,6 +537,7 @@ export const nbTranslation = {
     discordRichPresenceDesc: 'Vis sporet som spilles i din Discord-profil. Krever at Discord kjører.',
     discordAppleCovers: 'Hent covere fra Apple Music til Discord',
     discordAppleCoversDesc: 'Sender artist- og albumnavn til Apples søke-API for å finne cover til Discord-profilen din. Deaktivert som standard av personvernhensyn.',
+    discordOptions: 'Avanserte Discord-alternativer',
     discordTemplates: 'Egendefinerte tekstmaler',
     discordTemplatesDesc: 'Tilpass hvilken informasjon som vises på Discord-profilen din. Variabler: {title}, {artist}, {album}',
     discordTemplateDetails: 'Primær linje (details)',
