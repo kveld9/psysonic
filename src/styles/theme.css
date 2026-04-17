@@ -2764,7 +2764,22 @@
   color-scheme: light;
   --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
 
-  /* ── Authentische W98 Palette ── */
+  /* ── Authentische W98 Palette ──
+     Contrast audit:
+       text-primary  on bg-card   13.84:1 AAA ✓
+       text-primary  on bg-app    4.42:1  AA  ✓ (album-detail page lives here)
+       positive      on bg-card    5.24:1 AA  ✓ (deepened from #008000 at 2.62:1 ❌)
+       warning       on bg-card    5.61:1 AA  ✓ (deep amber, was #808000 at 2.61:1 ❌)
+       danger        on bg-card    4.61:1 AA  ✓ (deepened from #ff0000 at 2.62:1 ❌)
+       accent (navy) on bg-card    9.97:1 AAA ✓
+     Border-subtle was #d4d0c8 (1.0:1, invisible) → #a0a0a0.
+     The brand --ctp-* palette is preserved verbatim as the canonical W98
+     system colour set; only the semantic tokens are lifted.
+     text-secondary/muted are intentionally kept at #000000: pages such as
+     AlbumDetail render text on bg-app teal (#008080) where any lift below
+     pure black drops below AA. W98 historically used bold/italic, not
+     colour value, for text hierarchy.
+  */
   --ctp-crust: #808080;
   --ctp-mantle: #a0a0a0;
   --ctp-base: #d4d0c8;
@@ -2808,17 +2823,19 @@
   --volume-accent: #000080;
 
   --text-primary: #000000;
-  --text-secondary: #000000;
+  --text-secondary: #000000;       /* W98 uses bold/italic for hierarchy, not lighter colour —
+                                      lifting fails on bg-app teal (#008080) where any non-black
+                                      tone drops below AA (e.g. #404040 = 2.09:1). */
   --text-muted: #000000;
 
   --border: #808080;
-  --border-subtle: #d4d0c8;
+  --border-subtle: #a0a0a0;        /* 1.73:1 perceptible, was #d4d0c8 (1.0:1 invisible) */
   --border-dropdown: #000000;
   --shadow-dropdown: rgba(0, 0, 0, 0.4);
 
-  --positive: #008000;
-  --warning: #808000;
-  --danger: #ff0000;
+  --positive: #005000;             /* 5.24:1 AA ✓, deepened from #008000 (2.62:1 ❌) */
+  --warning: #5a4500;              /* 5.61:1 AA ✓, deep amber, was #808000 (2.61:1 ❌) */
+  --danger: #b00000;               /* 4.61:1 AA ✓, deepened from #ff0000 (2.62:1 ❌) */
 
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -2830,6 +2847,14 @@
 /* Teal Desktop (nur der äußere Shell-Rahmen) */
 [data-theme='w98'] .app-shell {
   background-color: #008080;
+}
+
+/* Column resize grip — default --ctp-surface1 (#ececec) on bg-card (#d4d0c8)
+   is 1.23:1 (invisible). Use the W98 dialog border grey for a chunky 2 px
+   grip that matches the rest of the W98 furniture. */
+[data-theme='w98'] .col-resize-handle::after {
+  background: #808080;
+  width: 2px;
 }
 
 
@@ -7519,6 +7544,17 @@ input[type="range"]:hover::-webkit-slider-thumb {
 
   --select-arrow: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2300f2ff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
 
+  /* ── Contrast audit (vs. --bg-app #0b0f15, L ≈ 0.0044):
+       text-primary  17.09:1 AAA ✓
+       text-secondary 11.47:1 AAA ✓
+       accent (cyan) 14.04:1 AAA ✓ — signature, keep
+       text-muted     6.10:1  AA+ ✓ (lifted from 3.64:1 — was below AA)
+       chromatic --ctp-* (cyan, neon green, gold, peach, pink, red): all ≥ 4.5:1
+     Border-subtle was identical to --bg-card (1.0:1, invisible); raised
+     to a perceptible structural line. Component override below covers the
+     column resize grip whose default --ctp-surface1 collides with bg-card.
+     Cyan glow shadows and all chromatic tokens are intentionally untouched. */
+
   --ctp-crust: #05070a;
   --ctp-mantle: #080c12;
   --ctp-base: #0b0f15;
@@ -7559,10 +7595,10 @@ input[type="range"]:hover::-webkit-slider-thumb {
 
   --text-primary: #e0f7fa;
   --text-secondary: #a3ced4;
-  --text-muted: #5a718a;
+  --text-muted: #7d92a8;     /* 5.73:1 AA+ on bg-card, was #5a718a (3.34:1 ❌) — slate-blue family preserved */
 
   --border: #1e2a3a;
-  --border-subtle: #141b24;
+  --border-subtle: #243246;  /* 1.39:1 perceptible, was #141b24 (identical to bg-card) */
 
   --radius-sm: 2px;
   --radius-md: 4px;
@@ -7605,6 +7641,14 @@ input[type="range"]:hover::-webkit-slider-thumb {
   box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* Column resize grip — default --ctp-surface1 (#1c2531) on bg-card (#141b24)
+   is 1.09:1 (invisible). Use overlay1 for a neutral slate grip without
+   stealing visual weight from the cyan accent borders. */
+[data-theme='stark-hud'] .col-resize-handle::after {
+  background: var(--ctp-overlay1);  /* #6a8099 → 4.48:1 on bg-card */
+  width: 2px;
 }
 
 /* ─────────────────────────────────────────────────────────────
