@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import AlbumCard from '../components/AlbumCard';
 import GenreFilterBar from '../components/GenreFilterBar';
+import YearFilterButton from '../components/YearFilterButton';
 import { getAlbumList, getAlbumsByGenre, getAlbum, SubsonicAlbum, buildDownloadUrl } from '../api/subsonic';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
@@ -11,13 +12,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
 import { showToast } from '../utils/toast';
 import { useZipDownloadStore } from '../store/zipDownloadStore';
-import { X, CheckSquare2, Download, HardDriveDownload, ListMusic, Disc3 } from 'lucide-react';
+import { CheckSquare2, Download, HardDriveDownload, ListMusic, Disc3 } from 'lucide-react';
 
 type SortType = 'alphabeticalByName' | 'alphabeticalByArtist';
 type CompFilter = 'all' | 'only' | 'hide';
 
 const PAGE_SIZE = 30;
-const CURRENT_YEAR = new Date().getFullYear();
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'download';
@@ -191,8 +191,6 @@ export default function Albums() {
     return () => observer.disconnect();
   }, [loadMore]);
 
-  const clearYear = () => { setYearFrom(''); setYearTo(''); };
-
   const sortOptions: { value: SortType; label: string }[] = [
     { value: 'alphabeticalByName',   label: t('albums.sortByName') },
     { value: 'alphabeticalByArtist', label: t('albums.sortByArtist') },
@@ -231,41 +229,11 @@ export default function Albums() {
                 </button>
               ))}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontSize: 14, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {t('albums.yearFilterLabel')}
-                </span>
-                <input
-                  className="input"
-                  type="number"
-                  min={1900}
-                  max={CURRENT_YEAR}
-                  placeholder={t('albums.yearFrom')}
-                  value={yearFrom}
-                  onChange={e => setYearFrom(e.target.value)}
-                  style={{ width: 76, padding: 'var(--space-2) var(--space-2)' }}
-                />
-                <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>–</span>
-                <input
-                  className="input"
-                  type="number"
-                  min={1900}
-                  max={CURRENT_YEAR}
-                  placeholder={t('albums.yearTo')}
-                  value={yearTo}
-                  onChange={e => setYearTo(e.target.value)}
-                  style={{ width: 76, padding: 'var(--space-2) var(--space-2)' }}
-                />
-                {yearActive && (
-                  <button
-                    className="btn btn-ghost"
-                    onClick={clearYear}
-                    data-tooltip={t('albums.yearFilterClear')}
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
+              <YearFilterButton
+                from={yearFrom}
+                to={yearTo}
+                onChange={(from, to) => { setYearFrom(from); setYearTo(to); }}
+              />
 
               <GenreFilterBar selected={selectedGenres} onSelectionChange={setSelectedGenres} />
 
