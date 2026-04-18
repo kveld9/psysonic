@@ -6048,97 +6048,110 @@ html.no-compositing .fsr-lyric-line.fsrl-active .fsr-lyric-word.active {
 }
 
 /* ─ Genre Filter Bar ─ */
-.genre-filter-tagbox {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  background: var(--bg-card);
-  min-width: 220px;
-  cursor: text;
-  transition: border-color 0.15s;
-}
-
-.genre-filter-tagbox:focus-within {
-  border-color: var(--accent);
-}
-
-.genre-filter-chip {
+.genre-filter-count {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.15rem 0.3rem 0.15rem 0.5rem;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 0.35rem;
+  border-radius: 9px;
   background: var(--accent);
   color: var(--ctp-crust);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.genre-filter-chip button {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  opacity: 0.75;
+  font-size: 0.7rem;
+  font-weight: 700;
   line-height: 1;
 }
 
-.genre-filter-chip button:hover { opacity: 1; }
-
-.genre-filter-input {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  min-width: 100px;
-  flex: 1;
-  padding: 0.1rem 0;
-}
-
-.genre-filter-input::placeholder { color: var(--text-muted); }
-
-.genre-filter-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+.genre-filter-popover {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  max-height: 220px;
-  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
-  z-index: 500;
 }
 
-.genre-filter-option {
-  padding: 0.45rem 0.75rem;
+.genre-filter-popover__search {
+  padding: 0.55rem 0.6rem 0.4rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.genre-filter-popover__search input {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.genre-filter-popover__search input:focus {
+  border-color: var(--accent);
+}
+
+.genre-filter-popover__list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem 0;
+}
+
+.genre-filter-popover__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.7rem;
   font-size: 0.85rem;
   color: var(--text-primary);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  user-select: none;
 }
 
-.genre-filter-option:hover {
+.genre-filter-popover__option:hover {
   background: var(--bg-hover);
-  color: var(--accent);
 }
 
-.genre-filter-empty {
-  padding: 0.6rem 0.75rem;
+.genre-filter-popover__option--selected {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.genre-filter-popover__check {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ctp-crust);
+  background: transparent;
+}
+
+.genre-filter-popover__option--selected .genre-filter-popover__check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.genre-filter-popover__empty {
+  padding: 0.75rem;
   font-size: 0.82rem;
   color: var(--text-muted);
+  text-align: center;
+}
+
+.genre-filter-popover__footer {
+  padding: 0.4rem 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* ─ Genre Cards ─ */

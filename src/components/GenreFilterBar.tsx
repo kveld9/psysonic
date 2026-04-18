@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Filter, X } from 'lucide-react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, Filter, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getGenres } from '../api/subsonic';
 
@@ -13,8 +14,10 @@ export default function GenreFilterBar({ selected, onSelectionChange }: GenreFil
   const [open, setOpen] = useState(false);
   const [genres, setGenres] = useState<string[]>([]);
   const [search, setSearch] = useState('');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [popStyle, setPopStyle] = useState<React.CSSProperties>({});
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -23,124 +26,178 @@ export default function GenreFilterBar({ selected, onSelectionChange }: GenreFil
     );
   }, []);
 
-  // close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
 
-  // sync open state with selection
-  useEffect(() => {
-    if (selected.length > 0) setOpen(true);
-  }, [selected]);
+  // Selected on top, then alphabetical (stable for comfortable scanning).
+  const sortedGenres = useMemo(() => {
+    const arr = [...genres];
+    arr.sort((a, b) => {
+      const sa = selectedSet.has(a) ? 0 : 1;
+      const sb = selectedSet.has(b) ? 0 : 1;
+      if (sa !== sb) return sa - sb;
+      return a.localeCompare(b);
+    });
+    return arr;
+  }, [genres, selectedSet]);
 
-  const filteredOptions = genres.filter(
-    g => !selected.includes(g) && g.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredGenres = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sortedGenres;
+    return sortedGenres.filter(g => g.toLowerCase().includes(q));
+  }, [sortedGenres, search]);
 
-  const add = (genre: string) => {
-    onSelectionChange([...selected, genre]);
-    setSearch('');
-    inputRef.current?.focus();
+  const updatePopStyle = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const MARGIN = 6;
+    const WIDTH = 280;
+    const MAX_H = 360;
+    const spaceBelow = window.innerHeight - rect.bottom - MARGIN;
+    const spaceAbove = rect.top - MARGIN;
+    const useAbove = spaceBelow < 160 && spaceAbove > spaceBelow;
+    const left = Math.min(
+      Math.max(rect.left, 8),
+      window.innerWidth - WIDTH - 8,
+    );
+    setPopStyle({
+      position: 'fixed',
+      left,
+      width: WIDTH,
+      ...(useAbove
+        ? { bottom: window.innerHeight - rect.top + MARGIN }
+        : { top: rect.bottom + MARGIN }),
+      maxHeight: Math.min(MAX_H, useAbove ? spaceAbove : spaceBelow),
+      zIndex: 99998,
+    });
   };
 
-  const remove = (genre: string) => {
-    onSelectionChange(selected.filter(s => s !== genre));
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePopStyle();
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onResize = () => updatePopStyle();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, true);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onResize, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (
+        !triggerRef.current?.contains(e.target as Node) &&
+        !popRef.current?.contains(e.target as Node)
+      ) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const toggle = (genre: string) => {
+    if (selectedSet.has(genre)) onSelectionChange(selected.filter(s => s !== genre));
+    else onSelectionChange([...selected, genre]);
   };
 
   const clear = () => {
     onSelectionChange([]);
     setSearch('');
-    setOpen(false);
-    setDropdownOpen(false);
   };
 
-  const openFilter = () => {
-    setOpen(true);
-    setTimeout(() => { inputRef.current?.focus(); setDropdownOpen(true); }, 30);
-  };
-
-  if (!open) {
-    return (
-      <button className="btn btn-surface" onClick={openFilter} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-        <Filter size={14} />
-        {t('common.filterGenre')}
-      </button>
-    );
-  }
-
-  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    // relatedTarget is the next focused element; if it's outside our container, handle close
-    const next = e.relatedTarget as Node | null;
-    if (containerRef.current && next && containerRef.current.contains(next)) return;
-    setTimeout(() => {
-      if (selected.length === 0) {
-        setOpen(false);
-        setSearch('');
-        setDropdownOpen(false);
-      } else {
-        setDropdownOpen(false);
-      }
-    }, 150);
-  };
+  const count = selected.length;
 
   return (
-    <div ref={containerRef} onBlur={handleBlur} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-      <Filter size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`btn btn-surface${count > 0 ? ' btn-sort-active' : ''}`}
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+      >
+        <Filter size={14} />
+        {t('common.filterGenre')}
+        {count > 0 && <span className="genre-filter-count">{count}</span>}
+      </button>
 
-      <div className="genre-filter-tagbox">
-        {selected.map(g => (
-          <span key={g} className="genre-filter-chip">
-            {g}
-            <button onClick={() => remove(g)} aria-label={`Remove ${g}`}>
-              <X size={11} />
-            </button>
-          </span>
-        ))}
+      {open && createPortal(
+        <div
+          ref={popRef}
+          className="genre-filter-popover"
+          style={popStyle}
+          role="dialog"
+        >
+          <div className="genre-filter-popover__search">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={t('common.filterSearchGenres')}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && filteredGenres.length > 0) {
+                  toggle(filteredGenres[0]);
+                }
+              }}
+            />
+          </div>
 
-        <input
-          ref={inputRef}
-          className="genre-filter-input"
-          placeholder={selected.length === 0 ? t('common.filterSearchGenres') : ''}
-          value={search}
-          onChange={e => { setSearch(e.target.value); setDropdownOpen(true); }}
-          onFocus={() => setDropdownOpen(true)}
-          onKeyDown={e => {
-            if (e.key === 'Escape') { setDropdownOpen(false); e.currentTarget.blur(); }
-            if (e.key === 'Backspace' && search === '' && selected.length > 0) {
-              remove(selected[selected.length - 1]);
-            }
-          }}
-        />
-
-        {dropdownOpen && filteredOptions.length > 0 && (
-          <div className="genre-filter-dropdown" onWheel={e => e.stopPropagation()}>
-            {filteredOptions.slice(0, 60).map(g => (
-              <div key={g} className="genre-filter-option" onMouseDown={() => add(g)}>
-                {g}
+          <div className="genre-filter-popover__list">
+            {filteredGenres.length === 0 ? (
+              <div className="genre-filter-popover__empty">
+                {t('common.filterNoGenres')}
               </div>
-            ))}
+            ) : (
+              filteredGenres.map(g => {
+                const isSel = selectedSet.has(g);
+                return (
+                  <div
+                    key={g}
+                    className={`genre-filter-popover__option${isSel ? ' genre-filter-popover__option--selected' : ''}`}
+                    onClick={() => toggle(g)}
+                    role="option"
+                    aria-selected={isSel}
+                  >
+                    <span className="genre-filter-popover__check">
+                      {isSel && <Check size={12} strokeWidth={3} />}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {g}
+                    </span>
+                  </div>
+                );
+              })
+            )}
           </div>
-        )}
 
-        {dropdownOpen && filteredOptions.length === 0 && search.length > 0 && (
-          <div className="genre-filter-dropdown" onWheel={e => e.stopPropagation()}>
-            <div className="genre-filter-empty">{t('common.filterNoGenres')}</div>
-          </div>
-        )}
-      </div>
-
-      {selected.length > 0 && (
-        <button className="btn btn-ghost" onClick={clear} style={{ padding: '0.35rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
-          <X size={13} />
-          {t('common.filterClear')}
-        </button>
+          {count > 0 && (
+            <div className="genre-filter-popover__footer">
+              <button
+                className="btn btn-ghost"
+                onClick={clear}
+                style={{ padding: '0.3rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}
+              >
+                <X size={13} />
+                {t('common.filterClear')}
+              </button>
+            </div>
+          )}
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   );
 }
