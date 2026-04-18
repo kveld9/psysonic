@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import AlbumCard from '../components/AlbumCard';
 import GenreFilterBar from '../components/GenreFilterBar';
 import YearFilterButton from '../components/YearFilterButton';
+import SortDropdown from '../components/SortDropdown';
 import { getAlbumList, getAlbumsByGenre, getAlbum, SubsonicAlbum, buildDownloadUrl } from '../api/subsonic';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
@@ -218,16 +219,13 @@ export default function Albums() {
             </>
           ) : (
             <>
-              {!yearActive && sortOptions.map(o => (
-                <button
-                  key={o.value}
-                  className={`btn btn-surface ${sort === o.value ? 'btn-sort-active' : ''}`}
-                  onClick={() => setSort(o.value)}
-                  style={sort === o.value ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}}
-                >
-                  {o.label}
-                </button>
-              ))}
+              {!yearActive && (
+                <SortDropdown
+                  value={sort}
+                  options={sortOptions}
+                  onChange={setSort}
+                />
+              )}
 
               <YearFilterButton
                 from={yearFrom}
