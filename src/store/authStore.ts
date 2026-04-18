@@ -65,6 +65,8 @@ interface AuthState {
   discordTemplateState: string;
   discordTemplateLargeText: string;
   useCustomTitlebar: boolean;
+  /** Linux WebKitGTK: smooth wheel on when true; off only after explicit opt-out in Settings. */
+  linuxWebkitKineticScroll: boolean;
   nowPlayingEnabled: boolean;
   lyricsServerFirst: boolean;
   enableNeteaselyrics: boolean;
@@ -209,6 +211,7 @@ interface AuthState {
   setDiscordTemplateState: (v: string) => void;
   setDiscordTemplateLargeText: (v: string) => void;
   setUseCustomTitlebar: (v: boolean) => void;
+  setLinuxWebkitKineticScroll: (v: boolean) => void;
   setNowPlayingEnabled: (v: boolean) => void;
   setLyricsServerFirst: (v: boolean) => void;
   setEnableNeteaselyrics: (v: boolean) => void;
@@ -314,6 +317,7 @@ export const useAuthStore = create<AuthState>()(
       discordTemplateState: '{album}',
       discordTemplateLargeText: '{album}',
       useCustomTitlebar: false,
+      linuxWebkitKineticScroll: true,
       nowPlayingEnabled: false,
       lyricsServerFirst: true,
       enableNeteaselyrics: false,
@@ -443,6 +447,7 @@ export const useAuthStore = create<AuthState>()(
       setDiscordTemplateState: (v) => set({ discordTemplateState: v }),
       setDiscordTemplateLargeText: (v) => set({ discordTemplateLargeText: v }),
       setUseCustomTitlebar: (v) => set({ useCustomTitlebar: v }),
+      setLinuxWebkitKineticScroll: (v) => set({ linuxWebkitKineticScroll: v }),
       setNowPlayingEnabled: (v) => set({ nowPlayingEnabled: v }),
       setLyricsServerFirst: (v: boolean) => set({ lyricsServerFirst: v }),
       setEnableNeteaselyrics: (v: boolean) => set({ enableNeteaselyrics: v }),
@@ -630,6 +635,18 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch { /* ignore */ }
 
+        // One-time: older builds could persist smooth=false as the default. Force smooth on once
+        // so updates do not leave users on discrete scrolling; after this flag exists, only an
+        // explicit toggle in Settings may turn it off (persisted in psysonic-auth).
+        const wheelSmoothMigrationKey = 'psysonic-linux-webkit-smooth-v1';
+        let wheelSmoothOneTime: { linuxWebkitKineticScroll?: boolean } = {};
+        try {
+          if (!localStorage.getItem(wheelSmoothMigrationKey)) {
+            wheelSmoothOneTime = { linuxWebkitKineticScroll: true };
+            localStorage.setItem(wheelSmoothMigrationKey, '1');
+          }
+        } catch { /* ignore */ }
+
         useAuthStore.setState({
           mixMinRatingSong: clampMixFilterMinStars(state.mixMinRatingSong as number),
           mixMinRatingAlbum: clampMixFilterMinStars(state.mixMinRatingAlbum as number),
@@ -639,6 +656,7 @@ export const useAuthStore = create<AuthState>()(
           ),
           ...conflictingLegacyState,
           ...lyricsSourcesMigrated,
+          ...wheelSmoothOneTime,
         });
       },
     }
