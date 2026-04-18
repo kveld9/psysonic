@@ -128,6 +128,25 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.settings.args }}
+      - name: upload updater signature (macOS only)
+        if: runner.os == 'macOS'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ needs.create-release.outputs.package_version }}
+          SIG=$(find src-tauri/target -path '*/release/bundle/macos/*.app.tar.gz.sig' | head -1)
+          if [ -z "$SIG" ]; then
+            echo "::error::No .sig file found under src-tauri/target/*/release/bundle/macos/"
+            exit 1
+          fi
+          echo "Found signature: $SIG"
+          if echo "$SIG" | grep -q 'aarch64-apple-darwin'; then
+            DST="Psysonic_aarch64.app.tar.gz.sig"
+          else
+            DST="Psysonic_x64.app.tar.gz.sig"
+          fi
+          cp "$SIG" "$DST"
+          gh release upload "app-v${VERSION}" "$DST" --clobber
 
   generate-manifest:
     needs: [create-release, build-macos-windows]

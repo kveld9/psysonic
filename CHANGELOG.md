@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 >
 > **🎉 macOS users:** Starting with **v1.34.15**, Psysonic can **update itself silently**. No more DMG downloading and dragging to Applications — the updater fetches the signed `.app` bundle, verifies the signature, replaces the app in place, and relaunches. Just click "Update" when the toast appears.
 
+## [1.34.16] - 2026-04-18
+
+### Fixed
+
+- **CI — Updater signature upload** *(by [@Psychotoxical](https://github.com/Psychotoxical))*: tauri-action on macOS produces the `.app.tar.gz.sig` minisign signature locally but does not upload it as a release asset for cross-target builds, which caused the `latest.json` manifest generator to fail (no signature to embed). An explicit post-build step now finds the `.sig` under `src-tauri/target/*/release/bundle/macos/` and uploads it with the expected filename (`Psysonic_aarch64.app.tar.gz.sig` / `Psysonic_x64.app.tar.gz.sig`).
+
 ## [1.34.15] - 2026-04-18
 
 ### Added
