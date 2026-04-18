@@ -281,7 +281,15 @@ jobs:
         run: nix flake update --accept-flake-config
 
       - name: verify nix build + push to Cachix
-        run: nix build .#psysonic --accept-flake-config --no-link --print-build-logs
+        run: |
+          set -euo pipefail
+          nix build .#psysonic --accept-flake-config --no-link --print-build-logs
+          # The cachix-action daemon writes a post-build-hook into the user
+          # nix.conf, but the Determinate Nix daemon that runs the builds reads
+          # the system nix.conf — so the hook never fires and only a couple of
+          # early prep paths get uploaded. Force an explicit closure push here;
+          # cachix dedupes against anything already in the cache.
+          nix path-info --recursive .#psysonic | cachix push psysonic
 
       - name: commit + push refreshed lock and hash (if changed)
         run: |
