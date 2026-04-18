@@ -19,7 +19,7 @@
 ---
 
 <div align="center">
-  <a href="https://discord.gg/ckVPGPMS">
+  <a href="https://discord.gg/AMnDRErm4u">
     <img src="https://img.shields.io/badge/Join%20the%20Psysonic%20Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white" alt="Join Discord"/>
   </a>
   <p>Have questions, ideas, or just want to hang out? Come chat in our Discord server!</p>
