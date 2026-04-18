@@ -130,17 +130,16 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.settings.args }}
-          # Disable tauri-action's own .app.tar.gz re-packaging + updater JSON
-          # upload — its repack overwrites the .app.tar.gz produced by tauri
-          # CLI and invalidates the matching .sig (the tauri-created signature
-          # no longer matches the repacked tarball's hash, so tauri-action
-          # silently drops the .sig). We upload both files ourselves below,
-          # and the generate-manifest job assembles latest.json.
-          includeUpdaterJson: false
-      - name: upload updater bundle + signature (macOS only)
+      - name: re-sign updater bundle + upload .sig (macOS only)
+        # tauri-action re-packs the .app into .app.tar.gz after tauri CLI is
+        # done, which invalidates the .sig tauri CLI created (different hash).
+        # We can't stop the repack (it's tied to includeUpdaterJson), so we
+        # sign the final repacked .tar.gz ourselves and upload the fresh .sig.
         if: runner.os == 'macOS'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           set -e
           VERSION=${{ needs.create-release.outputs.package_version }}
@@ -152,11 +151,15 @@ jobs:
             TARGET="x86_64-apple-darwin"
             ARCH="x64"
           fi
-          BUNDLE_DIR="src-tauri/target/${TARGET}/release/bundle/macos"
-          cp "${BUNDLE_DIR}/Psysonic.app.tar.gz"     "Psysonic_${ARCH}.app.tar.gz"
-          cp "${BUNDLE_DIR}/Psysonic.app.tar.gz.sig" "Psysonic_${ARCH}.app.tar.gz.sig"
+          TARBALL="src-tauri/target/${TARGET}/release/bundle/macos/Psysonic.app.tar.gz"
+          if [ ! -f "$TARBALL" ]; then
+            echo "::error::Expected tarball missing: $TARBALL"
+            ls -la "$(dirname "$TARBALL")" || true
+            exit 1
+          fi
+          npx @tauri-apps/cli signer sign "$TARBALL"
+          cp "${TARBALL}.sig" "Psysonic_${ARCH}.app.tar.gz.sig"
           gh release upload "app-v${VERSION}" \
-            "Psysonic_${ARCH}.app.tar.gz" \
             "Psysonic_${ARCH}.app.tar.gz.sig" \
             --clobber
 
