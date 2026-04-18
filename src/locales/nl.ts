@@ -217,6 +217,9 @@ export const nlTranslation = {
     clearArtistFilter: 'Artiestfilter wissen',
     noFilterResults: 'Geen resultaten met de geselecteerde filters.',
     allArtists: 'Alle artiesten',
+    topArtists: 'Top-artiesten op favorieten',
+    topArtistsSongCount_one: '{{count}} nummer',
+    topArtistsSongCount_other: '{{count}} nummers',
   },
   randomLanding: {
     title: 'Mix samenstellen',

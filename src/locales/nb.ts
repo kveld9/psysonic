@@ -218,6 +218,9 @@ export const nbTranslation = {
     clearArtistFilter: 'Tøm artistfilter',
     noFilterResults: 'Ingen resultater med valgte filtre.',
     allArtists: 'Alle artister',
+    topArtists: 'Toppartister etter favoritter',
+    topArtistsSongCount_one: '{{count}} sang',
+    topArtistsSongCount_other: '{{count}} sanger',
   },
   randomLanding: {
     title: 'Lag en miks',

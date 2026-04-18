@@ -217,6 +217,9 @@ export const zhTranslation = {
     clearArtistFilter: '清除艺术家筛选',
     noFilterResults: '所选筛选条件下无结果。',
     allArtists: '全部艺术家',
+    topArtists: '按收藏数排行的艺术家',
+    topArtistsSongCount_one: '{{count}} 首歌曲',
+    topArtistsSongCount_other: '{{count}} 首歌曲',
   },
   randomLanding: {
     title: '创建混音',

@@ -219,6 +219,9 @@ export const enTranslation = {
     clearArtistFilter: 'Clear artist filter',
     noFilterResults: 'No results with selected filters.',
     allArtists: 'All Artists',
+    topArtists: 'Top Artists by Favorites',
+    topArtistsSongCount_one: '{{count}} song',
+    topArtistsSongCount_other: '{{count}} songs',
   },
   randomLanding: {
     title: 'Build a Mix',

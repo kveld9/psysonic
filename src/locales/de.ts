@@ -218,6 +218,9 @@ export const deTranslation = {
     clearArtistFilter: 'Künstlerfilter zurücksetzen',
     noFilterResults: 'Keine Ergebnisse mit den ausgewählten Filtern.',
     allArtists: 'Alle Künstler',
+    topArtists: 'Top-Künstler nach Favoriten',
+    topArtistsSongCount_one: '{{count}} Song',
+    topArtistsSongCount_other: '{{count}} Songs',
   },
   randomLanding: {
     title: 'Mix erstellen',

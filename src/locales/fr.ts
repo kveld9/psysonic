@@ -218,6 +218,9 @@ export const frTranslation = {
     clearArtistFilter: 'Effacer le filtre artiste',
     noFilterResults: 'Aucun résultat avec les filtres sélectionnés.',
     allArtists: 'Tous les artistes',
+    topArtists: 'Artistes favoris principaux',
+    topArtistsSongCount_one: '{{count}} morceau',
+    topArtistsSongCount_other: '{{count}} morceaux',
   },
   randomLanding: {
     title: 'Créer un mix',

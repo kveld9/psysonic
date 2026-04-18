@@ -219,6 +219,9 @@ export const esTranslation = {
     clearArtistFilter: 'Limpiar filtro de artista',
     noFilterResults: 'No hay resultados con los filtros seleccionados.',
     allArtists: 'Todos los Artistas',
+    topArtists: 'Artistas favoritos principales',
+    topArtistsSongCount_one: '{{count}} canción',
+    topArtistsSongCount_other: '{{count}} canciones',
   },
   randomLanding: {
     title: 'Crear Mezcla',

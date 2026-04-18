@@ -222,6 +222,11 @@ export const ruTranslation = {
     clearArtistFilter: 'Сбросить фильтр исполнителя',
     noFilterResults: 'Нет результатов с выбранными фильтрами.',
     allArtists: 'Все исполнители',
+    topArtists: 'Топ исполнителей по избранному',
+    topArtistsSongCount_one: '{{count}} трек',
+    topArtistsSongCount_few: '{{count}} трека',
+    topArtistsSongCount_many: '{{count}} треков',
+    topArtistsSongCount_other: '{{count}} трека',
   },
   randomLanding: {
     title: 'Собрать микс',
