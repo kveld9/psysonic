@@ -2645,6 +2645,7 @@
 .lyrics-pane {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   /* scroll-behavior intentionally left to auto — JS drives smooth scroll imperatively */
   padding: 16px 16px 8px;
   scrollbar-width: thin;
@@ -2680,6 +2681,9 @@
   border-radius: 6px;
   line-height: 1.55;
   cursor: default;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
   transform-origin: center center;
   /* All transitions are compositor-friendly */
   transition:
@@ -2726,7 +2730,7 @@
   display: inline;
   transition: color 160ms ease, text-shadow 160ms ease;
   color: inherit;
-  white-space: pre;
+  white-space: pre-wrap;
 }
 .lyrics-word.played {
   color: var(--text-secondary);
@@ -3529,6 +3533,7 @@
   overflow-x: hidden;
   scrollbar-width: none;
   padding: 0 clamp(28px, 5vw, 72px);
+  overscroll-behavior-x: none;
   /* pointer-events on children only — container itself scrollable */
   pointer-events: auto;
 }
@@ -3562,6 +3567,8 @@
   user-select: none;
   word-break: break-word;
   overflow-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
   transform-origin: left center;
   /* All visual changes are compositor-friendly (color, text-shadow, transform) */
   transition:
@@ -3603,7 +3610,7 @@
 
 .fsa-lyric-word {
   display: inline;
-  white-space: pre;  /* preserve trailing spaces from lyricsplus tokens */
+  white-space: pre-wrap;  /* preserves trailing spaces from lyricsplus tokens, allows wrapping */
   transition: color 160ms ease, text-shadow 160ms ease;
 }
 
