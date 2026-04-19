@@ -159,6 +159,7 @@ const CONTRIBUTORS = [
       'Tracklist column picker alignment and toggle fix across Favorites and PlaylistDetail (PR #192)',
       'CSV import: dynamic match threshold, cleaned title search, score display in report (PR #199)',
       'Discord Rich Presence: configurable text templates for details, state and album tooltip (PR #198)',
+      'Click-to-toggle duration / remaining time in player bar with persisted preference (PR #212)',
     ],
   },
   {
