@@ -434,40 +434,20 @@ const FsSeekbar = memo(function FsSeekbar({ duration }: { duration: number }) {
   const inputRef    = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Cache the last applied values so we can skip DOM writes when nothing
-    // changed. The store subscription fires on every state change (queue,
-    // volume, currentTrack…), not just progress, so without this guard we
-    // were writing identical width/textContent strings dozens of times per
-    // second — each one triggers a style invalidation in WebKitGTK.
-    let lastTime  = -1;
-    let lastPct   = -1;
-    let lastBufW  = -1;
-    let lastProg  = -1;
+    const s = usePlayerStore.getState();
+    const pct = s.progress * 100;
+    if (timeRef.current)   timeRef.current.textContent  = formatTime(s.currentTime);
+    if (playedRef.current) playedRef.current.style.width = `${pct}%`;
+    if (bufRef.current)    bufRef.current.style.width    = `${Math.max(pct, s.buffered * 100)}%`;
+    if (inputRef.current)  inputRef.current.value        = String(s.progress);
 
-    const apply = (s: ReturnType<typeof usePlayerStore.getState>) => {
-      const pct  = s.progress * 100;
-      const bufW = Math.max(pct, s.buffered * 100);
-      const sec  = s.currentTime | 0;
-      if (sec !== lastTime) {
-        lastTime = sec;
-        if (timeRef.current) timeRef.current.textContent = formatTime(s.currentTime);
-      }
-      if (pct !== lastPct) {
-        lastPct = pct;
-        if (playedRef.current) playedRef.current.style.width = `${pct}%`;
-      }
-      if (bufW !== lastBufW) {
-        lastBufW = bufW;
-        if (bufRef.current) bufRef.current.style.width = `${bufW}%`;
-      }
-      if (s.progress !== lastProg) {
-        lastProg = s.progress;
-        if (inputRef.current) inputRef.current.value = String(s.progress);
-      }
-    };
-
-    apply(usePlayerStore.getState());
-    return usePlayerStore.subscribe(apply);
+    return usePlayerStore.subscribe(state => {
+      const p = state.progress * 100;
+      if (timeRef.current)   timeRef.current.textContent  = formatTime(state.currentTime);
+      if (playedRef.current) playedRef.current.style.width = `${p}%`;
+      if (bufRef.current)    bufRef.current.style.width    = `${Math.max(p, state.buffered * 100)}%`;
+      if (inputRef.current)  inputRef.current.value        = String(state.progress);
+    });
   }, []);
 
   const handleSeek = useCallback(

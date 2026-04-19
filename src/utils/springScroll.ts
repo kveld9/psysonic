@@ -40,15 +40,6 @@ export class SpringScroller {
 
   scrollTo(targetY: number) {
     this.target = Math.max(0, targetY);
-    // Software-rendered Linux: replace our 60 fps rAF spring with the
-    // browser's native smooth scroll. The browser handles easing internally
-    // (one animation, not 60 JS callbacks per second) and we still get a
-    // smooth visual instead of a hard snap.
-    if (document.documentElement.classList.contains('no-compositing')) {
-      this.stop();
-      this.container.scrollTo({ top: this.target, behavior: 'smooth' });
-      return;
-    }
     if (this.rafId === null) this.tick();
   }
 
