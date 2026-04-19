@@ -143,6 +143,7 @@ function AppShell() {
   const useCustomTitlebar = useAuthStore(s => s.useCustomTitlebar);
   const linuxWebkitKineticScroll = useAuthStore(s => s.linuxWebkitKineticScroll);
   const setEntityRatingSupport = useAuthStore(s => s.setEntityRatingSupport);
+  const floatingPlayerBar = useThemeStore(s => s.floatingPlayerBar);
   const offlineAlbums = useOfflineStore(s => s.albums);
   const hasOfflineContent = Object.values(offlineAlbums).some(a => a.serverId === serverId);
 
@@ -350,6 +351,7 @@ function AppShell() {
       data-mobile-player={isMobilePlayer || undefined}
       data-titlebar={(IS_LINUX && useCustomTitlebar && !isWindowFullscreen && !isTilingWm) || undefined}
       data-fullscreen={isWindowFullscreen || undefined}
+      data-floating-player-bar={floatingPlayerBar || undefined}
       style={{
         '--sidebar-width': isMobile ? '0px' : (isSidebarCollapsed ? '72px' : 'clamp(200px, 15vw, 220px)'),
         '--queue-width': isMobile ? '0px' : (isQueueVisible ? `${queueWidth}px` : '0px')

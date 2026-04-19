@@ -15412,3 +15412,13 @@ input[type="range"]:hover::-webkit-slider-thumb {
   --warning:  #c8c060;
   --danger:   #e07878;
 }
+
+/* ── Liquid Glass: player-btn-primary override (only when toggle active) ── */
+[data-theme] .app-shell[data-floating-player-bar] .player-bar .player-btn.player-btn-primary {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  box-shadow: inset 0 1.5px 0px rgba(255, 255, 255, 0.5), inset 0 -1px 0px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}

@@ -748,6 +748,8 @@ export const ruTranslation = {
     playlistCoverPhotoSub: 'Показывать сетку обложек в детальном виде плейлиста',
     showBitrate: 'Показывать Битрейт',
     showBitrateSub: 'Отображать битрейт аудио в списках треков',
+    floatingPlayerBar: 'Плавающая Панель Воспроизведения',
+    floatingPlayerBarSub: 'Включает плавающую панель воспроизведения в стиле liquid glass с эффектом преломления',
     uiScaleTitle: 'Масштаб интерфейса',
     uiScaleLabel: 'Масштаб',
   },

@@ -731,6 +731,8 @@ export const deTranslation = {
     playlistCoverPhotoSub: 'Zeigt Coverfoto-Raster in der Playlist-Detailansicht',
     showBitrate: 'Bitrate anzeigen',
     showBitrateSub: 'Audio-Bitrate in Track-Listen anzeigen',
+    floatingPlayerBar: 'Schwebende Wiedergabeleiste',
+    floatingPlayerBarSub: 'Aktiviert schwebende Wiedergabeleiste mit Liquid-Glass-Stil und Brechungseffekt',
     uiScaleTitle: 'Interface-Skalierung',
     uiScaleLabel: 'Zoom',
   },

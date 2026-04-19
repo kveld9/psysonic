@@ -1224,6 +1224,179 @@
   color: var(--text-primary);
 }
 
+/* ─── Floating Player Bar — Liquid Glass (Authentic) ─── */
+.app-shell[data-floating-player-bar] {
+  grid-template-rows: minmax(0, 1fr) 0px;
+}
+
+.app-shell[data-floating-player-bar][data-titlebar] {
+  grid-template-rows: var(--titlebar-height) minmax(0, 1fr) 0px;
+}
+
+.app-shell[data-floating-player-bar] .player-bar {
+  position: fixed;
+  bottom: 16px;
+  left: calc(var(--sidebar-width) + 16px);
+  right: calc(var(--queue-width) + 16px);
+  height: calc(var(--player-height) - 8px);
+  margin: 0;
+
+  /* Background with cool tint - more resistant to background colors */
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(200, 220, 255, 0.12) 40%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+
+  /* Aggressive blur + subtle brightness */
+  backdrop-filter: blur(28px) saturate(200%) brightness(1.08) contrast(108%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.08) contrast(108%);
+
+  border-radius: 100px;
+
+  /* Asymmetric borders - top shines more */
+  border-top: 1px solid rgba(255, 255, 255, 0.32);
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* More separated shadows with stronger inset top + rim light */
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.55),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    inset 0 1.5px 0px rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0px rgba(0, 0, 0, 0.25),
+    inset 0 0 40px rgba(255, 255, 255, 0.03);
+
+  padding: 8px 16px;
+  overflow: hidden;
+  z-index: 1000;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ::after only as thin specular line on top - no internal shapes */
+.app-shell[data-floating-player-bar] .player-bar::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 25%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0.35) 75%,
+    transparent 100%
+  );
+  border-radius: 100px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.app-shell[data-floating-player-bar] .player-bar:hover {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(180, 210, 255, 0.09) 40%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  box-shadow:
+    0 28px 56px rgba(0, 0, 0, 0.6),
+    0 10px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1.5px 0px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0px rgba(0, 0, 0, 0.2),
+    inset 0 0 40px rgba(255, 255, 255, 0.04);
+}
+
+/* Play button - glass capsule (override all theme selectors) */
+[data-theme] .app-shell[data-floating-player-bar] .player-bar .player-btn.player-btn-primary,
+[data-theme='mocha'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary,
+[data-theme='latte'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary,
+[data-theme='frappe'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary,
+[data-theme='macchiato'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  box-shadow: inset 0 1.5px 0px rgba(255, 255, 255, 0.5), inset 0 -1px 0px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme] .app-shell[data-floating-player-bar] .player-bar .player-btn.player-btn-primary:hover,
+[data-theme='mocha'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary:hover,
+[data-theme='latte'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary:hover,
+[data-theme='frappe'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary:hover,
+[data-theme='macchiato'] .app-shell[data-floating-player-bar] .player-bar .player-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  transform: scale(1.06) !important;
+}
+
+/* Volume slider - glass track and thumb */
+.app-shell[data-floating-player-bar] .player-bar input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.app-shell[data-floating-player-bar] .player-bar input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 100px;
+  border: none;
+}
+
+.app-shell[data-floating-player-bar] .player-bar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0px rgba(255, 255, 255, 0.6);
+  margin-top: -5px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-shell[data-floating-player-bar] .player-bar input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.12),
+    0 3px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0px rgba(255, 255, 255, 0.7);
+}
+
+/* Secondary icons - more integrated */
+.app-shell[data-floating-player-bar] .player-bar .player-btn {
+  opacity: 0.6;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.app-shell[data-floating-player-bar] .player-bar .player-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Album art - integrated with glass border */
+.app-shell[data-floating-player-bar] .player-bar .player-track-info img,
+.app-shell[data-floating-player-bar] .player-bar .player-album-art,
+.app-shell[data-floating-player-bar] .player-bar .player-album-art-placeholder {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0px rgba(255, 255, 255, 0.15) !important;
+}
+
 .player-track-artist {
   font-size: 12px;
   color: var(--text-secondary);

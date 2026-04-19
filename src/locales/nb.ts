@@ -718,6 +718,8 @@ export const nbTranslation = {
     playlistCoverPhotoSub: 'Vis coverfoto-rutenett i playlist-detailedvisning',
     showBitrate: 'Vis Bitrate',
     showBitrateSub: 'Vis audio-bitrate i sporlister',
+    floatingPlayerBar: 'Flytende Avspillingslinje',
+    floatingPlayerBarSub: 'Aktiverer flytende avspillingslinje med liquid glass-stil og refraksjonseffekt',
     uiScaleTitle: 'Grensesnittskala',
     uiScaleLabel: 'Zoom',
   },
