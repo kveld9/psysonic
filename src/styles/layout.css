@@ -1068,6 +1068,13 @@
   contain: paint;
 }
 
+/* When floating player is active, add extra bottom padding so content doesn't
+   get hidden behind the fixed floating bar (player height + bottom offset + minimal spacing).
+   !important needed to override inline padding:0 on App.tsx content-body */
+.app-shell.floating-player .content-body {
+  padding-bottom: calc(var(--player-height) + 12px) !important;
+}
+
 /* Every page re-uses .content-body as its outer wrapper, but App.tsx already
    renders one around <Routes /> as the scroll container. The inner one must
    not establish its own scroll ancestor — otherwise `position: sticky`
