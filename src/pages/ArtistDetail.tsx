@@ -348,19 +348,19 @@ export default function ArtistDetail() {
     if (!artist || albums.length === 0) return;
     setPlayAllLoading(true);
     try {
-      // Obtener todas las canciones del artista
+      // Get all artist tracks ordered by album and track number
       const allTracks = await fetchAllTracks();
-      
-      // Top songs desde el índico clickeado en adelante
+
+      // Top songs from clicked index onward
       const topTracksFromIndex = topSongs.slice(startIndex).map(songToTrack);
-      
-      // IDs de top songs para evitar duplicados
+
+      // Track IDs for deduplication
       const topSongIds = new Set(topSongs.map(s => s.id));
-      
-      // Filtrar canciones del artista para excluir top songs
+
+      // Filter remaining tracks to exclude top songs (prevent duplicates)
       const remainingTracks = allTracks.filter(t => !topSongIds.has(t.id));
-      
-      // Combinar: top songs restantes + resto del catálogo del artista
+
+      // Build queue: remaining top songs + rest of artist catalog
       const queue = [...topTracksFromIndex, ...remainingTracks];
       
       if (queue.length > 0) {
